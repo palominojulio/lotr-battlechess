@@ -458,6 +458,13 @@ async function performChessMove(from, to, promotionPiece = null) {
 
   updateHUD();
 
+  // Play faction movement sound: R2-D2 chirp for White (Gondor), Orc growl for Black (Mordor)
+  if (moveResult.color === 'w') {
+    soundFX.playR2D2Chirp();
+  } else {
+    soundFX.playOrcGrowl();
+  }
+
   const attackerMesh = pieceMeshes.get(from);
   const targetPos = squareToWorld(to);
 
@@ -607,8 +614,8 @@ let pointerDownPos = { x: 0, y: 0 };
 
 renderer.domElement.addEventListener('pointerdown', (e) => {
   pointerDownPos = { x: e.clientX, y: e.clientY };
-  // Auto-start Star Wars MIDI music on first interaction if not explicitly muted
-  if (!userMutedMidi && !soundFX.musicPlaying && soundFX.enabled) {
+  // Play the short Star Wars chorus ONCE at the very start of the match
+  if (!userMutedMidi && !soundFX.introPlayed && soundFX.enabled) {
     soundFX.startMusic();
     updateMidiButtonUI(true);
   }
@@ -690,9 +697,13 @@ let userMutedMidi = false;
 function updateMidiButtonUI(playing, trackName = null) {
   if (!btnMidi) return;
   btnMidi.classList.toggle('active', playing);
-  const label = trackName || 'Marcha Imperial (MIDI)';
-  btnMidi.textContent = playing ? `🎵 ${label}` : '🎵 MIDI: OFF';
+  const label = trackName || 'Estribillo Star Wars';
+  btnMidi.textContent = playing ? `🎵 ${label}` : '🎵 Sonar Estribillo';
 }
+
+soundFX.onMusicEnd = () => {
+  updateMidiButtonUI(false);
+};
 
 btnSound.addEventListener('click', () => {
   const on = soundFX.toggle();
@@ -730,7 +741,8 @@ function resetGame() {
   updateHUD();
   battleLog.innerHTML =
     '<li class="log-entry lore-intro">⚔️ Nueva guerra iniciada: Sables láser encendidos y corceles robot listos.</li>';
-  soundFX.playHornFanfare();
+  soundFX.startMusic();
+  updateMidiButtonUI(true);
 }
 
 document.getElementById('btn-reset').addEventListener('click', resetGame);

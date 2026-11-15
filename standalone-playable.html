@@ -120,44 +120,34 @@
     };
     const MIDI_TRACKS = [
       {
-        name: 'Marcha Imperial',
-        bpm: 108,
+        name: 'Marcha Imperial (Estribillo)',
+        bpm: 112,
         notes: [
           ['G4', 1, 'G2'], ['G4', 1, 'G2'], ['G4', 1, 'G2'], ['Eb4', 0.75, 'Eb3'], ['Bb4', 0.25, null],
-          ['G4', 1, 'G2'], ['Eb4', 0.75, 'Eb3'], ['Bb4', 0.25, null], ['G4', 2, 'G2'],
-          ['D5', 1, 'G2'], ['D5', 1, 'G2'], ['D5', 1, 'G2'], ['Eb5', 0.75, 'Eb3'], ['Bb4', 0.25, null],
-          ['Fs4', 1, 'D3'], ['Eb4', 0.75, 'Eb3'], ['Bb4', 0.25, null], ['G4', 2, 'G2'],
-          ['G5', 1, 'G3'], ['G4', 0.75, 'G2'], ['G4', 0.25, null], ['G5', 1, 'G3'], ['Fs5', 0.75, 'D3'], ['F5', 0.25, null],
-          ['E5', 0.25, 'C3'], ['Eb5', 0.25, null], ['E5', 0.5, null], [null, 0.5, null], ['Ab4', 0.5, 'Eb3'], ['Cs5', 1, 'C3'], ['C5', 0.75, null], ['B4', 0.25, null],
-          ['Bb4', 0.25, 'G2'], ['A4', 0.25, null], ['Bb4', 0.5, null], [null, 0.5, null], ['Eb4', 0.5, 'Eb3'], ['Fs4', 1, 'D3'], ['Eb4', 0.75, 'Eb3'], ['Fs4', 0.25, null],
-          ['Bb4', 1, 'G2'], ['G4', 0.75, 'Eb3'], ['Bb4', 0.25, null], ['D5', 2, 'G2']
+          ['G4', 1, 'G2'], ['Eb4', 0.75, 'Eb3'], ['Bb4', 0.25, null], ['G4', 2, 'G2']
         ]
       },
       {
-        name: 'Tema Star Wars',
-        bpm: 120,
+        name: 'Star Wars (Estribillo)',
+        bpm: 124,
         notes: [
           ['G4', 0.33, 'C3'], ['G4', 0.33, null], ['G4', 0.34, null],
           ['C5', 2, 'C3'], ['G5', 2, 'G3'],
-          ['F5', 0.33, 'F3'], ['E5', 0.33, null], ['D5', 0.34, null], ['C6', 2, 'C3'], ['G5', 1, 'G3'],
-          ['F5', 0.33, 'F3'], ['E5', 0.33, null], ['D5', 0.34, null], ['C6', 2, 'C3'], ['G5', 1, 'G3'],
-          ['F5', 0.33, 'F3'], ['E5', 0.33, null], ['F5', 0.34, null], ['D5', 2, 'G2'], [null, 1, null]
+          ['F5', 0.33, 'F3'], ['E5', 0.33, null], ['D5', 0.34, null], ['C6', 2, 'C3'], ['G5', 1.5, 'G3']
         ]
       },
       {
-        name: 'Duel of the Fates',
-        bpm: 144,
+        name: 'Duel of the Fates (Estribillo)',
+        bpm: 146,
         notes: [
-          ['E4', 0.5, 'E3'], ['Fs4', 0.5, null], ['G4', 0.5, 'E3'], ['Fs4', 0.5, null], ['D4', 1, 'D3'], [null, 1, 'E3'],
-          ['E4', 0.5, 'E3'], ['Fs4', 0.5, null], ['G4', 0.5, 'E3'], ['Fs4', 0.5, null], ['D4', 0.5, 'D3'], ['E4', 0.5, null], ['B4', 1, 'G2'],
-          ['E4', 0.5, 'E3'], ['Fs4', 0.5, null], ['G4', 0.5, 'E3'], ['Fs4', 0.5, null], ['D4', 1, 'D3'], [null, 1, 'E3'],
-          ['G5', 1.5, 'C3'], ['D5', 1.5, 'D3'], ['E5', 2, 'E3']
+          ['E4', 0.5, 'E3'], ['Fs4', 0.5, null], ['G4', 0.5, 'E3'], ['Fs4', 0.5, null], ['D4', 1, 'D3'], [null, 0.5, 'E3'],
+          ['E4', 0.5, 'E3'], ['Fs4', 0.5, null], ['G4', 0.5, 'E3'], ['Fs4', 0.5, null], ['D4', 0.5, 'D3'], ['E4', 0.5, null], ['B4', 1.5, 'G2']
         ]
       }
     ];
 
     let midiPlaying = false;
-    let midiMutedByUser = false;
+    let midiIntroPlayed = false;
     let midiTrackIdx = 0;
     let midiNoteIdx = 0;
     let midiTimer = null;
@@ -175,6 +165,10 @@
       const ac = ensureAudio();
       if (!ac) return;
       const track = MIDI_TRACKS[midiTrackIdx];
+      if (midiNoteIdx >= track.notes.length) {
+        stopMidi();
+        return;
+      }
       const [note, beats, bass] = track.notes[midiNoteIdx];
       const dur = beats * (60 / track.bpm);
       const now = ac.currentTime;
@@ -219,7 +213,7 @@
         bo.stop(now + Math.min(dur, 0.38));
       }
 
-      midiNoteIdx = (midiNoteIdx + 1) % track.notes.length;
+      midiNoteIdx++;
       midiTimer = setTimeout(scheduleMidiStep, dur * 1000);
     }
 
@@ -227,16 +221,17 @@
       if (midiPlaying) return;
       ensureAudio();
       midiPlaying = true;
+      midiIntroPlayed = true;
       midiNoteIdx = 0;
       scheduleMidiStep();
-      document.getElementById('btn-midi').textContent = `🎵 MIDI: ${MIDI_TRACKS[midiTrackIdx].name}`;
+      document.getElementById('btn-midi').textContent = `🎵 ${MIDI_TRACKS[midiTrackIdx].name}`;
     }
 
     function stopMidi() {
       midiPlaying = false;
       if (midiTimer) clearTimeout(midiTimer);
       midiTimer = null;
-      document.getElementById('btn-midi').textContent = '🎵 MIDI: OFF';
+      document.getElementById('btn-midi').textContent = '🎵 Estribillo Star Wars';
     }
     function playSound(type) {
       try {
@@ -245,6 +240,93 @@
         if (!audioCtx) audioCtx = new AC();
         if (audioCtx.state === 'suspended') audioCtx.resume();
         const now = audioCtx.currentTime;
+
+        if (type === 'r2d2') {
+          // Authentic R2-D2 Astromech Whistle / Beep-Bloop Sequence for White (Gondor) moves
+          const carrier = audioCtx.createOscillator();
+          const mod = audioCtx.createOscillator();
+          const modGain = audioCtx.createGain();
+          const gain = audioCtx.createGain();
+          carrier.type = 'sine';
+          mod.type = 'sine';
+          mod.frequency.setValueAtTime(34, now);
+          modGain.gain.setValueAtTime(140, now);
+
+          carrier.frequency.setValueAtTime(1850, now);
+          carrier.frequency.exponentialRampToValueAtTime(2950, now + 0.065);
+          carrier.frequency.setValueAtTime(1420, now + 0.075);
+          carrier.frequency.exponentialRampToValueAtTime(2580, now + 0.145);
+          carrier.frequency.setValueAtTime(3150, now + 0.155);
+          carrier.frequency.exponentialRampToValueAtTime(1920, now + 0.245);
+          carrier.frequency.exponentialRampToValueAtTime(2680, now + 0.31);
+
+          gain.gain.setValueAtTime(0.001, now);
+          gain.gain.linearRampToValueAtTime(0.11, now + 0.015);
+          gain.gain.setValueAtTime(0.10, now + 0.23);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.33);
+
+          mod.connect(modGain);
+          modGain.connect(carrier.frequency);
+          carrier.connect(gain);
+          gain.connect(audioCtx.destination);
+          carrier.start(now);
+          mod.start(now);
+          carrier.stop(now + 0.34);
+          mod.stop(now + 0.34);
+          return;
+        }
+
+        if (type === 'orc') {
+          // Guttural Mordor Orc Growl / Snarl for Black (Mordor) moves
+          const o1 = audioCtx.createOscillator();
+          const o2 = audioCtx.createOscillator();
+          const lfo = audioCtx.createOscillator();
+          const lfoGain = audioCtx.createGain();
+          const flt = audioCtx.createBiquadFilter();
+          const gain = audioCtx.createGain();
+
+          o1.type = 'sawtooth';
+          o2.type = 'sawtooth';
+          o1.frequency.setValueAtTime(84, now);
+          o1.frequency.linearRampToValueAtTime(106, now + 0.11);
+          o1.frequency.exponentialRampToValueAtTime(56, now + 0.39);
+
+          o2.frequency.setValueAtTime(89.5, now);
+          o2.frequency.linearRampToValueAtTime(112, now + 0.11);
+          o2.frequency.exponentialRampToValueAtTime(59, now + 0.39);
+
+          lfo.type = 'sine';
+          lfo.frequency.setValueAtTime(28, now);
+          lfoGain.gain.setValueAtTime(18, now);
+          lfo.connect(lfoGain);
+          lfoGain.connect(o1.frequency);
+          lfoGain.connect(o2.frequency);
+
+          flt.type = 'bandpass';
+          flt.Q.setValueAtTime(3.2, now);
+          flt.frequency.setValueAtTime(250, now);
+          flt.frequency.linearRampToValueAtTime(430, now + 0.12);
+          flt.frequency.exponentialRampToValueAtTime(175, now + 0.39);
+
+          gain.gain.setValueAtTime(0.001, now);
+          gain.gain.linearRampToValueAtTime(0.22, now + 0.04);
+          gain.gain.setValueAtTime(0.18, now + 0.22);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.41);
+
+          o1.connect(flt);
+          o2.connect(flt);
+          flt.connect(gain);
+          gain.connect(audioCtx.destination);
+
+          o1.start(now);
+          o2.start(now);
+          lfo.start(now);
+          o1.stop(now + 0.42);
+          o2.stop(now + 0.42);
+          lfo.stop(now + 0.42);
+          return;
+        }
+
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.connect(gain);
@@ -309,6 +391,7 @@
       selected = null;
       validMoves = [];
       activeCombat = null;
+      midiIntroPlayed = false;
       document.getElementById('combat-hud').classList.add('hidden');
       updateStatus('Turno: Orden de Gondor (Blancas) — Haz clic en una pieza');
       inspectPiece('w', 'p');
@@ -404,8 +487,10 @@
       selected = null;
       validMoves = [];
 
+      // Faction move sound: R2-D2 astromech whistle for White (Gondor), guttural Orc growl for Black (Mordor)
+      playSound(attacker.color === 'w' ? 'r2d2' : 'orc');
+
       if (!defender) {
-        playSound('ignite');
         board[toR][toC] = attacker;
         board[fromR][fromC] = null;
         if (attacker.type === 'p' && (toR === 0 || toR === 7)) attacker.type = 'q';
@@ -1071,10 +1156,8 @@
 
     document.getElementById('btn-midi').addEventListener('click', () => {
       if (midiPlaying) {
-        midiMutedByUser = true;
         stopMidi();
       } else {
-        midiMutedByUser = false;
         startMidi();
       }
     });
@@ -1082,13 +1165,12 @@
     document.getElementById('btn-midi-next').addEventListener('click', () => {
       midiTrackIdx = (midiTrackIdx + 1) % MIDI_TRACKS.length;
       midiNoteIdx = 0;
-      midiMutedByUser = false;
-      if (!midiPlaying) startMidi();
-      else document.getElementById('btn-midi').textContent = `🎵 MIDI: ${MIDI_TRACKS[midiTrackIdx].name}`;
+      if (midiPlaying) stopMidi();
+      startMidi();
     });
 
     canvas.addEventListener('click', (e) => {
-      if (!midiPlaying && !midiMutedByUser) startMidi();
+      if (!midiPlaying && !midiIntroPlayed) startMidi();
       if (activeCombat) return;
       const rect = canvas.getBoundingClientRect();
       const sx = (e.clientX - rect.left) * (canvas.width / rect.width);

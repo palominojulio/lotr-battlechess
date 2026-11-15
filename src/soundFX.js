@@ -4,41 +4,26 @@ const MIDI_NOTES = {
   C5: 523.25, Cs5: 554.37, D5: 587.33, Eb5: 622.25, E5: 659.25, F5: 698.46, Fs5: 739.99, G5: 783.99, C6: 1046.50
 };
 
-// Iconic Star Wars MIDI Sequences: [noteName, beats, bassNote]
+// Iconic Star Wars Chorus Hooks (played once at start, no infinite loop)
 const STAR_WARS_TRACKS = [
   {
-    name: 'Marcha Imperial (MIDI)',
-    bpm: 108,
-    notes: [
-      ['G4', 1, 'G2'], ['G4', 1, 'G2'], ['G4', 1, 'G2'], ['Eb4', 0.75, 'Eb3'], ['Bb4', 0.25, null],
-      ['G4', 1, 'G2'], ['Eb4', 0.75, 'Eb3'], ['Bb4', 0.25, null], ['G4', 2, 'G2'],
-      ['D5', 1, 'G2'], ['D5', 1, 'G2'], ['D5', 1, 'G2'], ['Eb5', 0.75, 'Eb3'], ['Bb4', 0.25, null],
-      ['Fs4', 1, 'D3'], ['Eb4', 0.75, 'Eb3'], ['Bb4', 0.25, null], ['G4', 2, 'G2'],
-      ['G5', 1, 'G3'], ['G4', 0.75, 'G2'], ['G4', 0.25, null], ['G5', 1, 'G3'], ['Fs5', 0.75, 'D3'], ['F5', 0.25, null],
-      ['E5', 0.25, 'C3'], ['Eb5', 0.25, null], ['E5', 0.5, null], [null, 0.5, null], ['Ab4', 0.5, 'Eb3'], ['Cs5', 1, 'C3'], ['C5', 0.75, null], ['B4', 0.25, null],
-      ['Bb4', 0.25, 'G2'], ['A4', 0.25, null], ['Bb4', 0.5, null], [null, 0.5, null], ['Eb4', 0.5, 'Eb3'], ['Fs4', 1, 'D3'], ['Eb4', 0.75, 'Eb3'], ['Fs4', 0.25, null],
-      ['Bb4', 1, 'G2'], ['G4', 0.75, 'Eb3'], ['Bb4', 0.25, null], ['D5', 2, 'G2']
-    ]
-  },
-  {
-    name: 'Tema Principal Star Wars (MIDI)',
-    bpm: 120,
+    name: 'Estribillo Star Wars (MIDI)',
+    bpm: 124,
     notes: [
       ['G4', 0.33, 'C3'], ['G4', 0.33, null], ['G4', 0.34, null],
-      ['C5', 2, 'C3'], ['G5', 2, 'G3'],
-      ['F5', 0.33, 'F3'], ['E5', 0.33, null], ['D5', 0.34, null], ['C6', 2, 'C3'], ['G5', 1, 'G3'],
-      ['F5', 0.33, 'F3'], ['E5', 0.33, null], ['D5', 0.34, null], ['C6', 2, 'C3'], ['G5', 1, 'G3'],
-      ['F5', 0.33, 'F3'], ['E5', 0.33, null], ['F5', 0.34, null], ['D5', 2, 'G2'], [null, 1, null]
+      ['C5', 1.8, 'C3'], ['G5', 1.8, 'G3'],
+      ['F5', 0.33, 'F3'], ['E5', 0.33, null], ['D5', 0.34, null],
+      ['C6', 1.8, 'C3'], ['G5', 1.2, 'G3']
     ]
   },
   {
-    name: 'Duel of the Fates (MIDI)',
-    bpm: 144,
+    name: 'Estribillo Marcha Imperial (MIDI)',
+    bpm: 112,
     notes: [
-      ['E4', 0.5, 'E3'], ['Fs4', 0.5, null], ['G4', 0.5, 'E3'], ['Fs4', 0.5, null], ['D4', 1, 'D3'], [null, 1, 'E3'],
-      ['E4', 0.5, 'E3'], ['Fs4', 0.5, null], ['G4', 0.5, 'E3'], ['Fs4', 0.5, null], ['D4', 0.5, 'D3'], ['E4', 0.5, null], ['B4', 1, 'G2'],
-      ['E4', 0.5, 'E3'], ['Fs4', 0.5, null], ['G4', 0.5, 'E3'], ['Fs4', 0.5, null], ['D4', 1, 'D3'], [null, 1, 'E3'],
-      ['G5', 1.5, 'C3'], ['D5', 1.5, 'D3'], ['E5', 2, 'E3']
+      ['G4', 1, 'G2'], ['G4', 1, 'G2'], ['G4', 1, 'G2'],
+      ['Eb4', 0.75, 'Eb3'], ['Bb4', 0.25, null],
+      ['G4', 1, 'G2'], ['Eb4', 0.75, 'Eb3'], ['Bb4', 0.25, null],
+      ['G4', 1.8, 'G2']
     ]
   }
 ];
@@ -48,9 +33,11 @@ class SoundFX {
     this.enabled = true;
     this.ctx = null;
     this.musicPlaying = false;
+    this.introPlayed = false;
     this.trackIndex = 0;
     this.noteIndex = 0;
     this.musicTimer = null;
+    this.onMusicEnd = null;
   }
 
   init() {
@@ -73,12 +60,14 @@ class SoundFX {
     return this.enabled;
   }
 
+  // Plays ONLY the short Star Wars chorus once (no infinite loop)
   startMusic() {
     if (!this.enabled) return false;
     this.init();
     if (!this.ctx) return false;
-    if (this.musicPlaying) return true;
+    this.stopMusic();
     this.musicPlaying = true;
+    this.introPlayed = true;
     this.noteIndex = 0;
     this.scheduleNextMidiNote();
     return true;
@@ -105,10 +94,7 @@ class SoundFX {
 
   nextTrack() {
     this.trackIndex = (this.trackIndex + 1) % STAR_WARS_TRACKS.length;
-    this.noteIndex = 0;
-    if (!this.musicPlaying) {
-      this.startMusic();
-    }
+    this.startMusic();
     return STAR_WARS_TRACKS[this.trackIndex].name;
   }
 
@@ -116,6 +102,13 @@ class SoundFX {
     if (!this.musicPlaying || !this.enabled || !this.ctx) return;
 
     const track = STAR_WARS_TRACKS[this.trackIndex];
+    if (this.noteIndex >= track.notes.length) {
+      // Stop after playing the chorus once!
+      this.stopMusic();
+      this.onMusicEnd?.();
+      return;
+    }
+
     const [noteName, beats, bassName] = track.notes[this.noteIndex];
     const beatSec = 60 / track.bpm;
     const durSec = beats * beatSec;
@@ -170,8 +163,139 @@ class SoundFX {
       bOsc.stop(now + Math.min(durSec, 0.4));
     }
 
-    this.noteIndex = (this.noteIndex + 1) % track.notes.length;
+    this.noteIndex++;
     this.musicTimer = setTimeout(() => this.scheduleNextMidiNote(), durSec * 1000);
+  }
+
+  /**
+   * Authentic R2-D2 Astromech Droid whistle/chirp sequence when White (Gondor) pieces move
+   */
+  playR2D2Chirp() {
+    if (!this.enabled) return;
+    this.init();
+    if (!this.ctx) return;
+
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const mod = this.ctx.createOscillator();
+    const modGain = this.ctx.createGain();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'sine';
+    mod.type = 'sine';
+
+    // R2-D2 expressive multi-syllable whistle contour ("Bweep-boop-wheee-doot!")
+    osc.frequency.setValueAtTime(1450, now);
+    osc.frequency.exponentialRampToValueAtTime(2750, now + 0.08);
+    osc.frequency.setValueAtTime(1920, now + 0.09);
+    osc.frequency.exponentialRampToValueAtTime(1180, now + 0.17);
+    osc.frequency.setValueAtTime(2350, now + 0.18);
+    osc.frequency.exponentialRampToValueAtTime(3150, now + 0.27);
+    osc.frequency.setValueAtTime(1850, now + 0.28);
+    osc.frequency.exponentialRampToValueAtTime(2480, now + 0.36);
+
+    // Subtle FM warble for authentic droid vocal character
+    mod.frequency.setValueAtTime(38, now);
+    modGain.gain.setValueAtTime(160, now);
+
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.linearRampToValueAtTime(0.12, now + 0.02);
+    gain.gain.setValueAtTime(0.11, now + 0.28);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.38);
+
+    mod.connect(modGain);
+    modGain.connect(osc.frequency);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+
+    mod.start(now);
+    osc.start(now);
+    mod.stop(now + 0.39);
+    osc.stop(now + 0.39);
+  }
+
+  /**
+   * Guttural Mordor Orc Growl / Snarl ("GRRAAARGH") when Black (Mordor) pieces move
+   */
+  playOrcGrowl() {
+    if (!this.enabled) return;
+    this.init();
+    if (!this.ctx) return;
+
+    const now = this.ctx.currentTime;
+    const dur = 0.44;
+
+    // 1. Deep guttural vocal cords (2 detuned low sawtooths + throat vibrato)
+    const osc1 = this.ctx.createOscillator();
+    const osc2 = this.ctx.createOscillator();
+    const lfo = this.ctx.createOscillator();
+    const lfoGain = this.ctx.createGain();
+    const formant = this.ctx.createBiquadFilter();
+    const gain = this.ctx.createGain();
+
+    osc1.type = 'sawtooth';
+    osc2.type = 'sawtooth';
+    lfo.type = 'sine';
+
+    // Pitch contour of an aggressive orc snarl
+    osc1.frequency.setValueAtTime(82, now);
+    osc1.frequency.linearRampToValueAtTime(112, now + 0.12);
+    osc1.frequency.exponentialRampToValueAtTime(58, now + dur);
+
+    osc2.frequency.setValueAtTime(123, now);
+    osc2.frequency.linearRampToValueAtTime(162, now + 0.12);
+    osc2.frequency.exponentialRampToValueAtTime(86, now + dur);
+
+    // Throat rattle vibrato (28 Hz)
+    lfo.frequency.setValueAtTime(28, now);
+    lfoGain.gain.setValueAtTime(18, now);
+
+    // Vocal tract bandpass filter ("GRR-AAH")
+    formant.type = 'bandpass';
+    formant.Q.setValueAtTime(3.2, now);
+    formant.frequency.setValueAtTime(260, now);
+    formant.frequency.linearRampToValueAtTime(520, now + 0.14);
+    formant.frequency.exponentialRampToValueAtTime(210, now + dur);
+
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.linearRampToValueAtTime(0.24, now + 0.05);
+    gain.gain.setValueAtTime(0.20, now + 0.22);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+
+    lfo.connect(lfoGain);
+    lfoGain.connect(osc1.frequency);
+    lfoGain.connect(osc2.frequency);
+    osc1.connect(formant);
+    osc2.connect(formant);
+    formant.connect(gain);
+    gain.connect(this.ctx.destination);
+
+    lfo.start(now);
+    osc1.start(now);
+    osc2.start(now);
+    lfo.stop(now + dur + 0.02);
+    osc1.stop(now + dur + 0.02);
+    osc2.stop(now + dur + 0.02);
+
+    // 2. Raspy breath noise layer for orc snarl texture
+    const bufSize = Math.floor(this.ctx.sampleRate * dur);
+    const buf = this.ctx.createBuffer(1, bufSize, this.ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < bufSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.sin((i / bufSize) * Math.PI);
+    }
+    const noise = this.ctx.createBufferSource();
+    noise.buffer = buf;
+    const nFilter = this.ctx.createBiquadFilter();
+    nFilter.type = 'bandpass';
+    nFilter.frequency.setValueAtTime(420, now);
+    const nGain = this.ctx.createGain();
+    nGain.gain.setValueAtTime(0.09, now);
+    nGain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+    noise.connect(nFilter);
+    nFilter.connect(nGain);
+    nGain.connect(this.ctx.destination);
+    noise.start(now);
   }
 
   playSelect() {
