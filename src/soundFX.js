@@ -1,29 +1,38 @@
 const MIDI_NOTES = {
   G2: 98.00, Bb2: 116.54, C3: 130.81, D3: 146.83, Eb3: 155.56, E3: 164.81, F3: 174.61, Fs3: 185.00, G3: 196.00,
-  D4: 293.66, Eb4: 311.13, E4: 329.63, F4: 349.23, Fs4: 369.99, G4: 392.00, Ab4: 415.30, A4: 440.00, Bb4: 466.16, B4: 493.88,
-  C5: 523.25, Cs5: 554.37, D5: 587.33, Eb5: 622.25, E5: 659.25, F5: 698.46, Fs5: 739.99, G5: 783.99, C6: 1046.50
+  C4: 261.63, Db4: 277.18, D4: 293.66, Eb4: 311.13, E4: 329.63, F4: 349.23, Fs4: 369.99, G4: 392.00, Ab4: 415.30, A4: 440.00, Bb4: 466.16, B4: 493.88,
+  C5: 523.25, Cs5: 554.37, D5: 587.33, Eb5: 622.25, E5: 659.25, F5: 698.46, Fs5: 739.99, G5: 783.99, A5: 880.00, B5: 987.77, C6: 1046.50
 };
 
-// Iconic Star Wars Chorus Hooks (played once at start, no infinite loop)
+// 100% Public Domain Space & Imperial Battle Fanfares (played once at start, no infinite loop)
 const STAR_WARS_TRACKS = [
   {
-    name: 'Estribillo Star Wars (MIDI)',
-    bpm: 124,
+    name: 'Marte: Portador de la Guerra (Holst)',
+    bpm: 132,
     notes: [
-      ['G4', 0.33, 'C3'], ['G4', 0.33, null], ['G4', 0.34, null],
-      ['C5', 1.8, 'C3'], ['G5', 1.8, 'G3'],
-      ['F5', 0.33, 'F3'], ['E5', 0.33, null], ['D5', 0.34, null],
-      ['C6', 1.8, 'C3'], ['G5', 1.2, 'G3']
+      ['G4', 0.33, 'G2'], ['G4', 0.33, null], ['G4', 0.34, null],
+      ['G4', 1.0, 'G2'], ['D5', 1.0, 'D3'],
+      ['Db4', 1.0, 'G2'], ['C5', 1.5, 'C3'],
+      ['Ab4', 0.5, 'Eb3'], ['G4', 1.8, 'G2']
     ]
   },
   {
-    name: 'Estribillo Marcha Imperial (MIDI)',
-    bpm: 112,
+    name: 'Odisea Espacial: Zaratustra (Strauss)',
+    bpm: 104,
     notes: [
-      ['G4', 1, 'G2'], ['G4', 1, 'G2'], ['G4', 1, 'G2'],
-      ['Eb4', 0.75, 'Eb3'], ['Bb4', 0.25, null],
-      ['G4', 1, 'G2'], ['Eb4', 0.75, 'Eb3'], ['Bb4', 0.25, null],
-      ['G4', 1.8, 'G2']
+      ['C4', 1.2, 'C3'], ['G4', 1.2, 'C3'], ['C5', 1.8, 'C3'],
+      ['E5', 0.45, 'C3'], ['Eb5', 2.0, 'C3'],
+      ['C4', 1.2, 'C3'], ['G4', 1.2, 'C3'], ['C5', 1.8, 'C3'],
+      ['Eb5', 0.45, 'C3'], ['E5', 2.2, 'G3']
+    ]
+  },
+  {
+    name: 'Cabalgata de las Valquirias (Wagner)',
+    bpm: 136,
+    notes: [
+      ['B4', 0.75, 'E3'], ['E4', 0.25, null], ['B4', 0.5, 'E3'], ['D5', 1.5, 'G3'],
+      ['B4', 1.5, 'E3'], ['D5', 0.75, 'G3'], ['B4', 0.25, null], ['D5', 0.5, 'G3'],
+      ['Fs5', 1.5, 'D3'], ['D5', 1.8, 'G2']
     ]
   }
 ];

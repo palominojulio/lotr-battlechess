@@ -10,19 +10,19 @@
     <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
       <div>
         <h2 class="text-[var(--foreground)] font-semibold text-base flex items-center gap-2">
-          <span>💍⚔️</span>
-          <span>Battle Chess: Tierra Media × Sables Láser</span>
+          <span>⚔️🤖</span>
+          <span>Cyber-Medieval Battle Chess: Alianza Solar vs. Legión</span>
         </h2>
         <p class="text-[var(--muted-foreground)] text-xs" id="status-line">
-          Turno: Orden de Gondor (Blancas) — Haz clic en una pieza o pulsa «⚔️ Probar Combate»
+          Turno: Alianza Solar (Blancas) — Haz clic en una pieza o pulsa «⚔️ Probar Combate»
         </p>
       </div>
 
       <div class="flex flex-wrap items-center gap-1.5">
         <button id="btn-midi" type="button" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)] hover:opacity-90 transition cursor-pointer">
-          🎵 MIDI: Marcha Imperial
+          🎵 Fanfarria: Marte (Holst)
         </button>
-        <button id="btn-midi-next" type="button" class="px-2 py-1.5 rounded-lg text-xs font-medium bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)] hover:opacity-90 transition cursor-pointer" title="Cambiar pista MIDI de Star Wars">
+        <button id="btn-midi-next" type="button" class="px-2 py-1.5 rounded-lg text-xs font-medium bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)] hover:opacity-90 transition cursor-pointer" title="Cambiar fanfarria de Dominio Público (Holst / Strauss / Wagner)">
           ⏭️
         </button>
         <button id="btn-duel" type="button" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90 transition cursor-pointer">
@@ -50,21 +50,21 @@
         <div id="combat-hud" class="hidden absolute bottom-2 left-2 right-2 bg-[var(--card)]/95 border border-[var(--border)] rounded-lg p-2.5 shadow-lg">
           <div class="flex items-center justify-between gap-3 mb-1">
             <div class="flex-1">
-              <div class="text-xs font-semibold text-[var(--foreground)]" id="att-name">Aragorn</div>
+              <div class="text-xs font-semibold text-[var(--foreground)]" id="att-name">Rey Valerius</div>
               <div class="w-full h-2 rounded-full bg-[var(--secondary)] overflow-hidden mt-1">
                 <div id="att-hp" class="h-full bg-emerald-500 transition-all duration-150" style="width:100%"></div>
               </div>
             </div>
             <span class="text-xs font-bold px-2 py-0.5 rounded bg-[var(--secondary)] text-[var(--foreground)]">VS</span>
             <div class="flex-1 text-right">
-              <div class="text-xs font-semibold text-[var(--foreground)]" id="def-name">Uruk-Sith</div>
+              <div class="text-xs font-semibold text-[var(--foreground)]" id="def-name">Guerrero Orco</div>
               <div class="w-full h-2 rounded-full bg-[var(--secondary)] overflow-hidden mt-1">
                 <div id="def-hp" class="h-full bg-rose-500 transition-all duration-150" style="width:100%"></div>
               </div>
             </div>
           </div>
           <div class="text-xs text-center font-medium text-[var(--muted-foreground)]" id="combat-msg">
-            ¡Choque de sables láser!
+            ¡Choque de hojas de plasma!
           </div>
         </div>
       </div>
@@ -73,11 +73,11 @@
       <div class="md:col-span-4 flex flex-col justify-between gap-2">
         <div class="bg-[var(--background)] border border-[var(--border)] rounded-lg p-2.5">
           <div class="flex items-center justify-between mb-0.5">
-            <span class="text-xs font-semibold text-[var(--primary)]" id="card-faction">Orden de Gondor</span>
+            <span class="text-xs font-semibold text-[var(--primary)]" id="card-faction">Alianza Solar</span>
             <span class="text-xs text-[var(--muted-foreground)]" id="card-role">Peón con Escudo</span>
           </div>
-          <div class="text-xs font-bold text-[var(--foreground)] mb-0.5" id="card-name">🛡️ Hobbit Guardia Jedi</div>
-          <div class="text-[11px] text-[var(--muted-foreground)] truncate" id="card-weapon">🛡️ Escudo de Gondor y Daga Láser Azul</div>
+          <div class="text-xs font-bold text-[var(--foreground)] mb-0.5" id="card-name">🛡️ Centinela Escudero</div>
+          <div class="text-[11px] text-[var(--muted-foreground)] truncate" id="card-weapon">🛡️ Escudo Solar y Daga de Plasma Azul</div>
           <div class="hidden" id="card-finisher"></div>
         </div>
 
@@ -95,14 +95,14 @@
         <div class="bg-[var(--background)] border border-[var(--border)] rounded-lg p-2 flex-1 flex flex-col min-h-[125px]">
           <div class="flex items-center justify-between mb-1">
             <span class="text-xs font-semibold text-[var(--foreground)]">💬 Chat en Vivo & Crónicas</span>
-            <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-medium">Gondor ↔ Mordor</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-medium">Alianza ↔ Legión</span>
           </div>
           <div id="battle-log" class="text-xs text-[var(--muted-foreground)] space-y-1 overflow-y-auto max-h-[56px] mb-1 pr-1">
-            <div class="text-emerald-400">📡 Canal de chat abierto entre Gondor y Mordor.</div>
+            <div class="text-emerald-400">📡 Canal de chat abierto entre Alianza Solar y Legión.</div>
           </div>
           <div class="flex flex-wrap gap-1 mb-1.5">
-            <button type="button" class="chat-chip px-1.5 py-0.5 rounded text-[10px] bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)] hover:opacity-80 cursor-pointer" data-msg="⚔️ ¡Por Gondor!">⚔️ ¡Por Gondor!</button>
-            <button type="button" class="chat-chip px-1.5 py-0.5 rounded text-[10px] bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)] hover:opacity-80 cursor-pointer" data-msg="👁️ ¡Yo soy tu padre!">👁️ ¡Soy tu padre!</button>
+            <button type="button" class="chat-chip px-1.5 py-0.5 rounded text-[10px] bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)] hover:opacity-80 cursor-pointer" data-msg="⚔️ ¡Por la Alianza Solar!">⚔️ ¡Por la Alianza!</button>
+            <button type="button" class="chat-chip px-1.5 py-0.5 rounded text-[10px] bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)] hover:opacity-80 cursor-pointer" data-msg="👁️ ¡Teme a la Legión!">👁️ ¡Teme a la Legión!</button>
             <button type="button" class="chat-chip px-1.5 py-0.5 rounded text-[10px] bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)] hover:opacity-80 cursor-pointer" data-msg="👏 ¡Buena jugada, Santi!">👏 ¡Buena, Santi!</button>
           </div>
           <form id="inline-chat-form" class="flex gap-1 mt-auto">
@@ -115,57 +115,60 @@
   </div>
 
   <script>
-    // LOTR x Star Wars Cyber-Medieval Roster (High-Contrast Palette)
+    // Original Cyber-Medieval Roster (100% Copyright-Free, High-Contrast Palette)
     const ROSTER = {
       w: {
-        k: { name: 'Aragorn Elessar', role: 'Rey', weapon: 'Mandoble Láser Azul Andúril', saber: '#00e5ff', body: '#f8fafc', accent: '#2563eb', rim: '#facc15', style: 'saber_slice', finisher: 'Mandoble Láser y Ascensión' },
-        q: { name: 'Dama Galadriel', role: 'Reina', weapon: 'Sable Doble Estelar + Fuerza', saber: '#a5f3fc', body: '#fef9c3', accent: '#3b82f6', rim: '#fde047', style: 'force', finisher: 'Levitación Telequinética + Corte' },
-        r: { name: 'Mecha-Bárbol (Ent)', role: 'Torre', weapon: 'Martillo de Plasma Verde', saber: '#10b981', body: '#dcfce7', accent: '#15803d', rim: '#4ade80', style: 'mecha', finisher: 'Aplastamiento de Reactor' },
-        b: { name: 'Gandalf Cyber-Maia', role: 'Alfil', weapon: 'Pica Láser y Rayo de Anor', saber: '#38bdf8', body: '#ffffff', accent: '#eab308', rim: '#60a5fa', style: 'force', finisher: 'Relámpago de la Fuerza' },
-        n: { name: 'Rohirrim Caballo Robot', role: 'Caballo', weapon: 'Corcel Mecha + Ojos Láser', saber: '#22c55e', body: '#ecfccb', accent: '#ca8a04', rim: '#4ade80', style: 'horse_laser', finisher: 'Láser Ocular + Carga Térmica' },
-        p: { name: 'Hobbit Guardia Jedi', role: 'Peón', weapon: 'Escudo de Gondor y Daga Láser', saber: '#00d2ff', body: '#e0f2fe', accent: '#1d4ed8', rim: '#facc15', style: 'saber_slice', finisher: 'Golpe de Escudo y Decapitación' }
+        k: { name: 'Rey Valerius', role: 'Rey', weapon: 'Mandoble de Plasma Azul Nova', saber: '#00e5ff', body: '#f8fafc', accent: '#2563eb', rim: '#facc15', style: 'saber_slice', finisher: 'Mandoble de Plasma y Ascensión' },
+        q: { name: 'Reina Astral Lyra', role: 'Reina', weapon: 'Lanza Doble Estelar + Telequinesis', saber: '#a5f3fc', body: '#fef9c3', accent: '#3b82f6', rim: '#fde047', style: 'force', finisher: 'Levitación Telequinética + Corte' },
+        r: { name: 'Coloso Guardián Atlas', role: 'Torre', weapon: 'Martillo de Plasma Esmeralda', saber: '#10b981', body: '#dcfce7', accent: '#15803d', rim: '#4ade80', style: 'mecha', finisher: 'Aplastamiento de Reactor' },
+        b: { name: 'Sabio Arcano Orion', role: 'Alfil', weapon: 'Pica de Fotones y Rayo Solar', saber: '#38bdf8', body: '#ffffff', accent: '#eab308', rim: '#60a5fa', style: 'force', finisher: 'Relámpago Astral' },
+        n: { name: 'Paladín Caballo Robot', role: 'Caballo', weapon: 'Corcel Mecha + Ojos Láser', saber: '#22c55e', body: '#ecfccb', accent: '#ca8a04', rim: '#4ade80', style: 'horse_laser', finisher: 'Láser Ocular + Carga Térmica' },
+        p: { name: 'Centinela Escudero', role: 'Peón', weapon: 'Escudo Solar y Daga de Plasma', saber: '#00d2ff', body: '#e0f2fe', accent: '#1d4ed8', rim: '#facc15', style: 'saber_slice', finisher: 'Golpe de Escudo y Tajo de Plasma' }
       },
       b: {
-        k: { name: 'Darth Sauron', role: 'Rey', weapon: 'Mandoble Cruzado y Gran Capa Imperial', saber: '#ff0033', body: '#262930', accent: '#3f4654', rim: '#f97316', cape: '#181b20', style: 'saber_slice', finisher: 'Desmembramiento Carmesí' },
-        q: { name: 'Rey Brujo Inquisidor', role: 'Reina', weapon: 'Sable Doble y Manto Real Morgul', saber: '#ff1133', body: '#2a2e37', accent: '#3f4654', rim: '#ef4444', cape: '#1c1f26', style: 'force', finisher: 'Torbellino Sith Decapitador' },
-        r: { name: 'Ciber-Troll Olog-Mech', role: 'Torre', weapon: 'Martillo Térmico de Mordor', saber: '#ff4500', body: '#2f343f', accent: '#4b5563', rim: '#f97316', style: 'mecha', finisher: 'Explosión Sísmica de Chasis' },
-        b: { name: 'Conde Saruman', role: 'Alfil', weapon: 'Sable Curvo, Capa Arcana y Rayos Sith', saber: '#c084fc', body: '#2b303a', accent: '#4b5563', rim: '#c084fc', cape: '#1e222a', style: 'force', finisher: 'Electrocución y Sacrificio' },
-        n: { name: 'Nazgûl Caballo Robot', role: 'Caballo', weapon: 'Corcel Biónico + Guadaña Láser', saber: '#ff0022', body: '#282c34', accent: '#3f4654', rim: '#f97316', style: 'horse_laser', finisher: 'Salto Propulsado + Láser Rojo' },
-        p: { name: 'Trooper Uruk-Sith', role: 'Peón', weapon: 'Escudo del Ojo Rojo y Cimitarra Láser', saber: '#ff1a1a', body: '#2b303a', accent: '#3f4654', rim: '#fb923c', style: 'saber_slice', finisher: 'Embate de Escudo y Corte de Plasma' }
+        k: { name: 'Emperador Malakor', role: 'Rey', weapon: 'Mandoble Cruzado y Gran Capa Imperial', saber: '#ff0033', body: '#262930', accent: '#3f4654', rim: '#f97316', cape: '#181b20', style: 'saber_slice', finisher: 'Desmembramiento Carmesí' },
+        q: { name: 'Soberana Nocturna Vex', role: 'Reina', weapon: 'Guadaña Doble de Plasma y Manto Real', saber: '#ff1133', body: '#2a2e37', accent: '#3f4654', rim: '#ef4444', cape: '#1c1f26', style: 'force', finisher: 'Torbellino Carmesí' },
+        r: { name: 'Ciber-Ogro Acorazado', role: 'Torre', weapon: 'Martillo Térmico de Antracita', saber: '#ff4500', body: '#2f343f', accent: '#4b5563', rim: '#f97316', style: 'mecha', finisher: 'Explosión Sísmica de Chasis' },
+        b: { name: 'Brujo del Vacío', role: 'Alfil', weapon: 'Hoja Curva, Capa Arcana y Rayos Voltaicos', saber: '#c084fc', body: '#2b303a', accent: '#4b5563', rim: '#c084fc', cape: '#1e222a', style: 'force', finisher: 'Descarga Voltaica' },
+        n: { name: 'Espectro Caballo Robot', role: 'Caballo', weapon: 'Corcel Biónico + Guadaña Láser', saber: '#ff0022', body: '#282c34', accent: '#3f4654', rim: '#f97316', style: 'horse_laser', finisher: 'Salto Propulsado + Láser Rojo' },
+        p: { name: 'Guerrero Orco Blindado', role: 'Peón', weapon: 'Escudo del Ojo Ígneo y Cimitarra de Plasma', saber: '#ff1a1a', body: '#2b303a', accent: '#3f4654', rim: '#fb923c', style: 'saber_slice', finisher: 'Embate de Escudo y Corte de Plasma' }
       }
     };
 
-    // Web Audio Synthesizer & Star Wars MIDI Sequencer
+    // Web Audio Synthesizer & 100% Public Domain Orchestral MIDI Sequencer (Holst / Strauss / Wagner)
     let audioCtx = null;
     const MIDI_FREQ = {
-      G2: 98.00, Bb2: 116.54, C3: 130.81, D3: 146.83, Eb3: 155.56, E3: 164.81, F3: 174.61, Fs3: 185.00, G3: 196.00,
+      G2: 98.00, Bb2: 116.54, C3: 130.81, D3: 146.83, Eb3: 155.56, E3: 164.81, F3: 174.61, Fs3: 185.00, G3: 196.00, B3: 246.94,
       D4: 293.66, Eb4: 311.13, E4: 329.63, F4: 349.23, Fs4: 369.99, G4: 392.00, Ab4: 415.30, A4: 440.00, Bb4: 466.16, B4: 493.88,
       C5: 523.25, Cs5: 554.37, D5: 587.33, Eb5: 622.25, E5: 659.25, F5: 698.46, Fs5: 739.99, G5: 783.99, C6: 1046.50
     };
     const MIDI_TRACKS = [
       {
-        name: 'Marcha Imperial (Estribillo)',
-        bpm: 112,
+        name: 'Marte: Portador de la Guerra (Holst)',
+        bpm: 118,
         notes: [
-          ['G4', 1, 'G2'], ['G4', 1, 'G2'], ['G4', 1, 'G2'], ['Eb4', 0.75, 'Eb3'], ['Bb4', 0.25, null],
-          ['G4', 1, 'G2'], ['Eb4', 0.75, 'Eb3'], ['Bb4', 0.25, null], ['G4', 2, 'G2']
+          ['G4', 0.33, 'G2'], ['G4', 0.33, null], ['G4', 0.34, null],
+          ['G4', 1.0, 'G2'], ['D5', 1.0, 'D3'], ['C5', 1.0, 'C3'],
+          ['G4', 0.33, 'G2'], ['G4', 0.33, null], ['G4', 0.34, null],
+          ['Ab4', 1.0, 'Eb3'], ['Eb5', 1.0, 'Eb3'], ['D5', 2.0, 'G2']
         ]
       },
       {
-        name: 'Star Wars (Estribillo)',
-        bpm: 124,
+        name: 'Odisea Espacial: Zaratustra (Strauss)',
+        bpm: 96,
         notes: [
-          ['G4', 0.33, 'C3'], ['G4', 0.33, null], ['G4', 0.34, null],
-          ['C5', 2, 'C3'], ['G5', 2, 'G3'],
-          ['F5', 0.33, 'F3'], ['E5', 0.33, null], ['D5', 0.34, null], ['C6', 2, 'C3'], ['G5', 1.5, 'G3']
+          ['C4', 1.5, 'C3'], ['G4', 1.5, 'G2'], ['C5', 2.5, 'C3'],
+          ['E5', 0.4, null], ['Eb5', 2.2, 'C3'],
+          ['D5', 0.5, 'G2'], ['E5', 0.5, null], ['F5', 0.5, 'F3'], ['G5', 2.5, 'C3']
         ]
       },
       {
-        name: 'Duel of the Fates (Estribillo)',
-        bpm: 146,
+        name: 'Cabalgata de las Valquirias (Wagner)',
+        bpm: 132,
         notes: [
-          ['E4', 0.5, 'E3'], ['Fs4', 0.5, null], ['G4', 0.5, 'E3'], ['Fs4', 0.5, null], ['D4', 1, 'D3'], [null, 0.5, 'E3'],
-          ['E4', 0.5, 'E3'], ['Fs4', 0.5, null], ['G4', 0.5, 'E3'], ['Fs4', 0.5, null], ['D4', 0.5, 'D3'], ['E4', 0.5, null], ['B4', 1.5, 'G2']
+          ['B3', 0.75, 'B3'], ['E4', 0.25, null], ['G4', 1.0, 'E3'], ['B4', 1.5, 'E3'],
+          ['G4', 0.75, 'E3'], ['B4', 0.25, null], ['D5', 1.0, 'G3'], ['B4', 1.5, 'E3'],
+          ['E5', 1.0, 'C3'], ['C5', 1.0, 'C3'], ['B4', 2.0, 'E3']
         ]
       }
     ];
@@ -255,7 +258,7 @@
       midiPlaying = false;
       if (midiTimer) clearTimeout(midiTimer);
       midiTimer = null;
-      document.getElementById('btn-midi').textContent = '🎵 Estribillo Star Wars';
+      document.getElementById('btn-midi').textContent = '🎵 Sonar Fanfarria';
     }
     function playSound(type) {
       try {
@@ -642,7 +645,7 @@
       renderInlineNotation();
       midiIntroPlayed = false;
       document.getElementById('combat-hud').classList.add('hidden');
-      updateStatus('Turno: Orden de Gondor (Blancas) — Haz clic en una pieza');
+      updateStatus('Turno: Alianza Solar (Blancas) — Haz clic en una pieza');
       inspectPiece('w', 'p');
     }
 
@@ -697,7 +700,7 @@
 
     function inspectPiece(color, type) {
       const info = ROSTER[color][type];
-      document.getElementById('card-faction').textContent = color === 'w' ? '☀️ Orden de Gondor (Blancas)' : '👁️ Imperio de Mordor (Negras)';
+      document.getElementById('card-faction').textContent = color === 'w' ? '☀️ Alianza Solar (Blancas)' : '👁️ Legión de Antracita (Negras)';
       document.getElementById('card-role').textContent = info.role;
       document.getElementById('card-name').textContent = info.name;
       document.getElementById('card-weapon').textContent = `⚔️ ${info.weapon}`;
@@ -749,7 +752,7 @@
         const info = ROSTER[attacker.color][attacker.type];
         logEvent(`[${notationTag}] 🛡️ ${info.name}`);
         turn = turn === 'w' ? 'b' : 'w';
-        updateStatus(`Turno: ${turn === 'w' ? 'Orden de Gondor (Blancas)' : 'Imperio de Mordor (Negras)'}`);
+        updateStatus(`Turno: ${turn === 'w' ? 'Alianza Solar (Blancas)' : 'Legión de Antracita (Negras)'}`);
         if (onComplete) onComplete();
         else if (turn === 'b') setTimeout(playAIMove, 450);
         return;
@@ -1382,7 +1385,7 @@
           }
           logEvent(`[${notationTag}] 💀 ${done.attInfo.name} ejecutó a ${done.defInfo.name}`);
           turn = turn === 'w' ? 'b' : 'w';
-          updateStatus(`Turno: ${turn === 'w' ? 'Orden de Gondor (Blancas)' : 'Imperio de Mordor (Negras)'}`);
+          updateStatus(`Turno: ${turn === 'w' ? 'Alianza Solar (Blancas)' : 'Legión de Antracita (Negras)'}`);
           setTimeout(() => {
             if (!activeCombat) document.getElementById('combat-hud').classList.add('hidden');
           }, 900);
@@ -1500,7 +1503,7 @@
     document.getElementById('btn-whatsapp').addEventListener('click', () => {
       const roomCode = `SANTI-${Math.floor(1000 + Math.random() * 9000)}`;
       const gameUrl = `https://palominojulio.github.io/lotr-battlechess/?room=${roomCode}`;
-      const msg = `⚔️ ¡Santi! Te reto a nuestro Battle Chess 3D (El Señor de los Anillos x Star Wars). Entra en este enlace para jugar contra mí:\n${gameUrl}`;
+      const msg = `⚔️ ¡Santi! Te reto a nuestro Cyber-Medieval Battle Chess 3D (Alianza Solar vs. Legión de Antracita). Entra en este enlace para jugar contra mí:\n${gameUrl}`;
       window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer');
     });
 
@@ -1508,12 +1511,12 @@
       const clean = String(text || '').trim();
       if (!clean) return;
       playSound('r2d2');
-      logEvent(`💬 ☀️ Tú (Gondor): ${clean}`);
+      logEvent(`💬 ☀️ Tú (Alianza): ${clean}`);
       setTimeout(() => {
         const replies = [
-          '💬 👁️ Mordor: «¡No conoces el poder del Lado Oscuro del Anillo!»',
-          '💬 👁️ Mordor: «¡Mis caballos robot aplastarán Minas Tirith!»',
-          '💬 👁️ Mordor: «¡Buena jugada! Prepárate para el duelo de sables láser.»'
+          '💬 👁️ Legión: «¡No conoces el poder de la Forja de Antracita!»',
+          '💬 👁️ Legión: «¡Mis caballos robot aplastarán tu Ciudadela Solar!»',
+          '💬 👁️ Legión: «¡Buena jugada! Prepárate para el duelo de espadas de plasma.»'
         ];
         playSound('orc');
         logEvent(replies[Math.floor(Math.random() * replies.length)]);

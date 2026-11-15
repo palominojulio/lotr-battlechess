@@ -319,16 +319,16 @@ function updateHUD() {
   const isWhite = turn === 'w';
   turnDot.className = `faction-dot ${isWhite ? 'white-faction' : 'black-faction'}`;
   turnFactionName.textContent = isWhite
-    ? 'Turno: Orden de Gondor (Blancas)'
-    : 'Turno: Imperio de Mordor (Negras)';
+    ? 'Turno: Alianza Solar (Blancas)'
+    : 'Turno: Legión de Antracita (Negras)';
 
   if (chess.isCheckmate()) {
-    const winner = isWhite ? 'Imperio de Mordor (Negras)' : 'Orden de Gondor (Blancas)';
+    const winner = isWhite ? 'Legión de Antracita (Negras)' : 'Alianza Solar (Blancas)';
     gameStatusText.textContent = `¡JAQUE MATE! Victoria de ${winner}`;
   } else if (chess.isDraw()) {
-    gameStatusText.textContent = '¡Tablas! Tregua en la Tierra Media';
+    gameStatusText.textContent = '¡Tablas! Tregua en el campo de batalla';
   } else if (chess.inCheck()) {
-    const kingName = isWhite ? 'Aragorn' : 'Darth Sauron';
+    const kingName = isWhite ? 'Rey Valerius' : 'Emperador Malakor';
     gameStatusText.textContent = `⚠️ ¡JAQUE A ${kingName.toUpperCase()}!`;
   } else {
     gameStatusText.textContent = isAnimating
@@ -455,10 +455,10 @@ gameoverDialog.addEventListener('close', () => {
 function promptPawnPromotion(color) {
   return new Promise((resolve) => {
     const isW = color === 'w';
-    document.getElementById('promo-name-q').textContent = isW ? 'Dama Galadriel (Sable Doble)' : 'Rey Brujo (Sable Doble)';
-    document.getElementById('promo-name-r').textContent = isW ? 'Mecha-Bárbol (Torre)' : 'Ciber-Troll (Torre)';
-    document.getElementById('promo-name-b').textContent = isW ? 'Gandalf Cyber-Maia' : 'Conde Saruman';
-    document.getElementById('promo-name-n').textContent = isW ? 'Rohirrim en Caballo Robot' : 'Nazgûl en Caballo Robot';
+    document.getElementById('promo-name-q').textContent = isW ? 'Reina Lyra (Espada Doble)' : 'Dama Vex (Espada Doble)';
+    document.getElementById('promo-name-r').textContent = isW ? 'Coloso Atlas (Torre)' : 'Ciber-Ogro (Torre)';
+    document.getElementById('promo-name-b').textContent = isW ? 'Sabio Orion (Alfil)' : 'Brujo del Vacío (Alfil)';
+    document.getElementById('promo-name-n').textContent = isW ? 'Paladín en Caballo Robot' : 'Jinete en Caballo Robot';
 
     function onClose() {
       promoDialog.removeEventListener('close', onClose);
@@ -648,13 +648,13 @@ async function performChessMove(from, to, promotionPiece = null, isRemote = fals
     if (chess.isCheckmate()) {
       const winnerIsWhite = moveResult.color === 'w';
       gameoverTitle.textContent = winnerIsWhite
-        ? '☀️ ¡Victoria de la Orden de Gondor!'
-        : '👁️ ¡Triunfo del Imperio de Mordor!';
+        ? '☀️ ¡Victoria de la Alianza Solar!'
+        : '👁️ ¡Triunfo de la Legión de Antracita!';
       gameoverMessage.textContent = winnerIsWhite
-        ? 'Aragorn y los Pueblos Libres han destruido el poder oscuro de Darth Sauron con sus sables de luz.'
-        : 'Las legiones cibernéticas de Mordor y los Caballos Robot Nazgûl han conquistado la Tierra Media.';
+        ? 'El Rey Valerius y la Alianza Solar han derrotado a la Legión con sus espadas de plasma.'
+        : 'Las legiones cibernéticas de Antracita y sus Caballos Robot han conquistado el tablero.';
     } else {
-      gameoverTitle.textContent = '⚖️ ¡Tregua en la Tierra Media!';
+      gameoverTitle.textContent = '⚖️ ¡Tablas en el Campo de Batalla!';
       gameoverMessage.textContent = 'La batalla ha terminado en tablas tras un duelo legendario.';
     }
     gameoverDialog.showModal();
@@ -765,10 +765,10 @@ const chatStatusBadge = document.getElementById('chat-status-badge');
 let lastChatSent = '';
 
 const AI_CHAT_REPLIES = [
-  '👁️ Darth Sauron: «¡No conoces el poder del Lado Oscuro del Anillo Único!»',
-  '🤖 Nazgûl Ciber: «¡Nuestros caballos robot y sables rojos aplastarán Minas Tirith!»',
-  '🔥 Uruk-Sith: «¡La era de los Jedi de Gondor ha terminado!»',
-  '⚡ Conde Saruman: «¡Mis rayos de la Fuerza reducirán tus torres a cenizas!»'
+  '👁️ Emperador Malakor: «¡No conocéis el poder de la Legión de Antracita!»',
+  '🤖 Jinete Mecha: «¡Nuestros caballos robot y espadas rojas aplastarán vuestras filas!»',
+  '🔥 Guerrero Orco: «¡La era de la Alianza Solar ha terminado!»',
+  '⚡ Brujo del Vacío: «¡Mis rayos voltaicos reducirán vuestras torres a cenizas!»'
 ];
 
 function appendChatMessage({ sender, text, color = 'w', isSystem = false, playAudio = true }) {
@@ -808,7 +808,7 @@ const onlineManager = new OnlineRoomManager({
   onConnected: ({ myColor, roomCode }) => {
     gameMode = 'online';
     if (gameModeSelect) gameModeSelect.value = 'online';
-    const factionLabel = myColor === 'w' ? 'Gondor (Blancas)' : 'Mordor (Negras)';
+    const factionLabel = myColor === 'w' ? 'Alianza Solar (Blancas)' : 'Legión de Antracita (Negras)';
     if (onlineStatusBanner) {
       onlineStatusBanner.textContent = `🎉 ¡Conectado en directo en la sala ${roomCode}! Juegas con ${factionLabel}.`;
     }
@@ -845,7 +845,7 @@ function handleSendChat(rawText) {
   if (!clean) return;
 
   const myColor = onlineManager.isConnected ? onlineManager.myColor : chess.turn();
-  const senderName = myColor === 'w' ? '☀️ Gondor (Blancas)' : '👁️ Mordor (Negras)';
+  const senderName = myColor === 'w' ? '☀️ Alianza (Blancas)' : '👁️ Legión (Negras)';
 
   lastChatSent = clean;
   appendChatMessage({ sender: senderName, text: clean, color: myColor, playAudio: true });
@@ -855,7 +855,7 @@ function handleSendChat(rawText) {
   } else if (gameMode.startsWith('ai')) {
     setTimeout(() => {
       const reply = AI_CHAT_REPLIES[Math.floor(Math.random() * AI_CHAT_REPLIES.length)];
-      appendChatMessage({ sender: '👁️ Mordor IA', text: reply, color: 'b', playAudio: true });
+      appendChatMessage({ sender: '👁️ Legión IA', text: reply, color: 'b', playAudio: true });
     }, 650);
   }
 }
@@ -913,7 +913,7 @@ document.getElementById('btn-copy-link')?.addEventListener('click', async (e) =>
 document.getElementById('btn-whatsapp-share')?.addEventListener('click', () => {
   const url = onlineShareUrlInput?.value || PUBLIC_GAME_URL;
   const code = onlineManager.roomCode || '';
-  const text = `⚔️ ¡Santi! Entra a mi sala online de Battle Chess (El Señor de los Anillos x Star Wars) para jugar en directo (Sala ${code}):\n${url}`;
+  const text = `⚔️ ¡Santi! Entra a mi sala online de Battle Chess 3D (Crónicas de Plasma) para jugar en directo (Sala ${code}):\n${url}`;
   window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
 });
 
@@ -937,9 +937,9 @@ document.getElementById('btn-whatsapp-turn')?.addEventListener('click', () => {
     if (lastChatSent) {
       shareUrl.searchParams.set('chat', lastChatSent);
     }
-    const nextTurnName = chess.turn() === 'w' ? 'Gondor (Blancas)' : 'Mordor (Negras)';
+    const nextTurnName = chess.turn() === 'w' ? 'Alianza Solar (Blancas)' : 'Legión de Antracita (Negras)';
     const chatPart = lastChatSent ? `\n💬 Mensaje: "${lastChatSent}"` : '';
-    const text = `⚔️ ¡Santi! He movido de ${lastMoveSnapshot.from.toUpperCase()} a ${lastMoveSnapshot.to.toUpperCase()} en nuestro Battle Chess.${chatPart}\nAbre este enlace público para ver el duelo láser y hacer tu jugada con ${nextTurnName}:\n${shareUrl.toString()}`;
+    const text = `⚔️ ¡Santi! He movido de ${lastMoveSnapshot.from.toUpperCase()} a ${lastMoveSnapshot.to.toUpperCase()} en nuestro Battle Chess.${chatPart}\nAbre este enlace público para ver el duelo de plasma y hacer tu jugada con ${nextTurnName}:\n${shareUrl.toString()}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
   } else {
     // No move made yet -> open the Online Room modal and auto-create a room for Santi!
@@ -971,8 +971,8 @@ let userMutedMidi = false;
 function updateMidiButtonUI(playing, trackName = null) {
   if (!btnMidi) return;
   btnMidi.classList.toggle('active', playing);
-  const label = trackName || 'Estribillo Star Wars';
-  btnMidi.textContent = playing ? `🎵 ${label}` : '🎵 Sonar Estribillo';
+  const label = trackName || 'Fanfarria (Holst)';
+  btnMidi.textContent = playing ? `🎵 ${label}` : '🎵 Sonar Fanfarria';
 }
 
 soundFX.onMusicEnd = () => {
@@ -1228,7 +1228,7 @@ function checkUrlParamsOnLoad() {
       setCameraPreset(receiverColor === 'w' ? 'white' : 'black');
       if (chatParam) {
         appendChatMessage({
-          sender: senderColor === 'w' ? '☀️ Gondor (Blancas)' : '👁️ Mordor (Negras)',
+          sender: senderColor === 'w' ? '☀️ Alianza (Blancas)' : '👁️ Legión (Negras)',
           text: chatParam,
           color: senderColor,
           playAudio: false

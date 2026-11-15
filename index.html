@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Battle Chess: El Señor de los Anillos</title>
+  <title>Battle Chess 3D: Alianza Solar vs. Legión de Antracita</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Cinzel:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -12,22 +12,22 @@
 <body>
   <div id="app">
     <!-- Canvas 3D container -->
-    <div id="canvas-container" aria-label="Tablero 3D de Battle Chess El Señor de los Anillos"></div>
+    <div id="canvas-container" aria-label="Tablero 3D de Battle Chess Cyber-Medieval"></div>
 
     <!-- Top Header HUD -->
     <header class="hud-header">
       <div class="brand">
-        <span class="ring-icon" aria-hidden="true">💍</span>
+        <span class="ring-icon" aria-hidden="true">⚔️</span>
         <div>
-          <h1>Battle Chess: Tierra Media × Cyber-Laser</h1>
-          <p class="subtitle">Caballeros de Gondor vs. Imperio de Mordor · Sables Láser y Corceles Robot</p>
+          <h1>Battle Chess: Crónicas de Plasma</h1>
+          <p class="subtitle">Alianza Solar vs. Legión de Antracita · Espadas de Plasma y Corceles Robot</p>
         </div>
       </div>
 
       <div class="turn-banner" id="turn-banner">
         <span class="faction-dot white-faction" id="turn-dot"></span>
         <div class="turn-text-wrap">
-          <span class="turn-label" id="turn-faction-name">Turno: Pueblos Libres (Blancas)</span>
+          <span class="turn-label" id="turn-faction-name">Turno: Alianza Solar (Blancas)</span>
           <span class="status-subtext" id="game-status-text">Selecciona un campeón para mover</span>
         </div>
       </div>
@@ -36,9 +36,9 @@
         <label class="control-pill">
           <span>Modo:</span>
           <select id="game-mode-select" aria-label="Modo de juego">
-            <option value="ai-2" selected>vs. Sauron IA (Normal)</option>
+            <option value="ai-2" selected>vs. Emperador IA (Normal)</option>
             <option value="ai-1">vs. Orco IA (Fácil)</option>
-            <option value="ai-3">vs. Señor Oscuro IA (Difícil)</option>
+            <option value="ai-3">vs. Legión IA (Difícil)</option>
             <option value="pvp">2 Jugadores (Local)</option>
             <option value="online">🌐 Online con Santi</option>
           </select>
@@ -54,10 +54,10 @@
         <button type="button" class="btn-hud active" id="btn-sound" title="Activar/desactivar efectos de sonido">
           🔊 Sonido: ON
         </button>
-        <button type="button" class="btn-hud active" id="btn-midi" title="Activar/desactivar música MIDI de Star Wars">
-          🎵 MIDI: Marcha Imperial
+        <button type="button" class="btn-hud active" id="btn-midi" title="Activar/desactivar fanfarria sinfónica de dominio público">
+          🎵 Fanfarria: Marte (Holst)
         </button>
-        <button type="button" class="btn-hud" id="btn-midi-next" title="Cambiar pista MIDI de Star Wars">
+        <button type="button" class="btn-hud" id="btn-midi-next" title="Cambiar fanfarria de dominio público">
           ⏭️ Cambiar Tema
         </button>
         <button type="button" class="btn-hud btn-accent" id="btn-demo-battle" title="Ejecutar una jugada con captura inmediata para ver el combate">
@@ -74,12 +74,12 @@
           <span class="chat-status-dot" id="chat-status-badge">Online / Local</span>
         </div>
         <div class="chat-messages" id="chat-messages" aria-live="polite">
-          <div class="chat-msg system-msg">📡 Canal de transmisión abierto entre Gondor y Mordor.</div>
+          <div class="chat-msg system-msg">📡 Canal de transmisión abierto entre Alianza Solar y Legión de Antracita.</div>
         </div>
         <div class="chat-quick-row">
-          <button type="button" class="chat-chip" data-msg="⚔️ ¡Por Gondor!">⚔️ ¡Por Gondor!</button>
-          <button type="button" class="chat-chip" data-msg="👁️ ¡Yo soy tu padre!">👁️ ¡Yo soy tu padre!</button>
-          <button type="button" class="chat-chip" data-msg="🧙‍♂️ ¡No puedes pasar!">🧙‍♂️ ¡No pasarás!</button>
+          <button type="button" class="chat-chip" data-msg="⚔️ ¡Por la Alianza Solar!">⚔️ ¡Por la Alianza!</button>
+          <button type="button" class="chat-chip" data-msg="👁️ ¡Temed el acero de Antracita!">👁️ ¡Temed mi acero!</button>
+          <button type="button" class="chat-chip" data-msg="🧙‍♂️ ¡No pasaréis de esta fila!">🧙‍♂️ ¡No pasaréis!</button>
           <button type="button" class="chat-chip" data-msg="👏 ¡Buena jugada, Santi!">👏 ¡Buena, Santi!</button>
         </div>
         <form class="chat-form" id="chat-form">
@@ -99,11 +99,11 @@
       <section class="panel-section">
         <h2 class="panel-title">Bajas en Combate</h2>
         <div class="casualties-group">
-          <div class="casualties-label">Caídos de Mordor (Capturados por Blancas):</div>
+          <div class="casualties-label">Caídos de la Legión (Capturados por Blancas):</div>
           <div class="casualties-tray" id="captured-black"></div>
         </div>
         <div class="casualties-group">
-          <div class="casualties-label">Caídos de los Pueblos Libres (Capturados por Negras):</div>
+          <div class="casualties-label">Caídos de la Alianza (Capturados por Negras):</div>
           <div class="casualties-tray" id="captured-white"></div>
         </div>
       </section>
@@ -121,8 +121,8 @@
             <thead>
               <tr>
                 <th>#</th>
-                <th>☀️ Blancas (Gondor)</th>
-                <th>👁️ Negras (Mordor)</th>
+                <th>☀️ Blancas (Alianza)</th>
+                <th>👁️ Negras (Legión)</th>
               </tr>
             </thead>
             <tbody id="notation-tbody">
@@ -133,7 +133,7 @@
           </table>
         </div>
         <ol class="battle-log" id="battle-log">
-          <li class="log-entry lore-intro">⚔️ Los ejércitos se despliegan entre Minas Tirith y el Monte del Destino.</li>
+          <li class="log-entry lore-intro">⚔️ Los ejércitos se despliegan en la ciudadela de mármol y obsidiana.</li>
         </ol>
       </section>
 
@@ -150,16 +150,16 @@
     <aside class="hud-panel hud-right">
       <section class="panel-section champion-card" id="champion-card">
         <div class="champion-header">
-          <span class="champion-badge" id="champ-faction">Pueblos Libres</span>
-          <span class="champion-chess-role" id="champ-chess-type">Rey (King)</span>
+          <span class="champion-badge" id="champ-faction">Alianza Solar</span>
+          <span class="champion-chess-role" id="champ-chess-type">Rey (Blancas)</span>
         </div>
-        <h2 class="champion-name" id="champ-name">Aragorn Elessar</h2>
-        <p class="champion-weapon" id="champ-weapon">🗡️ Arma: Andúril, Llama del Oeste</p>
+        <h2 class="champion-name" id="champ-name">Rey Valerius</h2>
+        <p class="champion-weapon" id="champ-weapon">⚔️ Arma: Solaris, Mandoble de Plasma Azul</p>
         <p class="champion-lore" id="champ-lore">
-          "Heredero de Isildur y Rey de Gondor. En combate cuerpo a cuerpo, blande a Andúril con estocadas reales."
+          "Monarca de la Alianza Solar con armadura medieval de titanio blanco, capa real de armiño y mandoble de plasma azul."
         </p>
         <div class="champion-combat-tag" id="champ-combat-style">
-          Animación de ataque: Mandoble Real de Gondor
+          Animación de ataque: Mandoble Real de Plasma
         </div>
       </section>
 
@@ -167,25 +167,25 @@
         <h2 class="panel-title">Guía de Campeones</h2>
         <div class="roster-grid">
           <div class="roster-col">
-            <h3 class="roster-col-title light">☀️ Pueblos Libres</h3>
+            <h3 class="roster-col-title light">☀️ Alianza Solar</h3>
             <ul>
-              <li><strong>Rey:</strong> Aragorn</li>
-              <li><strong>Reina:</strong> Galadriel</li>
-              <li><strong>Torre:</strong> Bárbol (Ent)</li>
-              <li><strong>Alfil:</strong> Gandalf</li>
-              <li><strong>Caballo:</strong> Rohirrim</li>
-              <li><strong>Peón:</strong> Guardia Hobbit</li>
+              <li><strong>Rey:</strong> Rey Valerius</li>
+              <li><strong>Reina:</strong> Reina Lyra</li>
+              <li><strong>Torre:</strong> Coloso Atlas</li>
+              <li><strong>Alfil:</strong> Sabio Orion</li>
+              <li><strong>Caballo:</strong> Paladín Mecha</li>
+              <li><strong>Peón:</strong> Centinela</li>
             </ul>
           </div>
           <div class="roster-col">
-            <h3 class="roster-col-title dark">👁️ Mordor</h3>
+            <h3 class="roster-col-title dark">👁️ Legión Antracita</h3>
             <ul>
-              <li><strong>Rey:</strong> Sauron</li>
-              <li><strong>Reina:</strong> Rey Brujo</li>
-              <li><strong>Torre:</strong> Troll Olog-hai</li>
-              <li><strong>Alfil:</strong> Saruman</li>
-              <li><strong>Caballo:</strong> Nazgûl</li>
-              <li><strong>Peón:</strong> Orco Uruk</li>
+              <li><strong>Rey:</strong> Emp. Malakor</li>
+              <li><strong>Reina:</strong> Dama Vex</li>
+              <li><strong>Torre:</strong> Ciber-Ogro</li>
+              <li><strong>Alfil:</strong> Brujo Vacío</li>
+              <li><strong>Caballo:</strong> Jinete Mecha</li>
+              <li><strong>Peón:</strong> Guerrero Orco</li>
             </ul>
           </div>
         </div>
@@ -194,8 +194,8 @@
       <section class="panel-section camera-controls">
         <h2 class="panel-title">Vistas de Cámara</h2>
         <div class="camera-btn-grid">
-          <button type="button" class="btn-cam" data-cam="white">🛡️ Vista Gondor</button>
-          <button type="button" class="btn-cam" data-cam="black">👁️ Vista Mordor</button>
+          <button type="button" class="btn-cam" data-cam="white">🛡️ Vista Blancas</button>
+          <button type="button" class="btn-cam" data-cam="black">👁️ Vista Negras</button>
           <button type="button" class="btn-cam" data-cam="top">🦅 Vista Águila</button>
           <button type="button" class="btn-cam" data-cam="side">🎬 Vista Lateral</button>
         </div>
@@ -206,7 +206,7 @@
     <div class="combat-overlay" id="combat-overlay" hidden>
       <div class="combat-duel-bar">
         <div class="combatant attacker-box">
-          <div class="combatant-name" id="combat-attacker-name">Gandalf el Blanco</div>
+          <div class="combatant-name" id="combat-attacker-name">Sabio Orion</div>
           <div class="hp-bar-track">
             <div class="hp-bar-fill attacker-hp" id="combat-attacker-hp"></div>
           </div>
@@ -215,44 +215,44 @@
         <div class="vs-medallion">⚔️ VS</div>
 
         <div class="combatant defender-box">
-          <div class="combatant-name" id="combat-defender-name">Orco Uruk</div>
+          <div class="combatant-name" id="combat-defender-name">Guerrero Orco</div>
           <div class="hp-bar-track">
             <div class="hp-bar-fill defender-hp" id="combat-defender-hp"></div>
           </div>
         </div>
       </div>
-      <div class="combat-caption" id="combat-caption">¡Duelo a muerte en el centro de la Tierra Media!</div>
+      <div class="combat-caption" id="combat-caption">¡Duelo de espadas de plasma en el centro del tablero!</div>
     </div>
   </div>
 
   <!-- Native Modal Dialog for Pawn Promotion (following modern-web-guidance dialog rules) -->
   <dialog id="promotion-dialog" closedby="none" aria-labelledby="promo-title">
     <h2 id="promo-title">Coronación en el Campo de Batalla</h2>
-    <p class="dialog-desc">Tu campeón ha alcanzado las líneas enemigas. Elige en qué héroe o bestia se convertirá:</p>
+    <p class="dialog-desc">Tu campeón ha alcanzado las líneas enemigas. Elige en qué héroe o coloso se convertirá:</p>
     <form method="dialog" class="promo-choices" id="promo-form">
       <button type="submit" value="q" class="promo-btn" autofocus>
         <span class="promo-role">👑 Reina</span>
-        <strong id="promo-name-q">Galadriel / Rey Brujo</strong>
+        <strong id="promo-name-q">Reina Lyra / Dama Vex</strong>
       </button>
       <button type="submit" value="r" class="promo-btn">
         <span class="promo-role">🏰 Torre</span>
-        <strong id="promo-name-r">Bárbol (Ent) / Troll Olog-hai</strong>
+        <strong id="promo-name-r">Coloso Atlas / Ciber-Ogro</strong>
       </button>
       <button type="submit" value="b" class="promo-btn">
         <span class="promo-role">🪄 Alfil</span>
-        <strong id="promo-name-b">Gandalf / Saruman</strong>
+        <strong id="promo-name-b">Sabio Orion / Brujo del Vacío</strong>
       </button>
       <button type="submit" value="n" class="promo-btn">
         <span class="promo-role">🐎 Caballo</span>
-        <strong id="promo-name-n">Rohirrim / Nazgûl</strong>
+        <strong id="promo-name-n">Paladín Mecha / Jinete Mecha</strong>
       </button>
     </form>
   </dialog>
 
   <!-- Native Modal Dialog for Game Over -->
   <dialog id="gameover-dialog" closedby="any" aria-labelledby="gameover-title">
-    <h2 id="gameover-title">¡Fin de la Batalla por la Tierra Media!</h2>
-    <p class="dialog-desc" id="gameover-message">Los Pueblos Libres han triunfado sobre la oscuridad de Mordor.</p>
+    <h2 id="gameover-title">¡Fin de la Batalla!</h2>
+    <p class="dialog-desc" id="gameover-message">La Alianza Solar ha triunfado sobre la Legión de Antracita.</p>
     <form method="dialog" class="dialog-actions">
       <button type="submit" value="new-game" class="btn-action btn-accent" autofocus>⚔️ Jugar Nueva Batalla</button>
       <button type="submit" value="inspect" class="btn-action">Ver Tablero</button>
@@ -270,10 +270,10 @@
       <div class="online-subtitle">1. Crear una Sala Nueva</div>
       <div class="online-btn-row">
         <button type="button" class="btn-action btn-gondor" id="btn-host-white" autofocus>
-          ☀️ Crear Sala (Yo juego Blancas · Gondor)
+          ☀️ Crear Sala (Yo juego Blancas · Alianza)
         </button>
         <button type="button" class="btn-action btn-mordor" id="btn-host-black">
-          👁️ Crear Sala (Yo juego Negras · Mordor)
+          👁️ Crear Sala (Yo juego Negras · Legión)
         </button>
       </div>
     </div>
