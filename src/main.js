@@ -805,6 +805,10 @@ function animate(now) {
       if (parts?.rightArm) {
         parts.rightArm.rotation.z = Math.sin(elapsedTime * 2.0 + idx) * 0.04;
       }
+      if (parts?.mountGroup?.userData?.tailGroup) {
+        parts.mountGroup.userData.tailGroup.rotation.z = Math.sin(elapsedTime * 2.2 + idx) * 0.14;
+        parts.mountGroup.userData.tailGroup.rotation.x = Math.cos(elapsedTime * 1.6 + idx) * 0.08;
+      }
     }
     idx++;
   }

@@ -249,104 +249,200 @@ function createScannerVisor(width, height, depth, saberColor, scanners) {
 }
 
 /**
- * Builds a Robotic Cyber-Horse (Caballo Robot) for Knights (n)
+ * Builds an anatomical, sculpted Bionic Cyber-Horse (Caballo Robot) for Knights (n)
+ * featuring a rounded chest/barrel/croup, visible muscular thighs, hydraulic knees,
+ * and a long, flowing natural-shaped cybernetic fiber-optic tail.
  */
 function buildRobotHorse(isWhite, saberColor, scanners = []) {
   const mountGroup = new THREE.Group();
 
   const chassisMat = new THREE.MeshStandardMaterial({
     color: isWhite ? 0xdbeafe : 0x4c1d24,
-    emissive: isWhite ? 0x000000 : 0x2a080c,
-    metalness: 0.85,
-    roughness: 0.22
+    emissive: isWhite ? 0x091526 : 0x2a080c,
+    metalness: 0.82,
+    roughness: 0.24
   });
-  const jointMat = new THREE.MeshStandardMaterial({
-    color: isWhite ? 0x64748b : 0x7f1d1d,
-    metalness: 0.9,
+  const muscleMat = new THREE.MeshStandardMaterial({
+    color: isWhite ? 0x94a3b8 : 0x7f1d1d,
+    emissive: isWhite ? 0x000000 : 0x3b0707,
+    metalness: 0.88,
     roughness: 0.28
   });
   const neonMat = new THREE.MeshBasicMaterial({
     color: saberColor
   });
 
-  // Armored Robotic Horse Torso
-  const torsoGeo = new THREE.BoxGeometry(0.46, 0.36, 0.88);
-  const torso = new THREE.Mesh(torsoGeo, chassisMat);
-  torso.position.set(0, 0.52, 0);
-  torso.castShadow = true;
-  mountGroup.add(torso);
+  // 1. Sculpted Organic-Bionic Equine Torso (Chest + Tapered Barrel + Rounded Croup/Haunches)
+  // Muscular Front Chest (Pecho)
+  const chestGeo = new THREE.SphereGeometry(0.24, 16, 14);
+  chestGeo.scale(1.05, 0.95, 1.15);
+  const chestMesh = new THREE.Mesh(chestGeo, chassisMat);
+  chestMesh.position.set(0, 0.56, 0.26);
+  chestMesh.castShadow = true;
+  mountGroup.add(chestMesh);
 
-  // Neon Energy Core Ribs on flanks
-  for (let z = -0.22; z <= 0.22; z += 0.22) {
-    const ribGeo = new THREE.BoxGeometry(0.5, 0.06, 0.05);
-    const rib = new THREE.Mesh(ribGeo, neonMat);
-    rib.position.set(0, 0.52, z);
-    mountGroup.add(rib);
+  // Tapered Ribcage / Barrel (Tronco cilíndrico estilizado, no cuadrado)
+  const barrelGeo = new THREE.CylinderGeometry(0.21, 0.19, 0.54, 16);
+  barrelGeo.rotateX(Math.PI / 2);
+  const barrelMesh = new THREE.Mesh(barrelGeo, chassisMat);
+  barrelMesh.position.set(0, 0.55, 0.0);
+  barrelMesh.castShadow = true;
+  mountGroup.add(barrelMesh);
+
+  // Sculpted Rear Croup / Haunches (Grupa / Ancas redondeadas)
+  const croupGeo = new THREE.SphereGeometry(0.23, 16, 14);
+  croupGeo.scale(1.04, 0.92, 1.12);
+  const croupMesh = new THREE.Mesh(croupGeo, chassisMat);
+  croupMesh.position.set(0, 0.57, -0.27);
+  croupMesh.castShadow = true;
+  mountGroup.add(croupMesh);
+
+  // Curved Neon Energy Ribs wrapping the rounded barrel
+  for (let z = -0.16; z <= 0.16; z += 0.16) {
+    const ribArc = new THREE.Mesh(
+      new THREE.TorusGeometry(0.212, 0.018, 8, 20, Math.PI * 1.2),
+      neonMat
+    );
+    ribArc.position.set(0, 0.55, z);
+    ribArc.rotation.z = -Math.PI * 0.1;
+    mountGroup.add(ribArc);
   }
 
-  // 4 Articulated Robotic Hydraulic Legs
+  // 2. Four Articulated Equine Legs with Prominent Muscular Thighs (Muslos visibles)
   const legs = [];
-  const legPositions = [
-    [-0.19, 0.42, 0.32],
-    [0.19, 0.42, 0.32],
-    [-0.19, 0.42, -0.32],
-    [0.19, 0.42, -0.32]
+  const legConfigs = [
+    { x: -0.21, y: 0.52, z: 0.28, isHind: false },
+    { x: 0.21, y: 0.52, z: 0.28, isHind: false },
+    { x: -0.22, y: 0.54, z: -0.28, isHind: true },
+    { x: 0.22, y: 0.54, z: -0.28, isHind: true }
   ];
 
-  legPositions.forEach(([lx, ly, lz]) => {
+  legConfigs.forEach(({ x, y, z, isHind }) => {
     const legPivot = new THREE.Group();
-    legPivot.position.set(lx, ly, lz);
+    legPivot.position.set(x, y, z);
 
-    const upperLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.05, 0.24, 8), chassisMat);
-    upperLeg.position.y = -0.1;
-    legPivot.add(upperLeg);
+    // Prominent Upper Muscular Thigh / Haunch (Muslo / Anca biónica)
+    const thighRadiusTop = isHind ? 0.125 : 0.105;
+    const thighGeo = new THREE.CylinderGeometry(thighRadiusTop, 0.055, 0.26, 12);
+    const thighMesh = new THREE.Mesh(thighGeo, muscleMat);
+    thighMesh.position.set(0, -0.11, isHind ? -0.03 : 0.02);
+    thighMesh.rotation.x = isHind ? 0.28 : -0.18;
+    thighMesh.castShadow = true;
+    legPivot.add(thighMesh);
 
-    const kneeJoint = new THREE.Mesh(new THREE.SphereGeometry(0.065, 8, 8), neonMat);
-    kneeJoint.position.y = -0.22;
+    // Sculpted Hip/Thigh Armor Plate on outer flank
+    const hipBall = new THREE.Mesh(
+      new THREE.SphereGeometry(thighRadiusTop * 0.95, 12, 10),
+      chassisMat
+    );
+    hipBall.scale.set(0.75, 1.15, 1.1);
+    hipBall.position.set(x > 0 ? 0.03 : -0.03, -0.04, 0);
+    legPivot.add(hipBall);
+
+    // Glowing Cybernetic Knee / Hock Joint
+    const kneeJoint = new THREE.Mesh(new THREE.SphereGeometry(0.062, 10, 10), neonMat);
+    kneeJoint.position.set(0, -0.24, isHind ? -0.06 : 0.04);
     legPivot.add(kneeJoint);
 
-    const lowerLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.065, 0.24, 8), jointMat);
-    lowerLeg.position.y = -0.32;
+    // Tapered Lower Cannon Bone (Caña inferior)
+    const lowerLegGeo = new THREE.CylinderGeometry(0.05, 0.038, 0.24, 10);
+    const lowerLeg = new THREE.Mesh(lowerLegGeo, chassisMat);
+    lowerLeg.position.set(0, -0.36, isHind ? -0.02 : 0.01);
+    lowerLeg.rotation.x = isHind ? -0.18 : 0.1;
     legPivot.add(lowerLeg);
+
+    // Armored Cyber-Hoof (Casco con borde de plasma)
+    const hoofGeo = new THREE.CylinderGeometry(0.048, 0.072, 0.07, 10);
+    const hoof = new THREE.Mesh(hoofGeo, muscleMat);
+    hoof.position.set(0, -0.48, isHind ? 0.01 : 0.03);
+    legPivot.add(hoof);
 
     mountGroup.add(legPivot);
     legs.push(legPivot);
   });
 
-  // Cybernetic Neck & Horse Head
+  // 3. Sculpted Arched Equine Neck & Tapered Cyber Head
   const neckGroup = new THREE.Group();
-  neckGroup.position.set(0, 0.68, 0.36);
-  neckGroup.rotation.x = -0.35;
+  neckGroup.position.set(0, 0.64, 0.32);
+  neckGroup.rotation.x = -0.38;
 
-  const neckMesh = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.42, 0.24), chassisMat);
-  neckMesh.position.y = 0.16;
+  const neckGeo = new THREE.CylinderGeometry(0.11, 0.16, 0.44, 14);
+  const neckMesh = new THREE.Mesh(neckGeo, chassisMat);
+  neckMesh.position.y = 0.18;
   neckGroup.add(neckMesh);
 
-  // Laser Mane (Cresta de Plasma)
-  const maneGeo = new THREE.BoxGeometry(0.05, 0.44, 0.12);
-  const maneMesh = new THREE.Mesh(maneGeo, neonMat);
-  maneMesh.position.set(0, 0.2, -0.12);
-  neckGroup.add(maneMesh);
+  // Curved Cyber Mane (Crin de plasma segmentada)
+  for (let i = 0; i < 4; i++) {
+    const fin = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.14, 6), neonMat);
+    fin.rotation.x = -Math.PI * 0.35;
+    fin.position.set(0, 0.08 + i * 0.09, -0.12);
+    neckGroup.add(fin);
+  }
 
-  // Robotic Snout + Scanning Laser Visor Eyes
-  const headMesh = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.2, 0.44), chassisMat);
-  headMesh.position.set(0, 0.38, 0.12);
-  neckGroup.add(headMesh);
+  // Tapered Equine Head & Snout (Cabeza equina estilizada, no cuadrada)
+  const skullMesh = new THREE.Mesh(new THREE.SphereGeometry(0.135, 14, 12), chassisMat);
+  skullMesh.position.set(0, 0.38, 0.04);
+  neckGroup.add(skullMesh);
 
-  const visorMesh = createScannerVisor(0.28, 0.065, 0.16, saberColor, scanners);
-  visorMesh.position.set(0, 0.41, 0.26);
+  const snoutGeo = new THREE.CylinderGeometry(0.075, 0.12, 0.34, 12);
+  snoutGeo.rotateX(Math.PI / 2.2);
+  const snoutMesh = new THREE.Mesh(snoutGeo, chassisMat);
+  snoutMesh.position.set(0, 0.35, 0.18);
+  neckGroup.add(snoutMesh);
+
+  // Pointed Cyber Ears
+  [-0.08, 0.08].forEach((ex) => {
+    const ear = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.12, 6), muscleMat);
+    ear.position.set(ex, 0.5, -0.02);
+    ear.rotation.x = 0.25;
+    neckGroup.add(ear);
+  });
+
+  const visorMesh = createScannerVisor(0.24, 0.055, 0.14, saberColor, scanners);
+  visorMesh.position.set(0, 0.4, 0.16);
   neckGroup.add(visorMesh);
 
   mountGroup.add(neckGroup);
 
-  // Rear Plasma Thruster Exhaust
-  const thrusterGeo = new THREE.CylinderGeometry(0.09, 0.13, 0.18, 10);
-  thrusterGeo.rotateX(Math.PI / 2);
-  const thruster = new THREE.Mesh(thrusterGeo, neonMat);
-  thruster.position.set(0, 0.54, -0.48);
-  mountGroup.add(thruster);
+  // 4. Long, Flowing Natural-Shaped Cybernetic Tail (Cola alargada natural pero ciber)
+  const tailGroup = new THREE.Group();
+  tailGroup.position.set(0, 0.62, -0.44);
 
-  mountGroup.userData = { legs, neckGroup, visorMesh, thruster };
+  // Flowing S-curve of overlapping bionic & neon fiber-optic tail segments
+  const tailPoints = [
+    { y: 0.02, z: -0.05, r: 0.068, rotX: 0.6 },
+    { y: -0.04, z: -0.13, r: 0.078, rotX: 0.35 },
+    { y: -0.13, z: -0.20, r: 0.082, rotX: 0.15 },
+    { y: -0.24, z: -0.24, r: 0.072, rotX: 0.05 },
+    { y: -0.35, z: -0.26, r: 0.055, rotX: -0.08 },
+    { y: -0.45, z: -0.25, r: 0.032, rotX: -0.2 }
+  ];
+
+  tailPoints.forEach((pt, i) => {
+    const segGeo = new THREE.CylinderGeometry(pt.r * 0.85, pt.r, 0.14, 10);
+    const segMat = i % 2 === 0 ? muscleMat : neonMat;
+    const seg = new THREE.Mesh(segGeo, segMat);
+    seg.position.set(0, pt.y, pt.z);
+    seg.rotation.x = pt.rotX;
+    tailGroup.add(seg);
+  });
+
+  // Glowing Fiber-Optic Plume Strands along the flowing tail
+  [-0.04, 0, 0.04].forEach((tx, idx) => {
+    const strandCurve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(tx * 0.4, 0.03, -0.02),
+      new THREE.Vector3(tx, -0.08, -0.18),
+      new THREE.Vector3(tx * 1.1, -0.26, -0.27),
+      new THREE.Vector3(tx * 0.5, -0.48, -0.25)
+    ]);
+    const tubeGeo = new THREE.TubeGeometry(strandCurve, 14, idx === 1 ? 0.022 : 0.016, 8, false);
+    const strand = new THREE.Mesh(tubeGeo, neonMat);
+    tailGroup.add(strand);
+  });
+
+  mountGroup.add(tailGroup);
+
+  mountGroup.userData = { legs, neckGroup, visorMesh, tailGroup };
   return mountGroup;
 }
 

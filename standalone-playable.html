@@ -442,26 +442,93 @@
 
       ctx.globalAlpha = alpha;
 
-      // KNIGHT ('n'): Draw Robotic Cyber-Horse Base with Scanning Laser Visor
+      // KNIGHT ('n'): Sculpted Bionic Cyber-Horse with Muscular Thighs, Rounded Body & Long Cyber Tail
       if (piece.type === 'n') {
+        const dir = isW ? 1 : -1;
+        const bx = upperOffsetX * 0.4;
+
+        // 1. Long Flowing Natural-Cyber Tail at rear (-dir)
+        ctx.save();
+        ctx.strokeStyle = info.saber;
+        ctx.shadowColor = info.saber;
+        ctx.shadowBlur = 6;
+        ctx.lineWidth = 3.2;
+        ctx.beginPath();
+        ctx.moveTo(-dir * 10 + bx, -14);
+        ctx.bezierCurveTo(-dir * 18 + bx, -18, -dir * 20 + bx, -6, -dir * 16 + bx, 1);
+        ctx.stroke();
+
+        ctx.strokeStyle = info.rim;
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.moveTo(-dir * 10 + bx, -13);
+        ctx.bezierCurveTo(-dir * 16 + bx, -15, -dir * 17 + bx, -5, -dir * 14 + bx, 0);
+        ctx.stroke();
+        ctx.restore();
+
+        // 2. Sculpted Organic Equine Barrel, Chest & Haunches (not a square box)
         ctx.fillStyle = isW ? '#cbd5e1' : '#58151c';
         ctx.strokeStyle = info.rim;
         ctx.lineWidth = 1.5;
-        ctx.fillRect(-11 + upperOffsetX * 0.4, -15, 22, 11);
-        ctx.strokeRect(-11 + upperOffsetX * 0.4, -15, 22, 11);
+        ctx.beginPath();
+        ctx.ellipse(bx, -12, 12, 5.8, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
 
-        // Horse Cyber Head & Continuous Glowing Visor Line + Oscillating Scanner Core
-        const hx = (isW ? 6 : -15) + headOffsetX * 0.5;
-        const hy = -25 + headOffsetY * 0.5;
-        ctx.fillRect(hx, hy, 9, 12);
-        ctx.strokeRect(hx, hy, 9, 12);
-        const vx = (isW ? 9.5 : -14.5) + headOffsetX * 0.5;
-        // Full background visor line stays lit
+        // Muscular Front Chest & Rear Haunch curves
+        ctx.beginPath();
+        ctx.arc(dir * 7 + bx, -13, 5.2, 0, Math.PI * 2);
+        ctx.arc(-dir * 7 + bx, -13, 5.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 3. Visible Muscular Thighs (Muslos) & Articulated Legs with Cyber Knee Joints
+        [-dir * 7.5, dir * 7.5].forEach((lx) => {
+          // Muscular upper thigh (Muslo ancho)
+          ctx.fillStyle = isW ? '#94a3b8' : '#7f1d1d';
+          ctx.strokeStyle = info.rim;
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          ctx.ellipse(lx + bx, -8.5, 3.6, 5.2, dir * 0.2, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+
+          // Glowing Cyber Knee Joint
+          ctx.fillStyle = info.saber;
+          ctx.beginPath();
+          ctx.arc(lx + bx, -4.2, 2.0, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Lower leg to hoof
+          ctx.strokeStyle = isW ? '#e2e8f0' : '#fca5a5';
+          ctx.lineWidth = 2.2;
+          ctx.beginPath();
+          ctx.moveTo(lx + bx, -4);
+          ctx.lineTo(lx + dir * 1.5 + bx, 1);
+          ctx.stroke();
+        });
+
+        // 4. Arched Equine Neck, Tapered Snout & Continuous Glowing Visor Line + Scanner
+        const hx = dir * 9 + headOffsetX * 0.5;
+        const hy = -23 + headOffsetY * 0.5;
+        ctx.fillStyle = isW ? '#cbd5e1' : '#58151c';
+        ctx.strokeStyle = info.rim;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.ellipse(hx, hy + 4, 4.8, 7.5, dir * 0.3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Tapered Equine Head
+        ctx.beginPath();
+        ctx.ellipse(hx + dir * 3, hy - 1, 6.2, 3.8, dir * 0.25, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        const vx = hx + (isW ? 0 : -5.5);
         ctx.fillStyle = info.saber;
-        ctx.fillRect(vx, -23 + headOffsetY * 0.5, 6.5, 3.2);
-        // Bright white scanner dot oscillates along the visor line
+        ctx.fillRect(vx, hy - 2.5, 6.2, 2.8);
         ctx.fillStyle = '#ffffff';
-        ctx.fillRect(vx + 2.3 + scanVal * 2.0, -23 + headOffsetY * 0.5, 2.0, 3.2);
+        ctx.fillRect(vx + 2.1 + scanVal * 1.8, hy - 2.5, 2.0, 2.8);
       }
 
       // Lower Armored Skirt / Legs with Bright Rim Outline
