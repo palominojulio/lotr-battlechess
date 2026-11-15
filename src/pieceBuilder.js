@@ -200,42 +200,48 @@ function createPawnShield(isWhite, saberColor, scanners = []) {
 }
 
 /**
- * Helper to create a Cyber Visor with an oscillating scanner eye dot/beam
+ * Helper to create a Cyber Visor that keeps the full glowing background visor line
+ * while a bright white-hot scanner point oscillates back and forth across it.
  */
 function createScannerVisor(width, height, depth, saberColor, scanners) {
   const visorGroup = new THREE.Group();
 
-  // Dark recessed visor slot
-  const slotMat = new THREE.MeshBasicMaterial({ color: 0x05070a });
-  const slotMesh = new THREE.Mesh(new THREE.BoxGeometry(width, height, depth), slotMat);
-  visorGroup.add(slotMesh);
-
-  // Subtle glowing visor rail
-  const railMat = new THREE.MeshBasicMaterial({
-    color: saberColor,
-    transparent: true,
-    opacity: 0.32
+  // Continuous glowing background visor line (always visible across the full visor)
+  const bgLineMat = new THREE.MeshBasicMaterial({
+    color: saberColor
   });
-  const railMesh = new THREE.Mesh(new THREE.BoxGeometry(width * 0.96, height * 0.45, depth * 1.02), railMat);
-  visorGroup.add(railMesh);
+  const bgLineMesh = new THREE.Mesh(new THREE.BoxGeometry(width, height, depth), bgLineMat);
+  visorGroup.add(bgLineMesh);
 
-  // Bright oscillating Cylon/Cyber scanner eye core + aura
+  // Subtle inner bright strip along the visor line
+  const innerLineMat = new THREE.MeshBasicMaterial({
+    color: 0xffffff,
+    transparent: true,
+    opacity: 0.35
+  });
+  const innerLineMesh = new THREE.Mesh(
+    new THREE.BoxGeometry(width * 0.92, height * 0.35, depth * 1.02),
+    innerLineMat
+  );
+  visorGroup.add(innerLineMesh);
+
+  // Bright oscillating Cylon/Cyber scanner hotspot riding on top of the background line
   const eyeGroup = new THREE.Group();
   const coreMesh = new THREE.Mesh(
-    new THREE.SphereGeometry(height * 0.65, 10, 10),
+    new THREE.SphereGeometry(height * 0.72, 12, 12),
     new THREE.MeshBasicMaterial({ color: 0xffffff })
   );
   const glowMesh = new THREE.Mesh(
-    new THREE.SphereGeometry(height * 1.15, 10, 10),
-    new THREE.MeshBasicMaterial({ color: saberColor, transparent: true, opacity: 0.85 })
+    new THREE.SphereGeometry(height * 1.35, 12, 12),
+    new THREE.MeshBasicMaterial({ color: saberColor, transparent: true, opacity: 0.9 })
   );
   eyeGroup.add(coreMesh, glowMesh);
-  eyeGroup.position.z = depth * 0.52;
+  eyeGroup.position.z = depth * 0.55;
   visorGroup.add(eyeGroup);
 
   scanners.push({
     mesh: eyeGroup,
-    range: width * 0.36,
+    range: width * 0.38,
     speed: 4.8
   });
 

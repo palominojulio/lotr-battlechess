@@ -450,16 +450,18 @@
         ctx.fillRect(-11 + upperOffsetX * 0.4, -15, 22, 11);
         ctx.strokeRect(-11 + upperOffsetX * 0.4, -15, 22, 11);
 
-        // Horse Cyber Head & Oscillating Laser Visor
+        // Horse Cyber Head & Continuous Glowing Visor Line + Oscillating Scanner Core
         const hx = (isW ? 6 : -15) + headOffsetX * 0.5;
         const hy = -25 + headOffsetY * 0.5;
         ctx.fillRect(hx, hy, 9, 12);
         ctx.strokeRect(hx, hy, 9, 12);
         const vx = (isW ? 9.5 : -14.5) + headOffsetX * 0.5;
-        ctx.fillStyle = '#090d16';
-        ctx.fillRect(vx, -23 + headOffsetY * 0.5, 6.5, 3.2);
+        // Full background visor line stays lit
         ctx.fillStyle = info.saber;
-        ctx.fillRect(vx + 2.2 + scanVal * 1.8, -23 + headOffsetY * 0.5, 2.4, 3.2);
+        ctx.fillRect(vx, -23 + headOffsetY * 0.5, 6.5, 3.2);
+        // Bright white scanner dot oscillates along the visor line
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(vx + 2.3 + scanVal * 2.0, -23 + headOffsetY * 0.5, 2.0, 3.2);
       }
 
       // Lower Armored Skirt / Legs with Bright Rim Outline
@@ -532,7 +534,7 @@
       }
       ctx.restore();
 
-      // Head & Role-Specific Helmet/Crown/Wizard Hat + Oscillating Scanner Visor
+      // Head & Role-Specific Helmet/Crown/Wizard Hat + Continuous Visor Line with Scanner Dot
       ctx.save();
       ctx.translate(upperOffsetX + headOffsetX, upperOffsetY + headOffsetY);
       ctx.fillStyle = isW ? '#fde68a' : '#7c2d12';
@@ -543,16 +545,18 @@
       ctx.fill();
       ctx.stroke();
 
-      // Dark Visor Track + Oscillating Cyber Scanner Eye Dot
-      ctx.fillStyle = '#05070a';
-      ctx.fillRect(-4.6 * hScale, -34.5 * hScale, 9.2 * hScale, 2.8);
+      // 1. Continuous Glowing Colored Visor Line (background line always visible)
       ctx.save();
       ctx.shadowColor = info.saber;
-      ctx.shadowBlur = 6;
+      ctx.shadowBlur = 5;
       ctx.fillStyle = info.saber;
-      ctx.fillRect((scanVal * 3.1 - 1.5) * hScale, -34.5 * hScale, 3.0 * hScale, 2.8);
+      ctx.fillRect(-4.6 * hScale, -34.5 * hScale, 9.2 * hScale, 2.6);
+
+      // 2. Oscillating White-Hot Scanner Spot sweeping back and forth over the line
+      ctx.shadowColor = '#ffffff';
+      ctx.shadowBlur = 6;
       ctx.fillStyle = '#ffffff';
-      ctx.fillRect((scanVal * 3.1 - 0.7) * hScale, -34.2 * hScale, 1.4 * hScale, 2.2);
+      ctx.fillRect((scanVal * 3.1 - 1.1) * hScale, -34.6 * hScale, 2.2 * hScale, 2.8);
       ctx.restore();
 
       // Role headgear
