@@ -1,6 +1,20 @@
 import Peer from 'peerjs';
 
 const PEER_PREFIX = 'lotr-bchess-v1-';
+export const PUBLIC_GAME_URL = 'https://palominojulio.github.io/lotr-battlechess/';
+
+const PEER_CONFIG = {
+  debug: 1,
+  config: {
+    iceServers: [
+      { urls: 'stun:stun.l.google.com:19302' },
+      { urls: 'stun:stun1.l.google.com:19302' },
+      { urls: 'stun:stun2.l.google.com:19302' },
+      { urls: 'stun:stun3.l.google.com:19302' },
+      { urls: 'stun:global.stun.twilio.com:3478' }
+    ]
+  }
+};
 
 export class OnlineRoomManager {
   constructor({ onStatusChange, onRemoteMove, onRemoteReset, onConnected }) {
@@ -41,10 +55,10 @@ export class OnlineRoomManager {
     this.onStatusChange?.({
       state: 'creating',
       roomCode: this.roomCode,
-      message: '⏳ Creando sala en la Tierra Media...'
+      message: '⏳ Creando sala pública en Internet...'
     });
 
-    this.peer = new Peer(fullPeerId);
+    this.peer = new Peer(fullPeerId, PEER_CONFIG);
 
     this.peer.on('open', () => {
       this.onStatusChange?.({
@@ -52,7 +66,7 @@ export class OnlineRoomManager {
         roomCode: this.roomCode,
         myColor: this.myColor,
         shareUrl: this.getShareUrl(),
-        message: `✅ Sala ${this.roomCode} lista. Comparte el enlace con Santi y espera a que entre.`
+        message: `✅ Sala ${this.roomCode} creada. Pulsa «💬 Enviar por WhatsApp» y NO cierres esta pestaña mientras Santi entra al enlace.`
       });
     });
 
@@ -65,7 +79,7 @@ export class OnlineRoomManager {
       this.onStatusChange?.({
         state: 'error',
         roomCode: this.roomCode,
-        message: `⚠️ Error de red P2P: ${err.type || err.message}. Intenta crear la sala de nuevo.`
+        message: `⚠️ Error de red (${err.type || err.message}). Pulsa Crear Sala de nuevo.`
       });
     });
   }
@@ -82,10 +96,10 @@ export class OnlineRoomManager {
     this.onStatusChange?.({
       state: 'joining',
       roomCode: cleanCode,
-      message: `⏳ Conectando con la sala ${cleanCode}...`
+      message: `⏳ Conectando en directo con la sala ${cleanCode}...`
     });
 
-    this.peer = new Peer();
+    this.peer = new Peer(undefined, PEER_CONFIG);
 
     this.peer.on('open', () => {
       const conn = this.peer.connect(targetPeerId, { reliable: true });
@@ -97,7 +111,7 @@ export class OnlineRoomManager {
       this.onStatusChange?.({
         state: 'error',
         roomCode: cleanCode,
-        message: `⚠️ No se pudo conectar a la sala ${cleanCode} (${err.type || 'sala no encontrada'}).`
+        message: `⚠️ No se encontró la sala ${cleanCode} (${err.type || 'asegúrate de que quien creó la sala tiene la página abierta'}).`
       });
     });
   }
@@ -106,7 +120,6 @@ export class OnlineRoomManager {
     conn.on('open', () => {
       this.isConnected = true;
       if (this.isHost) {
-        // Send welcome packet telling guest which color they play
         const guestColor = this.myColor === 'w' ? 'b' : 'w';
         conn.send({
           type: 'welcome',
@@ -148,7 +161,7 @@ export class OnlineRoomManager {
       this.onStatusChange?.({
         state: 'disconnected',
         roomCode: this.roomCode,
-        message: '🔌 El otro jugador se ha desconectado de la partida.'
+        message: '🔌 El otro jugador ha cerrado o recargado la pestaña.'
       });
     });
   }
@@ -166,7 +179,8 @@ export class OnlineRoomManager {
   }
 
   getShareUrl() {
-    const url = new URL(window.location.href);
+    // Always use the public GitHub Pages URL so Santi can open it from any phone/computer!
+    const url = new URL(PUBLIC_GAME_URL);
     url.searchParams.set('room', this.roomCode);
     return url.toString();
   }

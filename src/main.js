@@ -6,7 +6,7 @@ import { createLOTRPieceMesh } from './pieceBuilder.js';
 import { animateWalk, executeCinematicCombat, spawnParticleBurst } from './combatSystem.js';
 import { chooseBestMove } from './aiEngine.js';
 import { soundFX } from './soundFX.js';
-import { OnlineRoomManager } from './onlineMultiplayer.js';
+import { OnlineRoomManager, PUBLIC_GAME_URL } from './onlineMultiplayer.js';
 
 // --- Constants & Board Mapping ---
 const TILE_SIZE = 1.65;
@@ -742,6 +742,9 @@ const onlineManager = new OnlineRoomManager({
 if (btnOnlineRoom && onlineDialog) {
   btnOnlineRoom.addEventListener('click', () => {
     onlineDialog.showModal();
+    if (!onlineManager.roomCode) {
+      onlineManager.createRoom('w');
+    }
   });
 }
 
@@ -772,7 +775,7 @@ document.getElementById('btn-copy-link')?.addEventListener('click', async (e) =>
 });
 
 document.getElementById('btn-whatsapp-share')?.addEventListener('click', () => {
-  const url = onlineShareUrlInput?.value || window.location.href;
+  const url = onlineShareUrlInput?.value || PUBLIC_GAME_URL;
   const code = onlineManager.roomCode || '';
   const text = `⚔️ ¡Santi! Entra a mi sala online de Battle Chess (El Señor de los Anillos x Star Wars) para jugar en directo (Sala ${code}):\n${url}`;
   window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
@@ -780,10 +783,10 @@ document.getElementById('btn-whatsapp-share')?.addEventListener('click', () => {
 
 // Asynchronous / Instant WhatsApp Turn Share button ("💬 Mandar Jugada por WhatsApp a Santi")
 document.getElementById('btn-whatsapp-turn')?.addEventListener('click', () => {
-  const shareUrl = new URL(window.location.origin + window.location.pathname);
-  if (onlineManager.isConnected && onlineManager.roomCode) {
+  const shareUrl = new URL(PUBLIC_GAME_URL);
+  if (onlineManager.roomCode) {
     shareUrl.searchParams.set('room', onlineManager.roomCode);
-    const text = `⚔️ ¡Santi! Estoy en la sala en vivo ${onlineManager.roomCode} de Battle Chess. Entra aquí para jugar en directo:\n${shareUrl.toString()}`;
+    const text = `⚔️ ¡Santi! Estoy en la sala en vivo ${onlineManager.roomCode} de Battle Chess. Entra aquí desde tu móvil u ordenador para jugar en directo:\n${shareUrl.toString()}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
     return;
   }
@@ -796,11 +799,12 @@ document.getElementById('btn-whatsapp-turn')?.addEventListener('click', () => {
       shareUrl.searchParams.set('promo', lastMoveSnapshot.promotion);
     }
     const nextTurnName = chess.turn() === 'w' ? 'Gondor (Blancas)' : 'Mordor (Negras)';
-    const text = `⚔️ ¡Santi! He movido de ${lastMoveSnapshot.from.toUpperCase()} a ${lastMoveSnapshot.to.toUpperCase()} en nuestro Battle Chess. Abre este enlace para ver el duelo láser y hacer tu jugada con ${nextTurnName}:\n${shareUrl.toString()}`;
+    const text = `⚔️ ¡Santi! He movido de ${lastMoveSnapshot.from.toUpperCase()} a ${lastMoveSnapshot.to.toUpperCase()} en nuestro Battle Chess. Abre este enlace público para ver el duelo láser y hacer tu jugada con ${nextTurnName}:\n${shareUrl.toString()}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
   } else {
-    // No move made yet -> open the Online Room modal so user can invite Santi
+    // No move made yet -> open the Online Room modal and auto-create a room for Santi!
     onlineDialog?.showModal();
+    onlineManager.createRoom('w');
   }
 });
 
