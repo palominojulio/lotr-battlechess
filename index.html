@@ -110,8 +110,27 @@
 
       <section class="panel-section log-section">
         <div class="panel-header-row">
-          <h2 class="panel-title">Crónicas del Anillo</h2>
-          <span class="move-counter" id="move-counter">Jugada 1</span>
+          <h2 class="panel-title">📜 Planilla de Movimientos</h2>
+          <div class="notation-header-actions">
+            <span class="move-counter" id="move-counter">Jugada 1</span>
+            <button type="button" class="btn-copy-pgn" id="btn-copy-pgn" title="Copiar notación PGN de la partida">📋 PGN</button>
+          </div>
+        </div>
+        <div class="notation-sheet-wrap" id="notation-sheet-wrap">
+          <table class="notation-table" aria-label="Registro de nomenclatura de movimientos de ajedrez">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>☀️ Blancas (Gondor)</th>
+                <th>👁️ Negras (Mordor)</th>
+              </tr>
+            </thead>
+            <tbody id="notation-tbody">
+              <tr class="notation-empty-row">
+                <td colspan="3">Sin movimientos aún (ej. 1. e4 e5)</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
         <ol class="battle-log" id="battle-log">
           <li class="log-entry lore-intro">⚔️ Los ejércitos se despliegan entre Minas Tirith y el Monte del Destino.</li>

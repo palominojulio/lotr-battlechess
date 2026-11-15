@@ -69,26 +69,35 @@
         </div>
       </div>
 
-      <!-- Right Sidebar: Champion Info & Log -->
+      <!-- Right Sidebar: Champion Info, Move Nomenclature & Live Chat -->
       <div class="md:col-span-4 flex flex-col justify-between gap-2">
-        <div class="bg-[var(--background)] border border-[var(--border)] rounded-lg p-3">
-          <div class="flex items-center justify-between mb-1">
+        <div class="bg-[var(--background)] border border-[var(--border)] rounded-lg p-2.5">
+          <div class="flex items-center justify-between mb-0.5">
             <span class="text-xs font-semibold text-[var(--primary)]" id="card-faction">Orden de Gondor</span>
             <span class="text-xs text-[var(--muted-foreground)]" id="card-role">Peón con Escudo</span>
           </div>
-          <div class="text-sm font-bold text-[var(--foreground)] mb-1" id="card-name">🛡️ Hobbit Guardia Jedi</div>
-          <div class="text-xs text-[var(--muted-foreground)] mb-1.5" id="card-weapon">🛡️ Escudo de Gondor y Daga Láser Azul</div>
-          <div class="text-xs text-[var(--foreground)] bg-[var(--card)] border border-[var(--border)] rounded px-2 py-1" id="card-finisher">
-            Finisher: Decapitación / Corte de Plasma
+          <div class="text-xs font-bold text-[var(--foreground)] mb-0.5" id="card-name">🛡️ Hobbit Guardia Jedi</div>
+          <div class="text-[11px] text-[var(--muted-foreground)] truncate" id="card-weapon">🛡️ Escudo de Gondor y Daga Láser Azul</div>
+          <div class="hidden" id="card-finisher"></div>
+        </div>
+
+        <!-- Move Nomenclature Sheet (Planilla Algebraica) -->
+        <div class="bg-[var(--background)] border border-[var(--border)] rounded-lg p-2 flex flex-col">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-xs font-semibold text-[var(--foreground)]">📜 Nomenclatura de Movimientos</span>
+            <span class="text-[10px] text-[var(--muted-foreground)] font-mono" id="inline-move-count">0 jugadas</span>
+          </div>
+          <div id="inline-notation-list" class="text-[11px] font-mono text-[var(--foreground)] overflow-y-auto max-h-[68px] space-y-0.5 bg-[var(--card)] border border-[var(--border)] rounded px-2 py-1">
+            <div class="text-[var(--muted-foreground)] italic font-sans">Sin movimientos aún (ej. 1. e4 e5)</div>
           </div>
         </div>
 
-        <div class="bg-[var(--background)] border border-[var(--border)] rounded-lg p-2.5 flex-1 flex flex-col min-h-[165px]">
+        <div class="bg-[var(--background)] border border-[var(--border)] rounded-lg p-2 flex-1 flex flex-col min-h-[125px]">
           <div class="flex items-center justify-between mb-1">
             <span class="text-xs font-semibold text-[var(--foreground)]">💬 Chat en Vivo & Crónicas</span>
             <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-medium">Gondor ↔ Mordor</span>
           </div>
-          <div id="battle-log" class="text-xs text-[var(--muted-foreground)] space-y-1 overflow-y-auto max-h-[82px] mb-1.5 pr-1">
+          <div id="battle-log" class="text-xs text-[var(--muted-foreground)] space-y-1 overflow-y-auto max-h-[56px] mb-1 pr-1">
             <div class="text-emerald-400">📡 Canal de chat abierto entre Gondor y Mordor.</div>
           </div>
           <div class="flex flex-wrap gap-1 mb-1.5">
@@ -567,6 +576,54 @@
     let isIso = true;
     let activeCombat = null;
     let particles = [];
+    let moveHistory = []; // Array of { color, san, coords }
+
+    const PIECE_LETTER_ES = { p: '', n: 'C', b: 'A', r: 'T', q: 'D', k: 'R' };
+
+    function sqName(r, c) {
+      return `${String.fromCharCode(97 + c)}${8 - r}`;
+    }
+
+    function recordNotation(piece, fromR, fromC, toR, toC, isCapture, promoted = false) {
+      const fromSq = sqName(fromR, fromC);
+      const toSq = sqName(toR, toC);
+      const letter = PIECE_LETTER_ES[piece.type] || '';
+      let san = '';
+      if (piece.type === 'p') {
+        san = isCapture ? `${fromSq[0]}x${toSq}` : toSq;
+        if (promoted) san += '=D';
+      } else {
+        san = `${letter}${isCapture ? 'x' : ''}${toSq}`;
+      }
+      const coords = `${fromSq}${isCapture ? '×' : '→'}${toSq}`;
+      moveHistory.push({ color: piece.color, san, coords, isCapture });
+      renderInlineNotation();
+      const moveNum = Math.ceil(moveHistory.length / 2);
+      const prefix = piece.color === 'w' ? `${moveNum}.` : `${moveNum}...`;
+      return `${prefix} ${san} (${coords})`;
+    }
+
+    function renderInlineNotation() {
+      const list = document.getElementById('inline-notation-list');
+      const countEl = document.getElementById('inline-move-count');
+      if (!list) return;
+      if (countEl) countEl.textContent = `${Math.ceil(moveHistory.length / 2)} jugadas`;
+      if (moveHistory.length === 0) {
+        list.innerHTML = '<div class="text-[var(--muted-foreground)] italic font-sans">Sin movimientos aún (ej. 1. e4 e5)</div>';
+        return;
+      }
+      let html = '';
+      for (let i = 0; i < moveHistory.length; i += 2) {
+        const num = Math.floor(i / 2) + 1;
+        const w = moveHistory[i];
+        const b = moveHistory[i + 1];
+        const wStr = `<span class="text-sky-400 font-bold">${w.san}</span> <span class="text-[var(--muted-foreground)]">(${w.coords})</span>`;
+        const bStr = b ? `<span class="text-orange-400 font-bold">${b.san}</span> <span class="text-[var(--muted-foreground)]">(${b.coords})</span>` : '—';
+        html += `<div class="flex justify-between gap-2 border-b border-[var(--border)]/40 py-0.5"><span class="text-[var(--muted-foreground)] w-5">${num}.</span><span class="flex-1">${wStr}</span><span class="flex-1">${bStr}</span></div>`;
+      }
+      list.innerHTML = html;
+      list.scrollTop = list.scrollHeight;
+    }
 
     function initBoard() {
       const backRank = ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'];
@@ -581,6 +638,8 @@
       selected = null;
       validMoves = [];
       activeCombat = null;
+      moveHistory = [];
+      renderInlineNotation();
       midiIntroPlayed = false;
       document.getElementById('combat-hud').classList.add('hidden');
       updateStatus('Turno: Orden de Gondor (Blancas) — Haz clic en una pieza');
@@ -681,11 +740,14 @@
       playSound(attacker.color === 'w' ? 'r2d2' : 'orc');
 
       if (!defender) {
+        const wasPawn = attacker.type === 'p';
+        const promoted = wasPawn && (toR === 0 || toR === 7);
+        const notationTag = recordNotation(attacker, fromR, fromC, toR, toC, false, promoted);
         board[toR][toC] = attacker;
         board[fromR][fromC] = null;
-        if (attacker.type === 'p' && (toR === 0 || toR === 7)) attacker.type = 'q';
+        if (promoted) attacker.type = 'q';
         const info = ROSTER[attacker.color][attacker.type];
-        logEvent(`🛡️ ${info.name} avanza a ${String.fromCharCode(65 + toC)}${8 - toR}`);
+        logEvent(`[${notationTag}] 🛡️ ${info.name}`);
         turn = turn === 'w' ? 'b' : 'w';
         updateStatus(`Turno: ${turn === 'w' ? 'Orden de Gondor (Blancas)' : 'Imperio de Mordor (Negras)'}`);
         if (onComplete) onComplete();
@@ -1311,12 +1373,14 @@
         if (t >= 1) {
           const done = activeCombat;
           activeCombat = null;
+          const promoted = done.attacker.type === 'p' && (done.toR === 0 || done.toR === 7);
+          const notationTag = recordNotation(done.attacker, done.fromR, done.fromC, done.toR, done.toC, true, promoted);
           board[done.toR][done.toC] = done.attacker;
           board[done.fromR][done.fromC] = null;
-          if (done.attacker.type === 'p' && (done.toR === 0 || done.toR === 7)) {
+          if (promoted) {
             done.attacker.type = 'q';
           }
-          logEvent(`💀 ${done.attInfo.name} ejecutó a ${done.defInfo.name} (${done.attInfo.finisher})`);
+          logEvent(`[${notationTag}] 💀 ${done.attInfo.name} ejecutó a ${done.defInfo.name}`);
           turn = turn === 'w' ? 'b' : 'w';
           updateStatus(`Turno: ${turn === 'w' ? 'Orden de Gondor (Blancas)' : 'Imperio de Mordor (Negras)'}`);
           setTimeout(() => {

@@ -311,18 +311,114 @@ html, body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  min-height: 0;
+  min-height: 185px;
+  gap: 8px;
+}
+
+.notation-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.btn-copy-pgn {
+  padding: 2px 7px;
+  border-radius: 6px;
+  border: 1px solid rgba(230, 194, 89, 0.45);
+  background: rgba(230, 194, 89, 0.14);
+  color: var(--gold-bright);
+  font-size: 0.68rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-copy-pgn:hover {
+  background: rgba(230, 194, 89, 0.3);
+}
+
+.notation-sheet-wrap {
+  max-height: 118px;
+  overflow-y: auto;
+  border-radius: 8px;
+  background: rgba(3, 5, 10, 0.65);
+  border: 1px solid rgba(230, 194, 89, 0.28);
+}
+
+.notation-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.74rem;
+}
+
+.notation-table thead th {
+  position: sticky;
+  top: 0;
+  background: #141824;
+  color: var(--gold);
+  font-weight: 600;
+  text-align: left;
+  padding: 4px 6px;
+  font-size: 0.68rem;
+  border-bottom: 1px solid rgba(230, 194, 89, 0.25);
+}
+
+.notation-table tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.notation-table td {
+  padding: 4px 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.notation-turn-num {
+  color: var(--text-muted);
+  width: 26px;
+  font-weight: 600;
+}
+
+.notation-cell-white {
+  color: #bae6fd;
+}
+
+.notation-cell-black {
+  color: #fed7aa;
+}
+
+.notation-san {
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.notation-capture .notation-san {
+  color: #fca5a5;
+}
+
+.notation-coords {
+  font-size: 0.66rem;
+  color: var(--text-muted);
+  margin-left: 3px;
+}
+
+.notation-empty-row td {
+  text-align: center;
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 10px 6px;
+  font-family: var(--font-body);
 }
 
 .battle-log {
-  flex: 1;
+  max-height: 85px;
   overflow-y: auto;
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
   padding-right: 4px;
-  font-size: 0.78rem;
+  font-size: 0.74rem;
 }
 
 .log-entry {

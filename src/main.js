@@ -348,21 +348,76 @@ function renderCasualties() {
     .join('');
 }
 
+const SPANISH_PIECE_MAP = { N: 'C', B: 'A', R: 'T', Q: 'D', K: 'R' };
+
+function toSpanishSAN(san) {
+  if (!san) return '';
+  return san.replace(/[NBRQK]/g, (m) => SPANISH_PIECE_MAP[m] || m);
+}
+
+const notationTbody = document.getElementById('notation-tbody');
+const notationSheetWrap = document.getElementById('notation-sheet-wrap');
+
+function renderMoveNotation() {
+  if (!notationTbody) return;
+  const history = chess.history({ verbose: true });
+  if (history.length === 0) {
+    notationTbody.innerHTML =
+      '<tr class="notation-empty-row"><td colspan="3">Sin movimientos aún (ej. 1. e4 e5)</td></tr>';
+    return;
+  }
+
+  let rowsHtml = '';
+  for (let i = 0; i < history.length; i += 2) {
+    const moveNum = Math.floor(i / 2) + 1;
+    const wMove = history[i];
+    const bMove = history[i + 1];
+
+    const wSan = toSpanishSAN(wMove.san);
+    const wSep = wMove.captured ? '×' : '→';
+    const wCell = `<span class="notation-san">${wSan}</span><span class="notation-coords">(${wMove.from}${wSep}${wMove.to})</span>`;
+
+    let bCell = '—';
+    if (bMove) {
+      const bSan = toSpanishSAN(bMove.san);
+      const bSep = bMove.captured ? '×' : '→';
+      bCell = `<span class="notation-san">${bSan}</span><span class="notation-coords">(${bMove.from}${bSep}${bMove.to})</span>`;
+    }
+
+    rowsHtml += `<tr>
+      <td class="notation-turn-num">${moveNum}.</td>
+      <td class="notation-cell-white ${wMove.captured ? 'notation-capture' : ''}">${wCell}</td>
+      <td class="notation-cell-black ${bMove?.captured ? 'notation-capture' : ''}">${bCell}</td>
+    </tr>`;
+  }
+
+  notationTbody.innerHTML = rowsHtml;
+  if (notationSheetWrap) {
+    notationSheetWrap.scrollTop = notationSheetWrap.scrollHeight;
+  }
+}
+
 function appendBattleLog(moveResult) {
   const attLore = getPieceLore(moveResult.color, moveResult.piece);
   const li = document.createElement('li');
+  const historyLen = chess.history().length;
+  const moveNum = Math.ceil(historyLen / 2);
+  const prefix = moveResult.color === 'w' ? `${moveNum}.` : `${moveNum}...`;
+  const espSan = toSpanishSAN(moveResult.san);
+  const coordStr = `${moveResult.from}${moveResult.captured ? '×' : '→'}${moveResult.to}`;
 
   if (moveResult.captured) {
     const defColor = moveResult.color === 'w' ? 'b' : 'w';
     const defLore = getPieceLore(defColor, moveResult.captured);
     li.className = 'log-entry capture-log';
-    li.textContent = `⚔️ ${attLore.shortName} ejecuta a ${defLore.shortName} en ${moveResult.to.toUpperCase()} (${attLore.combatStyle})`;
+    li.textContent = `[${prefix} ${espSan} (${coordStr})] ⚔️ ${attLore.shortName} ejecuta a ${defLore.shortName}`;
   } else {
     li.className = `log-entry ${moveResult.color === 'w' ? 'white-move' : 'black-move'}`;
-    li.textContent = `${attLore.icon} ${attLore.shortName} avanza de ${moveResult.from.toUpperCase()} a ${moveResult.to.toUpperCase()}`;
+    li.textContent = `[${prefix} ${espSan} (${coordStr})] ${attLore.icon} ${attLore.shortName}`;
   }
 
   battleLog.prepend(li);
+  renderMoveNotation();
 }
 
 // --- Dialogs (Native <dialog> following modern-web-guidance) ---
@@ -954,6 +1009,7 @@ function resetGame(isRemote = false) {
   capturedByWhite.length = 0;
   capturedByBlack.length = 0;
   renderCasualties();
+  renderMoveNotation();
   clearHighlights();
   selectedSquare = null;
   legalMovesForSelected = [];
@@ -980,7 +1036,25 @@ document.getElementById('btn-undo').addEventListener('click', () => {
   selectedSquare = null;
   legalMovesForSelected = [];
   rebuildAllPieces();
+  renderMoveNotation();
   updateHUD();
+});
+
+document.getElementById('btn-copy-pgn')?.addEventListener('click', async (e) => {
+  const history = chess.history({ verbose: true });
+  let text = '';
+  for (let i = 0; i < history.length; i += 2) {
+    const num = Math.floor(i / 2) + 1;
+    const w = toSpanishSAN(history[i].san);
+    const b = history[i + 1] ? ` ${toSpanishSAN(history[i + 1].san)}` : '';
+    text += `${num}. ${w}${b} `;
+  }
+  const finalStr = text.trim() || 'Sin movimientos registrados';
+  try {
+    await navigator.clipboard.writeText(finalStr);
+    e.target.textContent = '✅ Copiado';
+    setTimeout(() => { e.target.textContent = '📋 PGN'; }, 1800);
+  } catch {}
 });
 
 // "⚔️ Probar Combate" button: immediately triggers a capture duel (or sets up an instant clash!)
