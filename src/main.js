@@ -607,6 +607,11 @@ let pointerDownPos = { x: 0, y: 0 };
 
 renderer.domElement.addEventListener('pointerdown', (e) => {
   pointerDownPos = { x: e.clientX, y: e.clientY };
+  // Auto-start Star Wars MIDI music on first interaction if not explicitly muted
+  if (!userMutedMidi && !soundFX.musicPlaying && soundFX.enabled) {
+    soundFX.startMusic();
+    updateMidiButtonUI(true);
+  }
 });
 
 renderer.domElement.addEventListener('pointerup', async (e) => {
@@ -678,11 +683,39 @@ btnCinematic.addEventListener('click', () => {
 });
 
 const btnSound = document.getElementById('btn-sound');
+const btnMidi = document.getElementById('btn-midi');
+const btnMidiNext = document.getElementById('btn-midi-next');
+let userMutedMidi = false;
+
+function updateMidiButtonUI(playing, trackName = null) {
+  if (!btnMidi) return;
+  btnMidi.classList.toggle('active', playing);
+  const label = trackName || 'Marcha Imperial (MIDI)';
+  btnMidi.textContent = playing ? `🎵 ${label}` : '🎵 MIDI: OFF';
+}
+
 btnSound.addEventListener('click', () => {
   const on = soundFX.toggle();
   btnSound.classList.toggle('active', on);
   btnSound.textContent = `🔊 Sonido: ${on ? 'ON' : 'OFF'}`;
+  if (!on) updateMidiButtonUI(false);
 });
+
+if (btnMidi) {
+  btnMidi.addEventListener('click', () => {
+    const { playing, trackName } = soundFX.toggleMusic();
+    userMutedMidi = !playing;
+    updateMidiButtonUI(playing, trackName);
+  });
+}
+
+if (btnMidiNext) {
+  btnMidiNext.addEventListener('click', () => {
+    userMutedMidi = false;
+    const trackName = soundFX.nextTrack();
+    updateMidiButtonUI(true, trackName);
+  });
+}
 
 function resetGame() {
   if (isAnimating) return;

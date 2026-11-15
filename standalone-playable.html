@@ -18,7 +18,13 @@
         </p>
       </div>
 
-      <div class="flex items-center gap-2">
+      <div class="flex flex-wrap items-center gap-1.5">
+        <button id="btn-midi" type="button" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)] hover:opacity-90 transition cursor-pointer">
+          🎵 MIDI: Marcha Imperial
+        </button>
+        <button id="btn-midi-next" type="button" class="px-2 py-1.5 rounded-lg text-xs font-medium bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)] hover:opacity-90 transition cursor-pointer" title="Cambiar pista MIDI de Star Wars">
+          ⏭️
+        </button>
         <button id="btn-duel" type="button" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90 transition cursor-pointer">
           ⚔️ Probar Combate
         </button>
@@ -105,8 +111,133 @@
       }
     };
 
-    // Web Audio Synthesizer
+    // Web Audio Synthesizer & Star Wars MIDI Sequencer
     let audioCtx = null;
+    const MIDI_FREQ = {
+      G2: 98.00, Bb2: 116.54, C3: 130.81, D3: 146.83, Eb3: 155.56, E3: 164.81, F3: 174.61, Fs3: 185.00, G3: 196.00,
+      D4: 293.66, Eb4: 311.13, E4: 329.63, F4: 349.23, Fs4: 369.99, G4: 392.00, Ab4: 415.30, A4: 440.00, Bb4: 466.16, B4: 493.88,
+      C5: 523.25, Cs5: 554.37, D5: 587.33, Eb5: 622.25, E5: 659.25, F5: 698.46, Fs5: 739.99, G5: 783.99, C6: 1046.50
+    };
+    const MIDI_TRACKS = [
+      {
+        name: 'Marcha Imperial',
+        bpm: 108,
+        notes: [
+          ['G4', 1, 'G2'], ['G4', 1, 'G2'], ['G4', 1, 'G2'], ['Eb4', 0.75, 'Eb3'], ['Bb4', 0.25, null],
+          ['G4', 1, 'G2'], ['Eb4', 0.75, 'Eb3'], ['Bb4', 0.25, null], ['G4', 2, 'G2'],
+          ['D5', 1, 'G2'], ['D5', 1, 'G2'], ['D5', 1, 'G2'], ['Eb5', 0.75, 'Eb3'], ['Bb4', 0.25, null],
+          ['Fs4', 1, 'D3'], ['Eb4', 0.75, 'Eb3'], ['Bb4', 0.25, null], ['G4', 2, 'G2'],
+          ['G5', 1, 'G3'], ['G4', 0.75, 'G2'], ['G4', 0.25, null], ['G5', 1, 'G3'], ['Fs5', 0.75, 'D3'], ['F5', 0.25, null],
+          ['E5', 0.25, 'C3'], ['Eb5', 0.25, null], ['E5', 0.5, null], [null, 0.5, null], ['Ab4', 0.5, 'Eb3'], ['Cs5', 1, 'C3'], ['C5', 0.75, null], ['B4', 0.25, null],
+          ['Bb4', 0.25, 'G2'], ['A4', 0.25, null], ['Bb4', 0.5, null], [null, 0.5, null], ['Eb4', 0.5, 'Eb3'], ['Fs4', 1, 'D3'], ['Eb4', 0.75, 'Eb3'], ['Fs4', 0.25, null],
+          ['Bb4', 1, 'G2'], ['G4', 0.75, 'Eb3'], ['Bb4', 0.25, null], ['D5', 2, 'G2']
+        ]
+      },
+      {
+        name: 'Tema Star Wars',
+        bpm: 120,
+        notes: [
+          ['G4', 0.33, 'C3'], ['G4', 0.33, null], ['G4', 0.34, null],
+          ['C5', 2, 'C3'], ['G5', 2, 'G3'],
+          ['F5', 0.33, 'F3'], ['E5', 0.33, null], ['D5', 0.34, null], ['C6', 2, 'C3'], ['G5', 1, 'G3'],
+          ['F5', 0.33, 'F3'], ['E5', 0.33, null], ['D5', 0.34, null], ['C6', 2, 'C3'], ['G5', 1, 'G3'],
+          ['F5', 0.33, 'F3'], ['E5', 0.33, null], ['F5', 0.34, null], ['D5', 2, 'G2'], [null, 1, null]
+        ]
+      },
+      {
+        name: 'Duel of the Fates',
+        bpm: 144,
+        notes: [
+          ['E4', 0.5, 'E3'], ['Fs4', 0.5, null], ['G4', 0.5, 'E3'], ['Fs4', 0.5, null], ['D4', 1, 'D3'], [null, 1, 'E3'],
+          ['E4', 0.5, 'E3'], ['Fs4', 0.5, null], ['G4', 0.5, 'E3'], ['Fs4', 0.5, null], ['D4', 0.5, 'D3'], ['E4', 0.5, null], ['B4', 1, 'G2'],
+          ['E4', 0.5, 'E3'], ['Fs4', 0.5, null], ['G4', 0.5, 'E3'], ['Fs4', 0.5, null], ['D4', 1, 'D3'], [null, 1, 'E3'],
+          ['G5', 1.5, 'C3'], ['D5', 1.5, 'D3'], ['E5', 2, 'E3']
+        ]
+      }
+    ];
+
+    let midiPlaying = false;
+    let midiMutedByUser = false;
+    let midiTrackIdx = 0;
+    let midiNoteIdx = 0;
+    let midiTimer = null;
+
+    function ensureAudio() {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      if (!audioCtx) audioCtx = new AC();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      return audioCtx;
+    }
+
+    function scheduleMidiStep() {
+      if (!midiPlaying) return;
+      const ac = ensureAudio();
+      if (!ac) return;
+      const track = MIDI_TRACKS[midiTrackIdx];
+      const [note, beats, bass] = track.notes[midiNoteIdx];
+      const dur = beats * (60 / track.bpm);
+      const now = ac.currentTime;
+
+      if (note && MIDI_FREQ[note]) {
+        const f = MIDI_FREQ[note];
+        const o1 = ac.createOscillator();
+        const o2 = ac.createOscillator();
+        const flt = ac.createBiquadFilter();
+        const g = ac.createGain();
+        o1.type = 'square';
+        o2.type = 'sawtooth';
+        o1.frequency.setValueAtTime(f, now);
+        o2.frequency.setValueAtTime(f * 1.004, now);
+        flt.type = 'lowpass';
+        flt.frequency.setValueAtTime(2000, now);
+        g.gain.setValueAtTime(0.001, now);
+        g.gain.linearRampToValueAtTime(0.048, now + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.028, now + dur * 0.75);
+        g.gain.exponentialRampToValueAtTime(0.001, now + dur * 0.94);
+        o1.connect(flt);
+        o2.connect(flt);
+        flt.connect(g);
+        g.connect(ac.destination);
+        o1.start(now);
+        o2.start(now);
+        o1.stop(now + dur * 0.95);
+        o2.stop(now + dur * 0.95);
+      }
+
+      if (bass && MIDI_FREQ[bass]) {
+        const bf = MIDI_FREQ[bass];
+        const bo = ac.createOscillator();
+        const bg = ac.createGain();
+        bo.type = 'triangle';
+        bo.frequency.setValueAtTime(bf, now);
+        bg.gain.setValueAtTime(0.06, now);
+        bg.gain.exponentialRampToValueAtTime(0.001, now + Math.min(dur, 0.36));
+        bo.connect(bg);
+        bg.connect(ac.destination);
+        bo.start(now);
+        bo.stop(now + Math.min(dur, 0.38));
+      }
+
+      midiNoteIdx = (midiNoteIdx + 1) % track.notes.length;
+      midiTimer = setTimeout(scheduleMidiStep, dur * 1000);
+    }
+
+    function startMidi() {
+      if (midiPlaying) return;
+      ensureAudio();
+      midiPlaying = true;
+      midiNoteIdx = 0;
+      scheduleMidiStep();
+      document.getElementById('btn-midi').textContent = `🎵 MIDI: ${MIDI_TRACKS[midiTrackIdx].name}`;
+    }
+
+    function stopMidi() {
+      midiPlaying = false;
+      if (midiTimer) clearTimeout(midiTimer);
+      midiTimer = null;
+      document.getElementById('btn-midi').textContent = '🎵 MIDI: OFF';
+    }
     function playSound(type) {
       try {
         const AC = window.AudioContext || window.webkitAudioContext;
@@ -720,9 +851,28 @@
         ctx.fill();
         ctx.restore();
       } else if (piece.type === 'r') {
-        // Fortress / Mecha Turret Battlements
-        ctx.fillStyle = info.accent;
-        ctx.fillRect(-6, -41, 12, 4);
+        // Classic Chess Rook Crown with 4 Battlement Points ("las cuatro puntas de una torre")
+        ctx.save();
+        ctx.fillStyle = info.body;
+        ctx.strokeStyle = info.rim;
+        ctx.lineWidth = 1.4;
+        // Base turret band
+        ctx.fillRect(-8, -40, 16, 3.5);
+        ctx.strokeRect(-8, -40, 16, 3.5);
+        // 4 Raised Battlement Points (Almenas)
+        [-7.5, -3.1, 1.3, 5.7].forEach((mx) => {
+          ctx.fillStyle = info.accent;
+          ctx.beginPath();
+          ctx.moveTo(mx, -40);
+          ctx.lineTo(mx, -45);
+          ctx.lineTo(mx + 1.1, -47);
+          ctx.lineTo(mx + 2.2, -45);
+          ctx.lineTo(mx + 2.2, -40);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+        });
+        ctx.restore();
       } else if (piece.type === 'p') {
         // Curved Roman Centurion / Legionary Fan Plume Crest (Cresta tipo Romana curva)
         ctx.save();
@@ -919,7 +1069,26 @@
       }
     }
 
+    document.getElementById('btn-midi').addEventListener('click', () => {
+      if (midiPlaying) {
+        midiMutedByUser = true;
+        stopMidi();
+      } else {
+        midiMutedByUser = false;
+        startMidi();
+      }
+    });
+
+    document.getElementById('btn-midi-next').addEventListener('click', () => {
+      midiTrackIdx = (midiTrackIdx + 1) % MIDI_TRACKS.length;
+      midiNoteIdx = 0;
+      midiMutedByUser = false;
+      if (!midiPlaying) startMidi();
+      else document.getElementById('btn-midi').textContent = `🎵 MIDI: ${MIDI_TRACKS[midiTrackIdx].name}`;
+    });
+
     canvas.addEventListener('click', (e) => {
+      if (!midiPlaying && !midiMutedByUser) startMidi();
       if (activeCombat) return;
       const rect = canvas.getBoundingClientRect();
       const sx = (e.clientX - rect.left) * (canvas.width / rect.width);

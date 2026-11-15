@@ -770,11 +770,35 @@ export function createLOTRPieceMesh(type, color) {
     upperBody.add(pL, pR);
 
     headGroup.position.set(0, 0.78, 0);
-    const headMesh = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.32, 0.32), armorMat);
+    const headMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.2, 0.3, 16), armorMat);
     headGroup.add(headMesh);
     const eyeVisor = createScannerVisor(0.3, 0.075, 0.18, saberColor, scanners);
-    eyeVisor.position.set(0, 0.04, 0.12);
+    eyeVisor.position.set(0, 0.02, 0.14);
     headGroup.add(eyeVisor);
+
+    // Classic Chess Rook Crown with 4 Prominent Battlement Points ("las cuatro puntas de una torre")
+    const turretRim = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.22, 0.08, 16), trimMat);
+    turretRim.position.y = 0.17;
+    headGroup.add(turretRim);
+
+    const merlonOffsets = [
+      [-0.13, -0.13],
+      [0.13, -0.13],
+      [-0.13, 0.13],
+      [0.13, 0.13]
+    ];
+    merlonOffsets.forEach(([mx, mz]) => {
+      // Raised battlement merlon block + pyramidal/pointed top cap
+      const merlon = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.16, 0.11), armorMat);
+      merlon.position.set(mx, 0.27, mz);
+      headGroup.add(merlon);
+
+      const merlonCap = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.1, 4), trimMat);
+      merlonCap.rotation.y = Math.PI / 4;
+      merlonCap.position.set(mx, 0.39, mz);
+      headGroup.add(merlonCap);
+    });
+
     upperBody.add(headGroup);
 
     rightArm.position.set(0.46, 0.48, 0);

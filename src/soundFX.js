@@ -1,7 +1,56 @@
+const MIDI_NOTES = {
+  G2: 98.00, Bb2: 116.54, C3: 130.81, D3: 146.83, Eb3: 155.56, E3: 164.81, F3: 174.61, Fs3: 185.00, G3: 196.00,
+  D4: 293.66, Eb4: 311.13, E4: 329.63, F4: 349.23, Fs4: 369.99, G4: 392.00, Ab4: 415.30, A4: 440.00, Bb4: 466.16, B4: 493.88,
+  C5: 523.25, Cs5: 554.37, D5: 587.33, Eb5: 622.25, E5: 659.25, F5: 698.46, Fs5: 739.99, G5: 783.99, C6: 1046.50
+};
+
+// Iconic Star Wars MIDI Sequences: [noteName, beats, bassNote]
+const STAR_WARS_TRACKS = [
+  {
+    name: 'Marcha Imperial (MIDI)',
+    bpm: 108,
+    notes: [
+      ['G4', 1, 'G2'], ['G4', 1, 'G2'], ['G4', 1, 'G2'], ['Eb4', 0.75, 'Eb3'], ['Bb4', 0.25, null],
+      ['G4', 1, 'G2'], ['Eb4', 0.75, 'Eb3'], ['Bb4', 0.25, null], ['G4', 2, 'G2'],
+      ['D5', 1, 'G2'], ['D5', 1, 'G2'], ['D5', 1, 'G2'], ['Eb5', 0.75, 'Eb3'], ['Bb4', 0.25, null],
+      ['Fs4', 1, 'D3'], ['Eb4', 0.75, 'Eb3'], ['Bb4', 0.25, null], ['G4', 2, 'G2'],
+      ['G5', 1, 'G3'], ['G4', 0.75, 'G2'], ['G4', 0.25, null], ['G5', 1, 'G3'], ['Fs5', 0.75, 'D3'], ['F5', 0.25, null],
+      ['E5', 0.25, 'C3'], ['Eb5', 0.25, null], ['E5', 0.5, null], [null, 0.5, null], ['Ab4', 0.5, 'Eb3'], ['Cs5', 1, 'C3'], ['C5', 0.75, null], ['B4', 0.25, null],
+      ['Bb4', 0.25, 'G2'], ['A4', 0.25, null], ['Bb4', 0.5, null], [null, 0.5, null], ['Eb4', 0.5, 'Eb3'], ['Fs4', 1, 'D3'], ['Eb4', 0.75, 'Eb3'], ['Fs4', 0.25, null],
+      ['Bb4', 1, 'G2'], ['G4', 0.75, 'Eb3'], ['Bb4', 0.25, null], ['D5', 2, 'G2']
+    ]
+  },
+  {
+    name: 'Tema Principal Star Wars (MIDI)',
+    bpm: 120,
+    notes: [
+      ['G4', 0.33, 'C3'], ['G4', 0.33, null], ['G4', 0.34, null],
+      ['C5', 2, 'C3'], ['G5', 2, 'G3'],
+      ['F5', 0.33, 'F3'], ['E5', 0.33, null], ['D5', 0.34, null], ['C6', 2, 'C3'], ['G5', 1, 'G3'],
+      ['F5', 0.33, 'F3'], ['E5', 0.33, null], ['D5', 0.34, null], ['C6', 2, 'C3'], ['G5', 1, 'G3'],
+      ['F5', 0.33, 'F3'], ['E5', 0.33, null], ['F5', 0.34, null], ['D5', 2, 'G2'], [null, 1, null]
+    ]
+  },
+  {
+    name: 'Duel of the Fates (MIDI)',
+    bpm: 144,
+    notes: [
+      ['E4', 0.5, 'E3'], ['Fs4', 0.5, null], ['G4', 0.5, 'E3'], ['Fs4', 0.5, null], ['D4', 1, 'D3'], [null, 1, 'E3'],
+      ['E4', 0.5, 'E3'], ['Fs4', 0.5, null], ['G4', 0.5, 'E3'], ['Fs4', 0.5, null], ['D4', 0.5, 'D3'], ['E4', 0.5, null], ['B4', 1, 'G2'],
+      ['E4', 0.5, 'E3'], ['Fs4', 0.5, null], ['G4', 0.5, 'E3'], ['Fs4', 0.5, null], ['D4', 1, 'D3'], [null, 1, 'E3'],
+      ['G5', 1.5, 'C3'], ['D5', 1.5, 'D3'], ['E5', 2, 'E3']
+    ]
+  }
+];
+
 class SoundFX {
   constructor() {
     this.enabled = true;
     this.ctx = null;
+    this.musicPlaying = false;
+    this.trackIndex = 0;
+    this.noteIndex = 0;
+    this.musicTimer = null;
   }
 
   init() {
@@ -18,7 +67,111 @@ class SoundFX {
 
   toggle() {
     this.enabled = !this.enabled;
+    if (!this.enabled) {
+      this.stopMusic();
+    }
     return this.enabled;
+  }
+
+  startMusic() {
+    if (!this.enabled) return false;
+    this.init();
+    if (!this.ctx) return false;
+    if (this.musicPlaying) return true;
+    this.musicPlaying = true;
+    this.noteIndex = 0;
+    this.scheduleNextMidiNote();
+    return true;
+  }
+
+  stopMusic() {
+    this.musicPlaying = false;
+    if (this.musicTimer) {
+      clearTimeout(this.musicTimer);
+      this.musicTimer = null;
+    }
+  }
+
+  toggleMusic() {
+    if (this.musicPlaying) {
+      this.stopMusic();
+      return { playing: false, trackName: STAR_WARS_TRACKS[this.trackIndex].name };
+    } else {
+      this.enabled = true;
+      this.startMusic();
+      return { playing: true, trackName: STAR_WARS_TRACKS[this.trackIndex].name };
+    }
+  }
+
+  nextTrack() {
+    this.trackIndex = (this.trackIndex + 1) % STAR_WARS_TRACKS.length;
+    this.noteIndex = 0;
+    if (!this.musicPlaying) {
+      this.startMusic();
+    }
+    return STAR_WARS_TRACKS[this.trackIndex].name;
+  }
+
+  scheduleNextMidiNote() {
+    if (!this.musicPlaying || !this.enabled || !this.ctx) return;
+
+    const track = STAR_WARS_TRACKS[this.trackIndex];
+    const [noteName, beats, bassName] = track.notes[this.noteIndex];
+    const beatSec = 60 / track.bpm;
+    const durSec = beats * beatSec;
+    const now = this.ctx.currentTime;
+
+    // 1. Lead MIDI Brass / Chiptune Voice (Square + Sawtooth detuned)
+    if (noteName && MIDI_NOTES[noteName]) {
+      const freq = MIDI_NOTES[noteName];
+      const osc1 = this.ctx.createOscillator();
+      const osc2 = this.ctx.createOscillator();
+      const filter = this.ctx.createBiquadFilter();
+      const gain = this.ctx.createGain();
+
+      osc1.type = 'square';
+      osc2.type = 'sawtooth';
+      osc1.frequency.setValueAtTime(freq, now);
+      osc2.frequency.setValueAtTime(freq * 1.004, now);
+
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(2100, now);
+
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(0.055, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.032, now + durSec * 0.75);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + durSec * 0.94);
+
+      osc1.connect(filter);
+      osc2.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc1.start(now);
+      osc2.start(now);
+      osc1.stop(now + durSec * 0.95);
+      osc2.stop(now + durSec * 0.95);
+    }
+
+    // 2. MIDI Bass Accompaniment Voice
+    if (bassName && MIDI_NOTES[bassName]) {
+      const bFreq = MIDI_NOTES[bassName];
+      const bOsc = this.ctx.createOscillator();
+      const bGain = this.ctx.createGain();
+      bOsc.type = 'triangle';
+      bOsc.frequency.setValueAtTime(bFreq, now);
+
+      bGain.gain.setValueAtTime(0.065, now);
+      bGain.gain.exponentialRampToValueAtTime(0.001, now + Math.min(durSec, 0.38));
+
+      bOsc.connect(bGain);
+      bGain.connect(this.ctx.destination);
+      bOsc.start(now);
+      bOsc.stop(now + Math.min(durSec, 0.4));
+    }
+
+    this.noteIndex = (this.noteIndex + 1) % track.notes.length;
+    this.musicTimer = setTimeout(() => this.scheduleNextMidiNote(), durSec * 1000);
   }
 
   playSelect() {
