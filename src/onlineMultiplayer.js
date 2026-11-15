@@ -16,22 +16,68 @@ const PEER_CONFIG = {
   }
 };
 
+/**
+ * Extracts a clean room code (e.g. "SANTI-5420") even if the user pastes the full
+ * URL ("https://palominojulio.github.io/lotr-battlechess/?room=SANTI-5420"),
+ * a full WhatsApp message, or just the 4 digits ("5420").
+ */
+export function extractRoomCode(rawInput) {
+  if (!rawInput) return '';
+  const str = String(rawInput).trim();
+
+  // 1. Look for SANTI-XXXX anywhere in the pasted string or URL
+  const santiMatch = str.match(/SANTI-\d{3,6}/i);
+  if (santiMatch) return santiMatch[0].toUpperCase();
+
+  // 2. Look for ?room=... parameter if it's a URL
+  try {
+    const url = new URL(str);
+    const roomParam = url.searchParams.get('room');
+    if (roomParam) return extractRoomCode(roomParam);
+  } catch {}
+
+  const roomQueryMatch = str.match(/[?&]room=([A-Za-z0-9-_]+)/i);
+  if (roomQueryMatch) return roomQueryMatch[1].toUpperCase();
+
+  // 3. If user only typed numbers like "5420", prefix with SANTI-
+  if (/^\d{3,6}$/.test(str)) {
+    return `SANTI-${str}`;
+  }
+
+  return str.toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 20);
+}
+
 export class OnlineRoomManager {
   constructor({ onStatusChange, onRemoteMove, onRemoteReset, onConnected }) {
     this.peer = null;
     this.conn = null;
     this.roomCode = null;
+    this.preferredColor = 'w';
     this.myColor = 'w'; // 'w' (Gondor) or 'b' (Mordor)
     this.isConnected = false;
     this.isHost = false;
+    this.retryTimer = null;
 
     this.onStatusChange = onStatusChange;
     this.onRemoteMove = onRemoteMove;
     this.onRemoteReset = onRemoteReset;
     this.onConnected = onConnected;
+
+    // When returning from WhatsApp app on mobile/desktop, automatically ensure room is active
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && this.roomCode && !this.isConnected) {
+        if (!this.peer || this.peer.disconnected || this.peer.destroyed) {
+          this.enterRoom(this.roomCode, this.preferredColor);
+        }
+      }
+    });
   }
 
   disconnect() {
+    if (this.retryTimer) {
+      clearTimeout(this.retryTimer);
+      this.retryTimer = null;
+    }
     if (this.conn) {
       try { this.conn.close(); } catch {}
       this.conn = null;
@@ -41,84 +87,119 @@ export class OnlineRoomManager {
       this.peer = null;
     }
     this.isConnected = false;
-    this.roomCode = null;
   }
 
   createRoom(hostColor = 'w') {
-    this.disconnect();
-    this.isHost = true;
-    this.myColor = hostColor;
     const randomNum = Math.floor(1000 + Math.random() * 9000);
-    this.roomCode = `SANTI-${randomNum}`;
-    const fullPeerId = `${PEER_PREFIX}${this.roomCode}`;
+    const code = this.roomCode || `SANTI-${randomNum}`;
+    this.enterRoom(code, hostColor);
+  }
+
+  joinRoom(rawInput) {
+    const cleanCode = extractRoomCode(rawInput);
+    if (!cleanCode) return;
+    this.enterRoom(cleanCode, 'b');
+  }
+
+  /**
+   * Symmetric room entry:
+   * - First tries to claim the room ID (`lotr-bchess-v1-SANTI-XXXX`) as Host and wait.
+   * - If the room ID is already taken (`unavailable-id`), that means the other player
+   *   is ALREADY waiting in the room, so it immediately connects to them as Guest!
+   * - If the other player isn't there yet (`peer-unavailable`), it automatically holds
+   *   the room and waits for them without throwing an error!
+   */
+  enterRoom(rawCode, preferredColor = 'w') {
+    const cleanCode = extractRoomCode(rawCode);
+    if (!cleanCode) return;
+
+    this.disconnect();
+    this.roomCode = cleanCode;
+    this.preferredColor = preferredColor;
+    const hostPeerId = `${PEER_PREFIX}${cleanCode}`;
 
     this.onStatusChange?.({
-      state: 'creating',
+      state: 'waiting',
       roomCode: this.roomCode,
-      message: '⏳ Creando sala pública en Internet...'
+      myColor: this.myColor,
+      shareUrl: this.getShareUrl(),
+      message: `⏳ Conectando a la sala ${this.roomCode}...`
     });
 
-    this.peer = new Peer(fullPeerId, PEER_CONFIG);
+    // Step 1: Try to open the room as Host
+    const hostPeer = new Peer(hostPeerId, PEER_CONFIG);
+    this.peer = hostPeer;
 
-    this.peer.on('open', () => {
+    hostPeer.on('open', () => {
+      this.isHost = true;
+      this.myColor = this.preferredColor;
       this.onStatusChange?.({
         state: 'waiting',
         roomCode: this.roomCode,
         myColor: this.myColor,
         shareUrl: this.getShareUrl(),
-        message: `✅ Sala ${this.roomCode} creada. Pulsa «💬 Enviar por WhatsApp» y NO cierres esta pestaña mientras Santi entra al enlace.`
+        message: `🟢 Sala ${this.roomCode} abierta y esperando. Envíale el enlace por WhatsApp a Santi; en cuanto él lo abra se conectará automáticamente.`
       });
     });
 
-    this.peer.on('connection', (conn) => {
+    hostPeer.on('connection', (conn) => {
       this.conn = conn;
       this._setupConnection(conn);
     });
 
-    this.peer.on('error', (err) => {
-      this.onStatusChange?.({
-        state: 'error',
-        roomCode: this.roomCode,
-        message: `⚠️ Error de red (${err.type || err.message}). Pulsa Crear Sala de nuevo.`
-      });
+    hostPeer.on('error', (err) => {
+      if (err.type === 'unavailable-id') {
+        // The other player is ALREADY hosting this room! Connect to them as Guest!
+        this._connectAsGuest(hostPeerId);
+      } else {
+        this.onStatusChange?.({
+          state: 'waiting',
+          roomCode: this.roomCode,
+          shareUrl: this.getShareUrl(),
+          message: `🔄 Reconectando sala ${this.roomCode}...`
+        });
+        this.retryTimer = setTimeout(() => {
+          if (!this.isConnected && this.roomCode) {
+            this.enterRoom(this.roomCode, this.preferredColor);
+          }
+        }, 2200);
+      }
     });
   }
 
-  joinRoom(rawCode) {
-    const cleanCode = rawCode.trim().toUpperCase();
-    if (!cleanCode) return;
-
-    this.disconnect();
+  _connectAsGuest(hostPeerId) {
+    if (this.peer) {
+      try { this.peer.destroy(); } catch {}
+    }
     this.isHost = false;
-    this.roomCode = cleanCode;
-    const targetPeerId = `${PEER_PREFIX}${cleanCode}`;
+    const guestPeer = new Peer(undefined, PEER_CONFIG);
+    this.peer = guestPeer;
 
-    this.onStatusChange?.({
-      state: 'joining',
-      roomCode: cleanCode,
-      message: `⏳ Conectando en directo con la sala ${cleanCode}...`
-    });
-
-    this.peer = new Peer(undefined, PEER_CONFIG);
-
-    this.peer.on('open', () => {
-      const conn = this.peer.connect(targetPeerId, { reliable: true });
+    guestPeer.on('open', () => {
+      const conn = guestPeer.connect(hostPeerId, { reliable: true });
       this.conn = conn;
       this._setupConnection(conn);
     });
 
-    this.peer.on('error', (err) => {
-      this.onStatusChange?.({
-        state: 'error',
-        roomCode: cleanCode,
-        message: `⚠️ No se encontró la sala ${cleanCode} (${err.type || 'asegúrate de que quien creó la sala tiene la página abierta'}).`
-      });
+    guestPeer.on('error', (err) => {
+      if (err.type === 'peer-unavailable') {
+        // Host just left or switched apps; claim the room as Host and wait for them!
+        this.retryTimer = setTimeout(() => {
+          if (!this.isConnected && this.roomCode) {
+            this.enterRoom(this.roomCode, this.preferredColor);
+          }
+        }, 1200);
+      }
     });
   }
 
   _setupConnection(conn) {
     conn.on('open', () => {
       this.isConnected = true;
+      if (this.retryTimer) {
+        clearTimeout(this.retryTimer);
+        this.retryTimer = null;
+      }
       if (this.isHost) {
         const guestColor = this.myColor === 'w' ? 'b' : 'w';
         conn.send({
@@ -159,10 +240,16 @@ export class OnlineRoomManager {
     conn.on('close', () => {
       this.isConnected = false;
       this.onStatusChange?.({
-        state: 'disconnected',
+        state: 'waiting',
         roomCode: this.roomCode,
-        message: '🔌 El otro jugador ha cerrado o recargado la pestaña.'
+        shareUrl: this.getShareUrl(),
+        message: `🔌 Conexión en pausa en ${this.roomCode}. Reconectando automáticamente cuando el otro jugador vuelva a la pestaña...`
       });
+      this.retryTimer = setTimeout(() => {
+        if (!this.isConnected && this.roomCode) {
+          this.enterRoom(this.roomCode, this.myColor);
+        }
+      }, 1500);
     });
   }
 
@@ -179,7 +266,6 @@ export class OnlineRoomManager {
   }
 
   getShareUrl() {
-    // Always use the public GitHub Pages URL so Santi can open it from any phone/computer!
     const url = new URL(PUBLIC_GAME_URL);
     url.searchParams.set('room', this.roomCode);
     return url.toString();

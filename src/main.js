@@ -6,7 +6,7 @@ import { createLOTRPieceMesh } from './pieceBuilder.js';
 import { animateWalk, executeCinematicCombat, spawnParticleBurst } from './combatSystem.js';
 import { chooseBestMove } from './aiEngine.js';
 import { soundFX } from './soundFX.js';
-import { OnlineRoomManager, PUBLIC_GAME_URL } from './onlineMultiplayer.js';
+import { OnlineRoomManager, PUBLIC_GAME_URL, extractRoomCode } from './onlineMultiplayer.js';
 
 // --- Constants & Board Mapping ---
 const TILE_SIZE = 1.65;
@@ -758,7 +758,9 @@ document.getElementById('btn-host-black')?.addEventListener('click', () => {
 
 document.getElementById('btn-join-room')?.addEventListener('click', () => {
   if (onlineJoinInput?.value) {
-    onlineManager.joinRoom(onlineJoinInput.value);
+    const clean = extractRoomCode(onlineJoinInput.value);
+    onlineJoinInput.value = clean;
+    onlineManager.joinRoom(clean);
   }
 });
 
