@@ -6,6 +6,7 @@ import { createLOTRPieceMesh } from './pieceBuilder.js';
 import { animateWalk, executeCinematicCombat, spawnParticleBurst } from './combatSystem.js';
 import { chooseBestMove } from './aiEngine.js';
 import { soundFX } from './soundFX.js';
+import { OnlineRoomManager } from './onlineMultiplayer.js';
 
 // --- Constants & Board Mapping ---
 const TILE_SIZE = 1.65;
@@ -26,11 +27,12 @@ function coordsToSquare(fileIdx, rankIdx) {
 
 // --- Game State ---
 const chess = new Chess();
-let gameMode = 'ai-2'; // 'ai-1', 'ai-2', 'ai-3', 'pvp'
+let gameMode = 'ai-2'; // 'ai-1', 'ai-2', 'ai-3', 'pvp', 'online'
 let cinematicCameraEnabled = true;
 let isAnimating = false;
 let selectedSquare = null;
 let legalMovesForSelected = [];
+let lastMoveSnapshot = null; // { preFen, from, to, promotion } for WhatsApp turn sharing
 
 const pieceMeshes = new Map(); // square -> THREE.Group
 const tileMeshes = new Map();  // square -> THREE.Mesh
@@ -421,12 +423,14 @@ function triggerBurst(pos, colorHex, count = 28, speed = 4.2) {
   activeParticles.push(...burst);
 }
 
-async function performChessMove(from, to, promotionPiece = null) {
+async function performChessMove(from, to, promotionPiece = null, isRemote = false) {
   if (isAnimating) return false;
   isAnimating = true;
   clearHighlights();
   selectedSquare = null;
   legalMovesForSelected = [];
+
+  const preMoveFen = chess.fen();
 
   // Check if promotion is needed
   const movingPiece = chess.get(from);
@@ -440,7 +444,7 @@ async function performChessMove(from, to, promotionPiece = null) {
   let promo = promotionPiece;
   if (isPromo && !promo) {
     const isAITurn = gameMode.startsWith('ai') && movingPiece.color === 'b';
-    promo = isAITurn ? 'q' : await promptPawnPromotion(movingPiece.color);
+    promo = isAITurn || isRemote ? 'q' : await promptPawnPromotion(movingPiece.color);
   }
 
   let moveResult;
@@ -454,6 +458,17 @@ async function performChessMove(from, to, promotionPiece = null) {
   if (!moveResult) {
     isAnimating = false;
     return false;
+  }
+
+  lastMoveSnapshot = {
+    preFen: preMoveFen,
+    from,
+    to,
+    promotion: moveResult.promotion || null
+  };
+
+  if (gameMode === 'online' && !isRemote) {
+    onlineManager.sendMove(from, to, moveResult.promotion || null);
   }
 
   updateHUD();
@@ -656,10 +671,11 @@ renderer.domElement.addEventListener('pointerup', async (e) => {
     inspectPieceUI(pieceOnSquare.color, pieceOnSquare.type);
     soundFX.playSelect();
 
-    // Only allow selecting active turn's pieces (and only White if vs AI)
+    // Only allow selecting active turn's pieces (and only White if vs AI, or only myColor if Online)
     const isHumanTurn =
       pieceOnSquare.color === chess.turn() &&
-      !(gameMode.startsWith('ai') && pieceOnSquare.color === 'b');
+      !(gameMode.startsWith('ai') && pieceOnSquare.color === 'b') &&
+      !(gameMode === 'online' && onlineManager.isConnected && pieceOnSquare.color !== onlineManager.myColor);
 
     if (isHumanTurn) {
       selectedSquare = clickedSquare;
@@ -677,9 +693,123 @@ renderer.domElement.addEventListener('pointerup', async (e) => {
   }
 });
 
+// --- Online P2P Multiplayer & WhatsApp Sharing ---
+const onlineDialog = document.getElementById('online-dialog');
+const onlineShareBox = document.getElementById('online-share-box');
+const onlineRoomCodeEl = document.getElementById('online-room-code');
+const onlineShareUrlInput = document.getElementById('online-share-url');
+const onlineJoinInput = document.getElementById('online-join-input');
+const onlineStatusBanner = document.getElementById('online-status-banner');
+const gameModeSelect = document.getElementById('game-mode-select');
+const btnOnlineRoom = document.getElementById('btn-online-room');
+
+const onlineManager = new OnlineRoomManager({
+  onStatusChange: ({ state, roomCode, shareUrl, message }) => {
+    if (onlineStatusBanner && message) {
+      onlineStatusBanner.textContent = message;
+    }
+    if (state === 'waiting' && shareUrl) {
+      onlineShareBox.hidden = false;
+      onlineRoomCodeEl.textContent = roomCode;
+      onlineShareUrlInput.value = shareUrl;
+    }
+  },
+  onConnected: ({ myColor, roomCode }) => {
+    gameMode = 'online';
+    if (gameModeSelect) gameModeSelect.value = 'online';
+    const factionLabel = myColor === 'w' ? 'Gondor (Blancas)' : 'Mordor (Negras)';
+    if (onlineStatusBanner) {
+      onlineStatusBanner.textContent = `🎉 ¡Conectado en directo en la sala ${roomCode}! Juegas con ${factionLabel}.`;
+    }
+    if (btnOnlineRoom) {
+      btnOnlineRoom.textContent = `🟢 Online: ${roomCode}`;
+    }
+    setCameraPreset(myColor === 'w' ? 'white' : 'black');
+    soundFX.playHornFanfare();
+    resetGame(true);
+    setTimeout(() => {
+      if (onlineDialog?.open) onlineDialog.close();
+    }, 900);
+  },
+  onRemoteMove: async ({ from, to, promotion }) => {
+    await performChessMove(from, to, promotion, true);
+  },
+  onRemoteReset: () => {
+    resetGame(true);
+  }
+});
+
+if (btnOnlineRoom && onlineDialog) {
+  btnOnlineRoom.addEventListener('click', () => {
+    onlineDialog.showModal();
+  });
+}
+
+document.getElementById('btn-host-white')?.addEventListener('click', () => {
+  onlineManager.createRoom('w');
+});
+
+document.getElementById('btn-host-black')?.addEventListener('click', () => {
+  onlineManager.createRoom('b');
+});
+
+document.getElementById('btn-join-room')?.addEventListener('click', () => {
+  if (onlineJoinInput?.value) {
+    onlineManager.joinRoom(onlineJoinInput.value);
+  }
+});
+
+document.getElementById('btn-copy-link')?.addEventListener('click', async (e) => {
+  const url = onlineShareUrlInput?.value;
+  if (!url) return;
+  try {
+    await navigator.clipboard.writeText(url);
+    e.target.textContent = '✅ ¡Enlace Copiado!';
+    setTimeout(() => { e.target.textContent = '📋 Copiar Enlace'; }, 2000);
+  } catch {
+    onlineShareUrlInput.select();
+  }
+});
+
+document.getElementById('btn-whatsapp-share')?.addEventListener('click', () => {
+  const url = onlineShareUrlInput?.value || window.location.href;
+  const code = onlineManager.roomCode || '';
+  const text = `⚔️ ¡Santi! Entra a mi sala online de Battle Chess (El Señor de los Anillos x Star Wars) para jugar en directo (Sala ${code}):\n${url}`;
+  window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
+});
+
+// Asynchronous / Instant WhatsApp Turn Share button ("💬 Mandar Jugada por WhatsApp a Santi")
+document.getElementById('btn-whatsapp-turn')?.addEventListener('click', () => {
+  const shareUrl = new URL(window.location.origin + window.location.pathname);
+  if (onlineManager.isConnected && onlineManager.roomCode) {
+    shareUrl.searchParams.set('room', onlineManager.roomCode);
+    const text = `⚔️ ¡Santi! Estoy en la sala en vivo ${onlineManager.roomCode} de Battle Chess. Entra aquí para jugar en directo:\n${shareUrl.toString()}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
+    return;
+  }
+
+  if (lastMoveSnapshot) {
+    shareUrl.searchParams.set('preFen', lastMoveSnapshot.preFen);
+    shareUrl.searchParams.set('from', lastMoveSnapshot.from);
+    shareUrl.searchParams.set('to', lastMoveSnapshot.to);
+    if (lastMoveSnapshot.promotion) {
+      shareUrl.searchParams.set('promo', lastMoveSnapshot.promotion);
+    }
+    const nextTurnName = chess.turn() === 'w' ? 'Gondor (Blancas)' : 'Mordor (Negras)';
+    const text = `⚔️ ¡Santi! He movido de ${lastMoveSnapshot.from.toUpperCase()} a ${lastMoveSnapshot.to.toUpperCase()} en nuestro Battle Chess. Abre este enlace para ver el duelo láser y hacer tu jugada con ${nextTurnName}:\n${shareUrl.toString()}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
+  } else {
+    // No move made yet -> open the Online Room modal so user can invite Santi
+    onlineDialog?.showModal();
+  }
+});
+
 // --- UI Controls Wiring ---
-document.getElementById('game-mode-select').addEventListener('change', (e) => {
+gameModeSelect.addEventListener('change', (e) => {
   gameMode = e.target.value;
+  if (gameMode === 'online') {
+    onlineDialog?.showModal();
+  }
 });
 
 const btnCinematic = document.getElementById('btn-cinematic');
@@ -728,9 +858,10 @@ if (btnMidiNext) {
   });
 }
 
-function resetGame() {
+function resetGame(isRemote = false) {
   if (isAnimating) return;
   chess.reset();
+  lastMoveSnapshot = null;
   capturedByWhite.length = 0;
   capturedByBlack.length = 0;
   renderCasualties();
@@ -741,11 +872,14 @@ function resetGame() {
   updateHUD();
   battleLog.innerHTML =
     '<li class="log-entry lore-intro">⚔️ Nueva guerra iniciada: Sables láser encendidos y corceles robot listos.</li>';
+  if (gameMode === 'online' && !isRemote) {
+    onlineManager.sendReset();
+  }
   soundFX.startMusic();
   updateMidiButtonUI(true);
 }
 
-document.getElementById('btn-reset').addEventListener('click', resetGame);
+document.getElementById('btn-reset').addEventListener('click', () => resetGame(false));
 
 document.getElementById('btn-undo').addEventListener('click', () => {
   if (isAnimating) return;
@@ -902,3 +1036,37 @@ rebuildAllPieces();
 inspectPieceUI('w', 'k');
 updateHUD();
 requestAnimationFrame(animate);
+
+// Auto-handle WhatsApp invite links (?room=SANTI-XXXX or ?preFen=...&from=...&to=...)
+function checkUrlParamsOnLoad() {
+  const params = new URLSearchParams(window.location.search);
+  const roomParam = params.get('room');
+  const preFenParam = params.get('preFen');
+  const fromParam = params.get('from');
+  const toParam = params.get('to');
+  const promoParam = params.get('promo');
+
+  if (roomParam) {
+    gameMode = 'online';
+    if (gameModeSelect) gameModeSelect.value = 'online';
+    if (onlineJoinInput) onlineJoinInput.value = roomParam;
+    onlineDialog?.showModal();
+    onlineManager.joinRoom(roomParam);
+  } else if (preFenParam && fromParam && toParam) {
+    try {
+      chess.load(preFenParam);
+      gameMode = 'pvp';
+      if (gameModeSelect) gameModeSelect.value = 'pvp';
+      rebuildAllPieces();
+      updateHUD();
+      // Rotate camera to the player who is about to receive the move
+      const receiverColor = chess.turn() === 'w' ? 'b' : 'w';
+      setCameraPreset(receiverColor === 'w' ? 'white' : 'black');
+      setTimeout(() => {
+        performChessMove(fromParam, toParam, promoParam || null, true);
+      }, 650);
+    } catch {}
+  }
+}
+
+checkUrlParamsOnLoad();

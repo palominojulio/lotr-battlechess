@@ -40,8 +40,13 @@
             <option value="ai-1">vs. Orco IA (Fácil)</option>
             <option value="ai-3">vs. Señor Oscuro IA (Difícil)</option>
             <option value="pvp">2 Jugadores (Local)</option>
+            <option value="online">🌐 Online con Santi</option>
           </select>
         </label>
+
+        <button type="button" class="btn-hud btn-online" id="btn-online-room" title="Crear sala online o invitar a Santi por WhatsApp">
+          🌐 Jugar Online con Santi
+        </button>
 
         <button type="button" class="btn-hud active" id="btn-cinematic" title="Activar/desactivar cámara cinemática en capturas">
           🎥 Cámara Combate: ON
@@ -88,6 +93,9 @@
       <div class="panel-actions">
         <button type="button" class="btn-action" id="btn-undo">↩ Deshacer</button>
         <button type="button" class="btn-action btn-danger" id="btn-reset">🔄 Nueva Guerra</button>
+        <button type="button" class="btn-action btn-whatsapp" id="btn-whatsapp-turn" style="grid-column: 1 / -1;">
+          💬 Mandar Jugada por WhatsApp a Santi
+        </button>
       </div>
     </aside>
 
@@ -201,6 +209,59 @@
     <form method="dialog" class="dialog-actions">
       <button type="submit" value="new-game" class="btn-action btn-accent" autofocus>⚔️ Jugar Nueva Batalla</button>
       <button type="submit" value="inspect" class="btn-action">Ver Tablero</button>
+    </form>
+  </dialog>
+
+  <!-- Native Modal Dialog for P2P Online Multiplayer with Santi -->
+  <dialog id="online-dialog" closedby="any" aria-labelledby="online-title">
+    <h2 id="online-title">🌐 Multijugador Online con Santi</h2>
+    <p class="dialog-desc">
+      Crea una sala en tiempo real y envíale el enlace a Santi por WhatsApp, o introduce su código de sala para jugar cada uno desde su móvil u ordenador.
+    </p>
+
+    <div class="online-section">
+      <div class="online-subtitle">1. Crear una Sala Nueva</div>
+      <div class="online-btn-row">
+        <button type="button" class="btn-action btn-gondor" id="btn-host-white" autofocus>
+          ☀️ Crear Sala (Yo juego Blancas · Gondor)
+        </button>
+        <button type="button" class="btn-action btn-mordor" id="btn-host-black">
+          👁️ Crear Sala (Yo juego Negras · Mordor)
+        </button>
+      </div>
+    </div>
+
+    <div class="online-share-box" id="online-share-box" hidden>
+      <div class="online-code-badge">
+        Código de Sala: <strong id="online-room-code">SANTI-0000</strong>
+      </div>
+      <input type="text" id="online-share-url" class="online-input" readonly aria-label="Enlace de invitación para Santi" />
+      <div class="online-btn-row">
+        <button type="button" class="btn-action btn-accent" id="btn-copy-link">📋 Copiar Enlace</button>
+        <button type="button" class="btn-action btn-whatsapp" id="btn-whatsapp-share">💬 Enviar por WhatsApp</button>
+      </div>
+    </div>
+
+    <div class="online-section">
+      <div class="online-subtitle">2. O Unirse a la Sala de Santi</div>
+      <div class="online-join-row">
+        <input
+          type="text"
+          id="online-join-input"
+          class="online-input"
+          placeholder="Ej: SANTI-4821"
+          aria-label="Código de sala de Santi"
+        />
+        <button type="button" class="btn-action btn-accent" id="btn-join-room">⚔️ Conectar</button>
+      </div>
+    </div>
+
+    <div class="online-status-banner" id="online-status-banner">
+      Selecciona crear sala o introduce el código de Santi.
+    </div>
+
+    <form method="dialog" class="dialog-actions">
+      <button type="submit" value="close" class="btn-action">Cerrar</button>
     </form>
   </dialog>
 
