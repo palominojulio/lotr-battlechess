@@ -57,7 +57,6 @@ function createLightsaber({
     headMesh.position.y = 0.14;
     bladeGroup.add(headMesh);
 
-    // Glowing plasma impact faces & spikes
     const faceGeo = new THREE.CylinderGeometry(0.14, 0.14, 0.52, 8);
     faceGeo.rotateZ(Math.PI / 2);
     const faceCore = new THREE.Mesh(faceGeo, coreMat);
@@ -88,7 +87,6 @@ function createLightsaber({
       const guardMetal = new THREE.Mesh(guardMetalGeo, goldMat);
       bladeGroup.add(guardMetal);
 
-      // Left & right mini plasma vents (Kylo / Medieval broadsword style)
       const ventCoreGeo = new THREE.CylinderGeometry(0.014, 0.018, 0.38, 8);
       ventCoreGeo.rotateZ(Math.PI / 2);
       const ventCore = new THREE.Mesh(ventCoreGeo, coreMat);
@@ -100,7 +98,6 @@ function createLightsaber({
       bladeGroup.add(ventAura);
     }
 
-    // Double-bladed lightsaber option (Galadriel / Witch-king / Wizards)
     if (isDoubleBladed) {
       const bottomCore = coreMesh.clone();
       bottomCore.rotation.z = Math.PI;
@@ -119,20 +116,104 @@ function createLightsaber({
 }
 
 /**
+ * Builds a prominent Medieval Heraldic Heater Shield ("Escudito") for Pawns
+ * with Gondor White Tree / Star emblem or Mordor Flaming Eye emblem
+ */
+function createPawnShield(isWhite, saberColor) {
+  const shieldGroup = new THREE.Group();
+
+  // Classic medieval heater shield silhouette
+  const shape = new THREE.Shape();
+  shape.moveTo(-0.24, 0.26);
+  shape.lineTo(0.24, 0.26);
+  shape.lineTo(0.24, -0.02);
+  shape.quadraticCurveTo(0.22, -0.24, 0, -0.38);
+  shape.quadraticCurveTo(-0.22, -0.24, -0.24, -0.02);
+  shape.closePath();
+
+  const extrudeSettings = {
+    depth: 0.045,
+    bevelEnabled: true,
+    bevelSegments: 2,
+    steps: 1,
+    bevelSize: 0.02,
+    bevelThickness: 0.02
+  };
+
+  const shieldGeo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+  const shieldPlateMat = new THREE.MeshStandardMaterial({
+    color: isWhite ? 0x1e3a8a : 0x7f1d1d,
+    emissive: isWhite ? 0x0f172a : 0x3b0707,
+    metalness: 0.7,
+    roughness: 0.25
+  });
+  const shieldMesh = new THREE.Mesh(shieldGeo, shieldPlateMat);
+  shieldMesh.castShadow = true;
+  shieldGroup.add(shieldMesh);
+
+  // Bright Metallic Heraldic Rim (Gold for Gondor, Molten Orange-Gold for Mordor)
+  const rimEdgeGeo = new THREE.EdgesGeometry(shieldGeo);
+  const rimMat = new THREE.LineBasicMaterial({
+    color: isWhite ? 0xfacc15 : 0xff6600
+  });
+  const rimLines = new THREE.LineSegments(rimEdgeGeo, rimMat);
+  shieldGroup.add(rimLines);
+
+  // Center Heraldic Boss + Glowing Faction Emblem on Front Face
+  const emblemMat = new THREE.MeshBasicMaterial({
+    color: isWhite ? 0xe0f2fe : 0xffaa00
+  });
+  const glowMat = new THREE.MeshBasicMaterial({
+    color: saberColor
+  });
+
+  if (isWhite) {
+    // Gondor Emblem on both front and back of shield: White Tree + Star of Eärendil
+    [0.065, -0.025].forEach((zPos) => {
+      const starBoss = new THREE.Mesh(new THREE.OctahedronGeometry(0.095, 0), emblemMat);
+      starBoss.position.set(0, 0.02, zPos);
+      shieldGroup.add(starBoss);
+
+      const verticalBar = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.34, 0.03), glowMat);
+      verticalBar.position.set(0, -0.02, zPos);
+      shieldGroup.add(verticalBar);
+
+      const crossBar = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.045, 0.03), glowMat);
+      crossBar.position.set(0, 0.04, zPos);
+      shieldGroup.add(crossBar);
+    });
+  } else {
+    // Mordor Emblem on both front and back of shield: Blazing Eye of Sauron
+    [0.06, -0.025].forEach((zPos) => {
+      const eyeRing = new THREE.Mesh(new THREE.TorusGeometry(0.11, 0.028, 8, 20), emblemMat);
+      eyeRing.position.set(0, 0.0, zPos);
+      shieldGroup.add(eyeRing);
+
+      const slitPupil = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.24, 0.04), glowMat);
+      slitPupil.position.set(0, 0.0, zPos);
+      shieldGroup.add(slitPupil);
+    });
+  }
+
+  return shieldGroup;
+}
+
+/**
  * Builds a Robotic Cyber-Horse (Caballo Robot) for Knights (n)
  */
 function buildRobotHorse(isWhite, saberColor) {
   const mountGroup = new THREE.Group();
 
   const chassisMat = new THREE.MeshStandardMaterial({
-    color: isWhite ? 0xdbeafe : 0x1e293b,
-    metalness: 0.88,
+    color: isWhite ? 0xdbeafe : 0x4c1d24,
+    emissive: isWhite ? 0x000000 : 0x2a080c,
+    metalness: 0.85,
     roughness: 0.22
   });
   const jointMat = new THREE.MeshStandardMaterial({
-    color: isWhite ? 0x64748b : 0x0f172a,
-    metalness: 0.92,
-    roughness: 0.3
+    color: isWhite ? 0x64748b : 0x7f1d1d,
+    metalness: 0.9,
+    roughness: 0.28
   });
   const neonMat = new THREE.MeshBasicMaterial({
     color: saberColor
@@ -234,47 +315,50 @@ export function createLOTRPieceMesh(type, color) {
     lore
   };
 
-  // Materials
+  // High-Contrast Faction Materials so Black pieces stand out vividly on dark tiles
   const baseMat = new THREE.MeshStandardMaterial({
-    color: isWhite ? 0x1e293b : 0x111827,
-    metalness: 0.75,
-    roughness: 0.3
+    color: isWhite ? 0xcbd5e1 : 0x5c1922,
+    emissive: isWhite ? 0x0f172a : 0x2e080d,
+    metalness: 0.72,
+    roughness: 0.28
   });
   const ringMat = new THREE.MeshBasicMaterial({
-    color: saberColor
+    color: isWhite ? 0x38bdf8 : 0xff4500
   });
   const armorMat = new THREE.MeshStandardMaterial({
     color: lore.primaryColor,
-    metalness: isWhite ? 0.65 : 0.8,
-    roughness: 0.28
+    emissive: isWhite ? 0x091526 : 0x330a10,
+    metalness: 0.68,
+    roughness: 0.26
   });
   const trimMat = new THREE.MeshStandardMaterial({
     color: lore.accentColor,
+    emissive: isWhite ? 0x1a1200 : 0x421000,
     metalness: 0.85,
     roughness: 0.2
   });
   const skinMat = new THREE.MeshStandardMaterial({
-    color: isWhite ? 0xfde68a : 0x3f3f46,
-    roughness: 0.5
+    color: isWhite ? 0xfde68a : 0x7c2d12,
+    roughness: 0.45
   });
 
-  // 1. Pedestal Base with Glowing Neon Faction Ring
-  const pedGeo = new THREE.CylinderGeometry(0.58, 0.68, 0.16, 24);
+  // 1. Pedestal Base with High-Contrast Glowing Faction Rings
+  const pedGeo = new THREE.CylinderGeometry(0.58, 0.68, 0.18, 24);
   const pedestal = new THREE.Mesh(pedGeo, baseMat);
-  pedestal.position.y = 0.08;
+  pedestal.position.y = 0.09;
   pedestal.castShadow = true;
   pedestal.receiveShadow = true;
   root.add(pedestal);
 
-  const neonRingGeo = new THREE.TorusGeometry(0.6, 0.028, 10, 32);
+  const neonRingGeo = new THREE.TorusGeometry(0.61, 0.036, 10, 32);
   neonRingGeo.rotateX(Math.PI / 2);
   const neonRing = new THREE.Mesh(neonRingGeo, ringMat);
-  neonRing.position.y = 0.16;
+  neonRing.position.y = 0.17;
   root.add(neonRing);
 
   // 2. Articulated Body Hierarchy (allows decapitation / waist-slice / Force levitation)
   const bodyGroup = new THREE.Group();
-  bodyGroup.position.y = 0.16;
+  bodyGroup.position.y = 0.18;
   root.add(bodyGroup);
 
   const lowerBody = new THREE.Group();
@@ -296,7 +380,7 @@ export function createLOTRPieceMesh(type, color) {
 
   // Scale height by piece role
   const scaleMap = {
-    p: 0.82,
+    p: 0.85,
     n: 1.0,
     b: 1.08,
     r: 1.22,
@@ -315,7 +399,6 @@ export function createLOTRPieceMesh(type, color) {
     mountGroup = buildRobotHorse(isWhite, saberColor);
     lowerBody.add(mountGroup);
 
-    // Rider positioned on the horse's saddle
     upperBody.position.set(0, 0.72, -0.05);
 
     const riderTorso = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.22, 0.48, 12), armorMat);
@@ -323,7 +406,6 @@ export function createLOTRPieceMesh(type, color) {
     riderTorso.castShadow = true;
     upperBody.add(riderTorso);
 
-    // Head + Cyber Visor Helmet
     headGroup.position.set(0, 0.58, 0);
     const helm = new THREE.Mesh(new THREE.SphereGeometry(0.16, 14, 14), armorMat);
     headGroup.add(helm);
@@ -331,13 +413,11 @@ export function createLOTRPieceMesh(type, color) {
     visor.position.set(0, 0.02, 0.1);
     headGroup.add(visor);
 
-    // Plume / Nazgûl spikes
     const crest = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.26, 6), trimMat);
     crest.position.set(0, 0.22, -0.04);
     headGroup.add(crest);
     upperBody.add(headGroup);
 
-    // Right arm holding Laser Cavalry Lance
     rightArm.position.set(0.26, 0.36, 0.05);
     const lance = createLightsaber({
       saberColor,
@@ -350,7 +430,6 @@ export function createLOTRPieceMesh(type, color) {
     rightArm.add(lance);
     upperBody.add(rightArm);
 
-    // Left arm with glowing plasma shield
     leftArm.position.set(-0.26, 0.32, 0.08);
     const shield = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.04, 16), trimMat);
     shield.rotation.z = Math.PI / 2;
@@ -370,13 +449,11 @@ export function createLOTRPieceMesh(type, color) {
     chest.castShadow = true;
     upperBody.add(chest);
 
-    // Glowing Reactor Core in Chest
     const core = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.46, 16), ringMat);
     core.rotation.x = Math.PI / 2;
     core.position.set(0, 0.35, 0);
     upperBody.add(core);
 
-    // Shoulder Turrets / Pauldrons
     const pauldronGeo = new THREE.BoxGeometry(0.24, 0.22, 0.34);
     const pL = new THREE.Mesh(pauldronGeo, trimMat);
     pL.position.set(-0.42, 0.56, 0);
@@ -384,7 +461,6 @@ export function createLOTRPieceMesh(type, color) {
     pR.position.x = 0.42;
     upperBody.add(pL, pR);
 
-    // Mecha Head
     headGroup.position.set(0, 0.78, 0);
     const headMesh = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.32, 0.32), armorMat);
     headGroup.add(headMesh);
@@ -393,7 +469,6 @@ export function createLOTRPieceMesh(type, color) {
     headGroup.add(eyeVisor);
     upperBody.add(headGroup);
 
-    // Right Arm with Giant Plasma Hammer
     rightArm.position.set(0.46, 0.48, 0);
     const hammer = createLightsaber({
       saberColor,
@@ -428,7 +503,7 @@ export function createLOTRPieceMesh(type, color) {
     torso.castShadow = true;
     upperBody.add(torso);
 
-    // Chest armor plate / Cyber-medieval breastplate
+    // Chest armor plate
     const chestPlate = new THREE.Mesh(
       new THREE.BoxGeometry(0.36 * hScale, 0.34 * hScale, 0.26 * hScale),
       trimMat
@@ -446,9 +521,8 @@ export function createLOTRPieceMesh(type, color) {
     visor.position.set(0, 0.03 * hScale, 0.1 * hScale);
     headGroup.add(visor);
 
-    // Role-specific headgear (Crowns, Wizard Hats, Helmets)
+    // Role-specific headgear
     if (type === 'k') {
-      // Crown of Aragorn / Spikes of Darth Sauron
       const crown = new THREE.Mesh(
         new THREE.CylinderGeometry(0.22 * hScale, 0.17 * hScale, 0.24 * hScale, 8, 1, true),
         trimMat
@@ -457,22 +531,24 @@ export function createLOTRPieceMesh(type, color) {
       headGroup.add(crown);
 
       if (!isWhite) {
-        // Sauron's Flaming Eye above crown
         const eye = new THREE.Mesh(new THREE.OctahedronGeometry(0.14), ringMat);
         eye.position.y = 0.42 * hScale;
         headGroup.add(eye);
       }
     } else if (type === 'q') {
-      // Galadriel Halo / Witch-king Morgul Crown
       const diadem = new THREE.Mesh(new THREE.TorusGeometry(0.2 * hScale, 0.03, 8, 20), trimMat);
       diadem.rotation.x = Math.PI / 2;
       diadem.position.y = 0.15 * hScale;
       headGroup.add(diadem);
     } else if (type === 'b') {
-      // Wizard Hat / Hood
       const hatCone = new THREE.Mesh(new THREE.ConeGeometry(0.24 * hScale, 0.45 * hScale, 12), armorMat);
       hatCone.position.y = 0.28 * hScale;
       headGroup.add(hatCone);
+    } else if (type === 'p') {
+      // Infantry Helmet Crest for Pawns so they look like armored medieval guards
+      const helmCrest = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.14, 0.26), trimMat);
+      helmCrest.position.set(0, 0.16 * hScale, 0);
+      headGroup.add(helmCrest);
     }
 
     upperBody.add(headGroup);
@@ -490,23 +566,31 @@ export function createLOTRPieceMesh(type, color) {
     rightArm.add(saber);
     upperBody.add(rightArm);
 
-    // Left Arm + Shield or Force Orb
-    leftArm.position.set(-0.32 * hScale, 0.4 * hScale, 0.06);
-    if (type === 'b' || type === 'q') {
-      // Floating Force / Palantír Plasma Orb
+    // Left Arm + Prominent Heraldic Shield ("Escudito") in FRONT of the Pawn
+    leftArm.position.set(-0.22 * hScale, 0.36 * hScale, 0.22);
+    if (type === 'p') {
+      // Prominent front-facing Medieval Heater Shield ("escudito") held forward toward the enemy!
+      const pawnShield = createPawnShield(isWhite, saberColor);
+      pawnShield.position.set(0.12, -0.04, 0.14);
+      pawnShield.rotation.y = 0.12;
+      leftArm.add(pawnShield);
+    } else if (type === 'b' || type === 'q') {
       const orb = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 12), ringMat);
       orb.position.set(0, 0.1, 0.18);
       leftArm.add(orb);
     } else {
-      // Medieval Energy Shield
-      const shield = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.38 * hScale, 0.28 * hScale), trimMat);
-      leftArm.add(shield);
+      const royalShield = createPawnShield(isWhite, saberColor);
+      royalShield.scale.setScalar(0.85);
+      royalShield.position.set(0.06, -0.05, 0.12);
+      royalShield.rotation.y = 0.18;
+      leftArm.add(royalShield);
     }
     upperBody.add(leftArm);
   }
 
-  // Face direction: White faces +Z (towards Black), Black faces -Z (towards White)
-  root.rotation.y = isWhite ? 0 : Math.PI;
+  // Face direction: White starts at +Z so rotates Math.PI to face -Z (towards Black);
+  // Black starts at -Z so rotates 0 to face +Z (towards White)
+  root.rotation.y = isWhite ? Math.PI : 0;
 
   root.userData.parts = {
     pedestal,

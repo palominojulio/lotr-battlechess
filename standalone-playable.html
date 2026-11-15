@@ -65,10 +65,10 @@
         <div class="bg-[var(--background)] border border-[var(--border)] rounded-lg p-3">
           <div class="flex items-center justify-between mb-1">
             <span class="text-xs font-semibold text-[var(--primary)]" id="card-faction">Orden de Gondor</span>
-            <span class="text-xs text-[var(--muted-foreground)]" id="card-role">Rey</span>
+            <span class="text-xs text-[var(--muted-foreground)]" id="card-role">Peón con Escudo</span>
           </div>
-          <div class="text-sm font-bold text-[var(--foreground)] mb-1" id="card-name">👑 Aragorn Elessar</div>
-          <div class="text-xs text-[var(--muted-foreground)] mb-1.5" id="card-weapon">🗡️ Mandoble Láser Azul Andúril</div>
+          <div class="text-sm font-bold text-[var(--foreground)] mb-1" id="card-name">🛡️ Hobbit Guardia Jedi</div>
+          <div class="text-xs text-[var(--muted-foreground)] mb-1.5" id="card-weapon">🛡️ Escudo de Gondor y Daga Láser Azul</div>
           <div class="text-xs text-[var(--foreground)] bg-[var(--card)] border border-[var(--border)] rounded px-2 py-1" id="card-finisher">
             Finisher: Decapitación / Corte de Plasma
           </div>
@@ -77,7 +77,7 @@
         <div class="bg-[var(--background)] border border-[var(--border)] rounded-lg p-3 flex-1 flex flex-col min-h-[140px]">
           <div class="text-xs font-semibold text-[var(--foreground)] mb-1.5">Crónicas de Combate</div>
           <div id="battle-log" class="text-xs text-[var(--muted-foreground)] space-y-1 overflow-y-auto max-h-[115px]">
-            <div>⚔️ Selecciona una pieza en el tablero o pulsa «Probar Combate».</div>
+            <div>🛡️ Peones equipados con escudos heráldicos y armaduras de alto contraste.</div>
           </div>
         </div>
       </div>
@@ -85,27 +85,27 @@
   </div>
 
   <script>
-    // LOTR x Star Wars Cyber-Medieval Roster
+    // LOTR x Star Wars Cyber-Medieval Roster (High-Contrast Palette)
     const ROSTER = {
       w: {
-        k: { name: 'Aragorn Elessar', role: 'Rey', weapon: 'Mandoble Láser Azul Andúril', saber: '#00e5ff', body: '#dbeafe', accent: '#fbbf24', style: 'saber_slice', finisher: 'Mandoble Láser y Ascensión' },
-        q: { name: 'Dama Galadriel', role: 'Reina', weapon: 'Sable Doble Estelar + Fuerza', saber: '#a5f3fc', body: '#fef3c7', accent: '#60a5fa', style: 'force', finisher: 'Levitación Telequinética + Corte' },
-        r: { name: 'Mecha-Bárbol (Ent)', role: 'Torre', weapon: 'Martillo de Plasma Verde', saber: '#10b981', body: '#86efac', accent: '#a16207', style: 'mecha', finisher: 'Aplastamiento de Reactor' },
-        b: { name: 'Gandalf Cyber-Maia', role: 'Alfil', weapon: 'Pica Láser y Rayo de Anor', saber: '#38bdf8', body: '#f8fafc', accent: '#facc15', style: 'force', finisher: 'Relámpago de la Fuerza' },
-        n: { name: 'Rohirrim Caballo Robot', role: 'Caballo', weapon: 'Corcel Mecha + Ojos Láser', saber: '#22c55e', body: '#d9f99d', accent: '#eab308', style: 'horse_laser', finisher: 'Láser Ocular + Carga Térmica' },
-        p: { name: 'Hobbit Guardia Jedi', role: 'Peón', weapon: 'Daga Láser Kyber (Dardo)', saber: '#00d2ff', body: '#bfdbfe', accent: '#34d399', style: 'saber_slice', finisher: 'Decapitación Acrobática' }
+        k: { name: 'Aragorn Elessar', role: 'Rey', weapon: 'Mandoble Láser Azul Andúril', saber: '#00e5ff', body: '#f8fafc', accent: '#2563eb', rim: '#facc15', style: 'saber_slice', finisher: 'Mandoble Láser y Ascensión' },
+        q: { name: 'Dama Galadriel', role: 'Reina', weapon: 'Sable Doble Estelar + Fuerza', saber: '#a5f3fc', body: '#fef9c3', accent: '#3b82f6', rim: '#fde047', style: 'force', finisher: 'Levitación Telequinética + Corte' },
+        r: { name: 'Mecha-Bárbol (Ent)', role: 'Torre', weapon: 'Martillo de Plasma Verde', saber: '#10b981', body: '#dcfce7', accent: '#15803d', rim: '#4ade80', style: 'mecha', finisher: 'Aplastamiento de Reactor' },
+        b: { name: 'Gandalf Cyber-Maia', role: 'Alfil', weapon: 'Pica Láser y Rayo de Anor', saber: '#38bdf8', body: '#ffffff', accent: '#eab308', rim: '#60a5fa', style: 'force', finisher: 'Relámpago de la Fuerza' },
+        n: { name: 'Rohirrim Caballo Robot', role: 'Caballo', weapon: 'Corcel Mecha + Ojos Láser', saber: '#22c55e', body: '#ecfccb', accent: '#ca8a04', rim: '#4ade80', style: 'horse_laser', finisher: 'Láser Ocular + Carga Térmica' },
+        p: { name: 'Hobbit Guardia Jedi', role: 'Peón', weapon: 'Escudo de Gondor y Daga Láser', saber: '#00d2ff', body: '#e0f2fe', accent: '#1d4ed8', rim: '#facc15', style: 'saber_slice', finisher: 'Golpe de Escudo y Decapitación' }
       },
       b: {
-        k: { name: 'Darth Sauron', role: 'Rey', weapon: 'Mandoble Cruzado y Maza Sith', saber: '#ff0033', body: '#1f2937', accent: '#f97316', style: 'saber_slice', finisher: 'Desmembramiento Carmesí' },
-        q: { name: 'Rey Brujo Inquisidor', role: 'Reina', weapon: 'Sable Doble Giratorio Morgul', saber: '#ff1133', body: '#111827', accent: '#ef4444', style: 'force', finisher: 'Torbellino Sith Decapitador' },
-        r: { name: 'Ciber-Troll Olog-Mech', role: 'Torre', weapon: 'Martillo Térmico de Mordor', saber: '#ff4500', body: '#27272a', accent: '#ea580c', style: 'mecha', finisher: 'Explosión Sísmica de Chasis' },
-        b: { name: 'Conde Saruman', role: 'Alfil', weapon: 'Sable Curvo y Rayos Sith', saber: '#c084fc', body: '#374151', accent: '#a855f7', style: 'force', finisher: 'Electrocución y Sacrificio' },
-        n: { name: 'Nazgûl Caballo Robot', role: 'Caballo', weapon: 'Corcel Biónico + Guadaña Láser', saber: '#ff0022', body: '#18181b', accent: '#dc2626', style: 'horse_laser', finisher: 'Salto Propulsado + Láser Rojo' },
-        p: { name: 'Trooper Uruk-Sith', role: 'Peón', weapon: 'Cimitarra Láser Roja', saber: '#ff1a1a', body: '#292524', accent: '#dc2626', style: 'saber_slice', finisher: 'Corte Diagonal de Plasma' }
+        k: { name: 'Darth Sauron', role: 'Rey', weapon: 'Mandoble Cruzado y Maza Sith', saber: '#ff0033', body: '#5c141b', accent: '#ea580c', rim: '#fb923c', style: 'saber_slice', finisher: 'Desmembramiento Carmesí' },
+        q: { name: 'Rey Brujo Inquisidor', role: 'Reina', weapon: 'Sable Doble Giratorio Morgul', saber: '#ff1133', body: '#4c1d4b', accent: '#e11d48', rim: '#f43f5e', style: 'force', finisher: 'Torbellino Sith Decapitador' },
+        r: { name: 'Ciber-Troll Olog-Mech', role: 'Torre', weapon: 'Martillo Térmico de Mordor', saber: '#ff4500', body: '#6b2114', accent: '#f97316', rim: '#fdba74', style: 'mecha', finisher: 'Explosión Sísmica de Chasis' },
+        b: { name: 'Conde Saruman', role: 'Alfil', weapon: 'Sable Curvo y Rayos Sith', saber: '#c084fc', body: '#4a1d5e', accent: '#a855f7', rim: '#d8b4fe', style: 'force', finisher: 'Electrocución y Sacrificio' },
+        n: { name: 'Nazgûl Caballo Robot', role: 'Caballo', weapon: 'Corcel Biónico + Guadaña Láser', saber: '#ff0022', body: '#58151c', accent: '#dc2626', rim: '#f87171', style: 'horse_laser', finisher: 'Salto Propulsado + Láser Rojo' },
+        p: { name: 'Trooper Uruk-Sith', role: 'Peón', weapon: 'Escudo del Ojo Rojo y Cimitarra Láser', saber: '#ff1a1a', body: '#63171b', accent: '#dc2626', rim: '#fb923c', style: 'saber_slice', finisher: 'Embate de Escudo y Corte de Plasma' }
       }
     };
 
-    // Web Audio Synthesizer for Lightsabers & Mecha Horses
+    // Web Audio Synthesizer
     let audioCtx = null;
     function playSound(type) {
       try {
@@ -162,7 +162,7 @@
     let selected = null;
     let validMoves = [];
     let isIso = true;
-    let activeCombat = null; // Holds cinematic duel state
+    let activeCombat = null;
     let particles = [];
 
     function initBoard() {
@@ -179,8 +179,8 @@
       validMoves = [];
       activeCombat = null;
       document.getElementById('combat-hud').classList.add('hidden');
-      updateStatus('Turno: Orden de Gondor (Blancas) — Selecciona un campeón');
-      inspectPiece('w', 'k');
+      updateStatus('Turno: Orden de Gondor (Blancas) — Haz clic en una pieza');
+      inspectPiece('w', 'p');
     }
 
     function getMovesFor(r, c) {
@@ -234,7 +234,7 @@
 
     function inspectPiece(color, type) {
       const info = ROSTER[color][type];
-      document.getElementById('card-faction').textContent = color === 'w' ? '☀️ Orden de Gondor' : '👁️ Imperio de Mordor';
+      document.getElementById('card-faction').textContent = color === 'w' ? '☀️ Orden de Gondor (Blancas)' : '👁️ Imperio de Mordor (Negras)';
       document.getElementById('card-role').textContent = info.role;
       document.getElementById('card-name').textContent = info.name;
       document.getElementById('card-weapon').textContent = `⚔️ ${info.weapon}`;
@@ -267,7 +267,6 @@
       }
     }
 
-    // Execute Move or Cinematic Duel
     function executeMove(fromR, fromC, toR, toC, onComplete) {
       const attacker = board[fromR][fromC];
       const defender = board[toR][toC];
@@ -288,7 +287,6 @@
         return;
       }
 
-      // CINEMATIC BATTLE CHESS DUEL!
       const attInfo = ROSTER[attacker.color][attacker.type];
       const defInfo = ROSTER[defender.color][defender.type];
 
@@ -298,7 +296,7 @@
       document.getElementById('def-name').textContent = defInfo.name;
       document.getElementById('att-hp').style.width = '100%';
       document.getElementById('def-hp').style.width = '100%';
-      document.getElementById('combat-msg').textContent = `⚔️ ¡${attInfo.name} enciende su arma contra ${defInfo.name}!`;
+      document.getElementById('combat-msg').textContent = `⚔️ ¡${attInfo.name} ataca a ${defInfo.name}!`;
 
       playSound('ignite');
 
@@ -334,16 +332,15 @@
       executeMove(chosen.fromR, chosen.fromC, chosen.r, chosen.c);
     }
 
-    // Canvas Projection & Rendering
     const canvas = document.getElementById('chess-canvas');
     const ctx = canvas.getContext('2d');
 
     function boardToScreen(r, c) {
       const cx = canvas.width / 2;
-      const cy = canvas.height / 2 + 18;
+      const cy = canvas.height / 2 + 20;
       if (isIso) {
-        const tileW = 46;
-        const tileH = 24;
+        const tileW = 48;
+        const tileH = 25;
         const dr = r - 3.5;
         const dc = c - 3.5;
         return {
@@ -359,22 +356,64 @@
       }
     }
 
-    function drawPiece(x, y, piece, animState = null) {
-      const info = ROSTER[piece.color][piece.type];
-      const isW = piece.color === 'w';
+    // Draws a Medieval Heater Shield ("Escudito") with Gondor or Mordor emblem
+    function drawPawnShield(ctx, x, y, isW, info) {
       ctx.save();
       ctx.translate(x, y);
 
-      // Pedestal
-      ctx.fillStyle = isW ? '#1e293b' : '#0f172a';
-      ctx.strokeStyle = info.saber;
+      // Heater Shield Silhouette
+      ctx.fillStyle = isW ? '#1d4ed8' : '#7f1d1d';
+      ctx.strokeStyle = isW ? '#facc15' : '#fb923c';
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.ellipse(0, 0, 14, 7, 0, 0, Math.PI * 2);
+      ctx.moveTo(-7, -7);
+      ctx.lineTo(7, -7);
+      ctx.lineTo(7, 0);
+      ctx.quadraticCurveTo(6, 7, 0, 10);
+      ctx.quadraticCurveTo(-6, 7, -7, 0);
+      ctx.closePath();
       ctx.fill();
       ctx.stroke();
 
-      // Death / Sacrifice Slice or Levitation offsets
+      // Shield Emblem (White Tree / Star for Gondor, Flaming Eye for Mordor)
+      if (isW) {
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.moveTo(0, -4);
+        ctx.lineTo(0, 6);
+        ctx.moveTo(-4, 0);
+        ctx.lineTo(4, 0);
+        ctx.stroke();
+      } else {
+        // Eye of Sauron on Black Pawn Shield
+        ctx.fillStyle = '#fbbf24';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 4.2, 2.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#dc2626';
+        ctx.fillRect(-0.8, -2.5, 1.6, 5);
+      }
+
+      ctx.restore();
+    }
+
+    function drawPiece(x, y, piece, animState = null) {
+      const info = ROSTER[piece.color][piece.type];
+      const isW = piece.color === 'w';
+      const isPawn = piece.type === 'p';
+      ctx.save();
+      ctx.translate(x, y);
+
+      // High-Contrast Pedestal Base so Black pieces never blend into dark squares
+      ctx.fillStyle = isW ? '#e2e8f0' : '#450a0a';
+      ctx.strokeStyle = isW ? '#38bdf8' : '#ff5500';
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, isPawn ? 12.5 : 14.5, isPawn ? 6.2 : 7.2, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
       let upperOffsetX = 0;
       let upperOffsetY = 0;
       let headOffsetX = 0;
@@ -383,19 +422,16 @@
       let alpha = animState?.alpha ?? 1;
 
       if (animState?.isDying) {
-        const dt = animState.deathProgress; // 0..1
+        const dt = animState.deathProgress;
         if (info.style === 'force') {
-          // Force Spirit Ascension: rises upward & glows cyan
           upperOffsetY = -dt * 42;
           alpha = 1 - dt * 0.85;
         } else if (info.style === 'mecha' || info.style === 'horse_laser') {
-          // Robot Horse / Mecha Explosion: chassis & head fly apart
           upperOffsetX = dt * 26;
           upperOffsetY = -Math.sin(dt * Math.PI) * 20;
           headOffsetX = -dt * 30;
           headOffsetY = -dt * 35;
         } else {
-          // Medieval Lightsaber Decapitation & Bisection!
           upperOffsetX = dt * 18;
           upperOffsetY = dt * 8;
           headOffsetX = -dt * 24;
@@ -405,95 +441,135 @@
 
       ctx.globalAlpha = alpha;
 
-      // If Knight ('n'): Draw Robotic Cyber-Horse Base!
+      // KNIGHT ('n'): Draw Robotic Cyber-Horse Base with High-Contrast Trim
       if (piece.type === 'n') {
-        ctx.fillStyle = isW ? '#94a3b8' : '#27272a';
-        ctx.fillRect(-10 + upperOffsetX * 0.4, -14, 20, 10);
+        ctx.fillStyle = isW ? '#cbd5e1' : '#58151c';
+        ctx.strokeStyle = info.rim;
+        ctx.lineWidth = 1.5;
+        ctx.fillRect(-11 + upperOffsetX * 0.4, -15, 22, 11);
+        ctx.strokeRect(-11 + upperOffsetX * 0.4, -15, 22, 11);
+
         // Horse Cyber Head & Glowing Laser Visor
-        ctx.fillRect((isW ? 6 : -14) + headOffsetX * 0.5, -24 + headOffsetY * 0.5, 9, 12);
+        const hx = (isW ? 6 : -15) + headOffsetX * 0.5;
+        const hy = -25 + headOffsetY * 0.5;
+        ctx.fillRect(hx, hy, 9, 12);
+        ctx.strokeRect(hx, hy, 9, 12);
         ctx.fillStyle = info.saber;
-        ctx.fillRect((isW ? 11 : -16) + headOffsetX * 0.5, -22 + headOffsetY * 0.5, 5, 3);
+        ctx.fillRect((isW ? 11 : -17) + headOffsetX * 0.5, -23 + headOffsetY * 0.5, 5, 3.2);
       }
 
-      // Lower Torso
+      // Lower Armored Skirt / Legs with Bright Rim Outline
+      const hScale = isPawn ? 0.84 : 1.0;
       ctx.fillStyle = info.body;
+      ctx.strokeStyle = info.rim;
+      ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.moveTo(-8, -2);
-      ctx.lineTo(8, -2);
-      ctx.lineTo(6, -15);
-      ctx.lineTo(-6, -15);
+      ctx.moveTo(-8 * hScale, -2);
+      ctx.lineTo(8 * hScale, -2);
+      ctx.lineTo(6 * hScale, -15 * hScale);
+      ctx.lineTo(-6 * hScale, -15 * hScale);
       ctx.closePath();
       ctx.fill();
+      ctx.stroke();
 
-      // Molten Plasma Cauterization Ring when sliced!
+      // Molten Plasma Cauterization Ring when sliced
       if (animState?.isDying && info.style === 'saber_slice') {
         ctx.strokeStyle = '#ffaa00';
         ctx.lineWidth = 3;
         ctx.beginPath();
-        ctx.moveTo(-9, -15);
-        ctx.lineTo(9, -15);
+        ctx.moveTo(-9, -15 * hScale);
+        ctx.lineTo(9, -15 * hScale);
         ctx.stroke();
       }
 
-      // Upper Torso & Medieval Armor
+      // Upper Torso & Medieval Breastplate
       ctx.save();
       ctx.translate(upperOffsetX, upperOffsetY);
       ctx.fillStyle = info.body;
-      ctx.fillRect(-7, -27, 14, 12);
-      ctx.fillStyle = info.accent;
-      ctx.fillRect(-4, -25, 8, 8);
+      ctx.strokeStyle = info.rim;
+      ctx.lineWidth = 1.5;
+      ctx.fillRect(-7 * hScale, -27 * hScale, 14 * hScale, 12 * hScale);
+      ctx.strokeRect(-7 * hScale, -27 * hScale, 14 * hScale, 12 * hScale);
 
-      // Lightsaber / Plasma Broadsword
+      ctx.fillStyle = info.accent;
+      ctx.fillRect(-4 * hScale, -25 * hScale, 8 * hScale, 8 * hScale);
+
+      // Lightsaber / Plasma Broadsword (held in rear/sword hand, angled forward toward enemy)
       ctx.save();
-      ctx.translate(isW ? 8 : -8, -21);
+      ctx.translate((isW ? -8 : 8) * hScale, -21 * hScale);
       ctx.rotate(saberAngle);
-      // Crossguard
-      ctx.strokeStyle = info.accent;
+      ctx.strokeStyle = info.rim;
       ctx.lineWidth = 2.5;
       ctx.beginPath();
       ctx.moveTo(-5, 0);
       ctx.lineTo(5, 0);
       ctx.stroke();
-      // Glowing Neon Plasma Blade
+
       ctx.shadowColor = info.saber;
       ctx.shadowBlur = 10;
       ctx.strokeStyle = info.saber;
-      ctx.lineWidth = 4.5;
+      ctx.lineWidth = isPawn ? 3.8 : 4.6;
       ctx.beginPath();
       ctx.moveTo(0, 0);
-      ctx.lineTo(0, -24);
+      ctx.lineTo(0, isPawn ? -18 : -24);
       ctx.stroke();
-      // White-hot inner core
+
       ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 1.8;
+      ctx.lineWidth = 1.6;
       ctx.beginPath();
       ctx.moveTo(0, 0);
-      ctx.lineTo(0, -23);
+      ctx.lineTo(0, isPawn ? -17 : -23);
       ctx.stroke();
-      ctx.restore();
       ctx.restore();
 
-      // Head & Crown/Helmet (can be decapitated!)
+      // PAWN SPECIAL: Prominent Heraldic Medieval Shield ("Escudito") in FRONT facing the enemy army!
+      // White advances toward top-right (+X, -Y); Black advances toward bottom-left (-X, +Y)
+      if (isPawn) {
+        drawPawnShield(ctx, isW ? 8 : -8, isW ? -19 : -15, isW, info);
+      }
+      ctx.restore();
+
+      // Head & Role-Specific Helmet/Crown/Wizard Hat
       ctx.save();
       ctx.translate(upperOffsetX + headOffsetX, upperOffsetY + headOffsetY);
-      ctx.fillStyle = isW ? '#fde68a' : '#27272a';
+      ctx.fillStyle = isW ? '#fde68a' : '#7c2d12';
+      ctx.strokeStyle = info.rim;
+      ctx.lineWidth = 1.4;
       ctx.beginPath();
-      ctx.arc(0, -33, 6, 0, Math.PI * 2);
+      ctx.arc(0, -33 * hScale, 5.8 * hScale, 0, Math.PI * 2);
       ctx.fill();
-      // Cyber/Jedi Visor
+      ctx.stroke();
+
+      // Glowing Cyber/Jedi/Sith Visor
       ctx.fillStyle = info.saber;
-      ctx.fillRect(-4, -34, 8, 2.2);
-      // Crown for King/Queen
+      ctx.fillRect(-4 * hScale, -34 * hScale, 8 * hScale, 2.3);
+
+      // Role headgear
       if (piece.type === 'k' || piece.type === 'q') {
-        ctx.fillStyle = '#fbbf24';
+        ctx.fillStyle = isW ? '#facc15' : '#fb923c';
         ctx.beginPath();
-        ctx.moveTo(-5, -38);
-        ctx.lineTo(-3, -44);
+        ctx.moveTo(-5.5, -38);
+        ctx.lineTo(-3.5, -45);
         ctx.lineTo(0, -40);
-        ctx.lineTo(3, -44);
-        ctx.lineTo(5, -38);
+        ctx.lineTo(3.5, -45);
+        ctx.lineTo(5.5, -38);
         ctx.closePath();
         ctx.fill();
+      } else if (piece.type === 'b') {
+        // Pointed Wizard Hat (Gandalf / Saruman)
+        ctx.fillStyle = info.body;
+        ctx.strokeStyle = info.rim;
+        ctx.beginPath();
+        ctx.moveTo(-6, -37);
+        ctx.lineTo(0, -47);
+        ctx.lineTo(6, -37);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      } else if (piece.type === 'r') {
+        // Fortress / Mecha Turret Battlements
+        ctx.fillStyle = info.accent;
+        ctx.fillRect(-6, -41, 12, 4);
       }
       ctx.restore();
 
@@ -502,11 +578,10 @@
 
     function renderLoop(now) {
       requestAnimationFrame(renderLoop);
-      const isLightTheme = document.documentElement.classList.contains('light');
-      ctx.fillStyle = isLightTheme ? '#0f172a' : '#090d16';
+      ctx.fillStyle = '#090d16';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Draw Board Tiles
+      // Draw Board Tiles with Clear Contrast
       for (let r = 0; r < 8; r++) {
         for (let c = 0; c < 8; c++) {
           const pos = boardToScreen(r, c);
@@ -517,7 +592,7 @@
           ctx.save();
           ctx.translate(pos.x, pos.y);
           if (isIso) {
-            const tw = 46, th = 24;
+            const tw = 48, th = 25;
             ctx.beginPath();
             ctx.moveTo(0, -th / 2);
             ctx.lineTo(tw / 2, 0);
@@ -534,27 +609,28 @@
           } else if (moveHint) {
             ctx.fillStyle = moveHint.capture ? '#dc2626' : '#0284c7';
           } else {
-            ctx.fillStyle = isLightSq ? '#cbd5e1' : '#1e293b';
+            // Warm marble light squares + slate-blue dark squares so dark crimson Mordor pieces pop!
+            ctx.fillStyle = isLightSq ? '#d6d3c9' : '#2b3648';
           }
           ctx.fill();
-          ctx.strokeStyle = 'rgba(230,194,89,0.28)';
+          ctx.strokeStyle = 'rgba(230,194,89,0.32)';
           ctx.lineWidth = 1;
           ctx.stroke();
           ctx.restore();
         }
       }
 
-      // Draw Pieces (painter's algorithm back-to-front)
+      // Draw Pieces
       for (let r = 0; r < 8; r++) {
         for (let c = 0; c < 8; c++) {
           const p = board[r][c];
           if (!p) continue;
           if (activeCombat && ((r === activeCombat.fromR && c === activeCombat.fromC) || (r === activeCombat.toR && c === activeCombat.toC))) {
-            continue; // Drawn in activeCombat layer
+            continue;
           }
           const pos = boardToScreen(r, c);
           const idleSwing = Math.sin(now * 0.004 + r + c) * 0.15;
-          drawPiece(pos.x, pos.y, p, { saberAngle: (p.color === 'w' ? -0.45 : 0.45) + idleSwing });
+          drawPiece(pos.x, pos.y, p, { saberAngle: (p.color === 'w' ? 0.35 : -0.35) + idleSwing });
         }
       }
 
@@ -565,9 +641,6 @@
         const startPos = boardToScreen(activeCombat.fromR, activeCombat.fromC);
         const endPos = boardToScreen(activeCombat.toR, activeCombat.toC);
 
-        // Phase 1 (0..0.25): Walk to target
-        // Phase 2 (0.25..0.68): Lightsaber Clash / Robot Horse Ocular Laser / Force Lightning
-        // Phase 3 (0.68..1.0): Execution Decapitation / Force Ascension / Mecha Explosion
         const walkT = Math.min(1, t / 0.25);
         const duelX = startPos.x + (endPos.x - startPos.x) * (walkT * 0.82);
         const duelY = startPos.y + (endPos.y - startPos.y) * (walkT * 0.82);
@@ -605,7 +678,6 @@
         const isDying = t > 0.68;
         const deathProgress = isDying ? (t - 0.68) / 0.32 : 0;
 
-        // Draw Ocular Laser or Force Beam during Phase 2
         if (t > 0.28 && t < 0.66 && (activeCombat.attInfo.style === 'horse_laser' || activeCombat.attInfo.style === 'force')) {
           ctx.save();
           ctx.strokeStyle = activeCombat.attInfo.saber;
@@ -619,7 +691,6 @@
           ctx.restore();
         }
 
-        // Draw Defender & Attacker
         drawPiece(endPos.x, endPos.y, activeCombat.defender, {
           saberAngle: defSaber,
           isDying,
@@ -666,7 +737,6 @@
       }
     }
 
-    // Click Handler on Canvas
     canvas.addEventListener('click', (e) => {
       if (activeCombat) return;
       const rect = canvas.getBoundingClientRect();
@@ -707,10 +777,8 @@
       }
     });
 
-    // "⚔️ Probar Combate" Button: Immediately triggers a capture duel!
     document.getElementById('btn-duel').addEventListener('click', () => {
       if (activeCombat) return;
-      // Find any available capture for current turn
       const captures = [];
       for (let r = 0; r < 8; r++) {
         for (let c = 0; c < 8; c++) {
@@ -726,8 +794,7 @@
         inspectPiece(turn, board[chosen.fromR][chosen.fromC].type);
         executeMove(chosen.fromR, chosen.fromC, chosen.r, chosen.c);
       } else {
-        // Set up an instant Knight / Pawn clash in the center!
-        board[4][4] = board[6][4] || { color: 'w', type: 'n' };
+        board[4][4] = board[6][4] || { color: 'w', type: 'p' };
         board[6][4] = null;
         board[3][3] = board[1][3] || { color: 'b', type: 'p' };
         board[1][3] = null;

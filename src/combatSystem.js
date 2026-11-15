@@ -111,8 +111,8 @@ export function animateWalk(pieceMesh, targetPos, durationMs = 680) {
         if (parts?.mountGroup?.userData?.legs) {
           parts.mountGroup.userData.legs.forEach((l) => l.rotation.set(0, 0, 0));
         }
-        // Restore default faction facing at end of normal walk
-        pieceMesh.rotation.y = pieceMesh.userData.color === 'w' ? 0 : Math.PI;
+        // Restore default faction facing at end of normal walk (White faces -Z, Black faces +Z)
+        pieceMesh.rotation.y = pieceMesh.userData.color === 'w' ? Math.PI : 0;
         resolve();
       }
     }

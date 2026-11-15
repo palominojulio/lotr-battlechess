@@ -116,16 +116,16 @@ function buildBoardArena() {
   borderLines.position.y = -0.24;
   boardGroup.add(borderLines);
 
-  // 64 Squares
+  // 64 Squares (High-contrast Gondor Marble & Slate Bluestone so both White and Black pieces pop)
   const lightTileMat = new THREE.MeshStandardMaterial({
-    color: 0xd6d3c9,
-    metalness: 0.25,
+    color: 0xe2dfd7,
+    metalness: 0.2,
     roughness: 0.35
   });
   const darkTileMat = new THREE.MeshStandardMaterial({
-    color: 0x1e2430,
-    metalness: 0.55,
-    roughness: 0.35
+    color: 0x2b3648,
+    metalness: 0.4,
+    roughness: 0.38
   });
 
   const tileGeo = new THREE.BoxGeometry(TILE_SIZE * 0.98, 0.16, TILE_SIZE * 0.98);
