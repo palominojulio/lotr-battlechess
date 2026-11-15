@@ -127,9 +127,9 @@ function buildBoardArena() {
     roughness: 0.35
   });
   const darkTileMat = new THREE.MeshStandardMaterial({
-    color: 0x364359,
-    metalness: 0.3,
-    roughness: 0.42
+    color: 0x526178,
+    metalness: 0.25,
+    roughness: 0.45
   });
 
   const tileGeo = new THREE.BoxGeometry(TILE_SIZE * 0.98, 0.16, TILE_SIZE * 0.98);

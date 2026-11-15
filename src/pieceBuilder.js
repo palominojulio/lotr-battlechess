@@ -142,10 +142,10 @@ function createPawnShield(isWhite, saberColor, scanners = []) {
 
   const shieldGeo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
   const shieldPlateMat = new THREE.MeshStandardMaterial({
-    color: isWhite ? 0x1e3a8a : 0x7f1d1d,
-    emissive: isWhite ? 0x0f172a : 0x3b0707,
-    metalness: 0.7,
-    roughness: 0.25
+    color: isWhite ? 0x1e3a8a : 0x262930,
+    emissive: isWhite ? 0x0f172a : 0x14171d,
+    metalness: 0.6,
+    roughness: 0.28
   });
   const shieldMesh = new THREE.Mesh(shieldGeo, shieldPlateMat);
   shieldMesh.castShadow = true;
@@ -269,8 +269,8 @@ function createStatusCape(type, isWhite, saberColor, hScale) {
       curveDepth: 0.14,
       hasHighCollar: false,
       hasRoyalClasps: false,
-      capeColor: isWhite ? 0x1e3a8a : 0x7e22ce,
-      trimColor: isWhite ? 0x38bdf8 : 0xfacc15
+      capeColor: isWhite ? 0x1e3a8a : 0x232730,
+      trimColor: isWhite ? 0x38bdf8 : 0xc084fc
     },
     q: {
       topW: 0.34 * hScale,
@@ -279,8 +279,8 @@ function createStatusCape(type, isWhite, saberColor, hScale) {
       curveDepth: 0.22,
       hasHighCollar: true,
       hasRoyalClasps: true,
-      capeColor: isWhite ? 0x1d4ed8 : 0xdc2626,
-      trimColor: isWhite ? 0xfde047 : 0xfacc15
+      capeColor: isWhite ? 0x1d4ed8 : 0x1f232b,
+      trimColor: isWhite ? 0xfde047 : 0xff2244
     },
     k: {
       topW: 0.42 * hScale,
@@ -289,8 +289,8 @@ function createStatusCape(type, isWhite, saberColor, hScale) {
       curveDepth: 0.26,
       hasHighCollar: true,
       hasRoyalClasps: true,
-      capeColor: isWhite ? 0x172554 : 0xb91c1c,
-      trimColor: isWhite ? 0xfacc15 : 0xffaa00
+      capeColor: isWhite ? 0x172554 : 0x1a1d24,
+      trimColor: isWhite ? 0xfacc15 : 0xff5500
     }
   }[type];
 
@@ -416,16 +416,16 @@ function buildRobotHorse(isWhite, saberColor, scanners = []) {
   const mountGroup = new THREE.Group();
 
   const chassisMat = new THREE.MeshStandardMaterial({
-    color: isWhite ? 0xdbeafe : 0xb91c1c,
-    emissive: isWhite ? 0x091526 : 0x450a0a,
-    metalness: 0.45,
-    roughness: 0.32
+    color: isWhite ? 0xdbeafe : 0x282c34,
+    emissive: isWhite ? 0x091526 : 0x161920,
+    metalness: 0.55,
+    roughness: 0.3
   });
   const muscleMat = new THREE.MeshStandardMaterial({
-    color: isWhite ? 0x94a3b8 : 0xea580c,
-    emissive: isWhite ? 0x000000 : 0x431407,
-    metalness: 0.5,
-    roughness: 0.3
+    color: isWhite ? 0x94a3b8 : 0x3b404c,
+    emissive: isWhite ? 0x000000 : 0x1c2029,
+    metalness: 0.6,
+    roughness: 0.28
   });
   const neonMat = new THREE.MeshBasicMaterial({
     color: saberColor
@@ -620,32 +620,32 @@ export function createLOTRPieceMesh(type, color) {
     lore
   };
 
-  // High-Contrast Faction Materials so Black (Mordor) pieces stand out vividly on ALL tiles
+  // High-Contrast Faction Materials: Gondor Pearl-White vs. Mordor Anthracite Black (Negro Antracita)
   const baseMat = new THREE.MeshStandardMaterial({
-    color: isWhite ? 0xe2e8f0 : 0x991b1b,
-    emissive: isWhite ? 0x0f172a : 0x450a0a,
-    metalness: 0.4,
-    roughness: 0.32
+    color: isWhite ? 0xe2e8f0 : 0x1f232a,
+    emissive: isWhite ? 0x0f172a : 0x12151a,
+    metalness: 0.55,
+    roughness: 0.3
   });
   const ringMat = new THREE.MeshBasicMaterial({
-    color: isWhite ? 0x38bdf8 : 0xffaa00
+    color: isWhite ? 0x38bdf8 : 0xff5500
   });
   const armorMat = new THREE.MeshStandardMaterial({
     color: lore.primaryColor,
-    emissive: isWhite ? 0x091526 : 0x4c0519,
-    metalness: 0.38,
-    roughness: 0.32
+    emissive: isWhite ? 0x091526 : 0x181c24,
+    metalness: 0.52,
+    roughness: 0.3
   });
   const trimMat = new THREE.MeshStandardMaterial({
     color: lore.accentColor,
-    emissive: isWhite ? 0x1a1200 : 0x5c2400,
-    metalness: 0.65,
+    emissive: isWhite ? 0x1a1200 : 0x3d1400,
+    metalness: 0.7,
     roughness: 0.25
   });
   const skinMat = new THREE.MeshStandardMaterial({
-    color: isWhite ? 0xfde68a : 0xfca5a5,
-    emissive: isWhite ? 0x000000 : 0x3b0d0d,
-    roughness: 0.4
+    color: isWhite ? 0xfde68a : 0x363b47,
+    emissive: isWhite ? 0x000000 : 0x161920,
+    roughness: 0.38
   });
 
   // 1. Pedestal Base with High-Contrast Glowing Faction Rings
@@ -850,9 +850,51 @@ export function createLOTRPieceMesh(type, color) {
       diadem.position.y = 0.15 * hScale;
       headGroup.add(diadem);
     } else if (type === 'b') {
-      const hatCone = new THREE.Mesh(new THREE.ConeGeometry(0.24 * hScale, 0.45 * hScale, 12), armorMat);
+      // Bishop Cone Hat + Circular Brim Ring ("el círculo del cono") + Glowing Top Finial Sphere ("el punto arriba")
+      const hatCone = new THREE.Mesh(
+        new THREE.ConeGeometry(0.24 * hScale, 0.46 * hScale, 16),
+        armorMat
+      );
       hatCone.position.y = 0.28 * hScale;
       headGroup.add(hatCone);
+
+      // Glowing Circle / Brim Ring around the base of the cone ("el círculo del cono")
+      const coneCircleMat = new THREE.MeshBasicMaterial({
+        color: isWhite ? 0xfacc15 : 0xff5500
+      });
+      const coneBrimDisc = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.32 * hScale, 0.32 * hScale, 0.035, 24),
+        trimMat
+      );
+      coneBrimDisc.position.y = 0.08 * hScale;
+      headGroup.add(coneBrimDisc);
+
+      const coneCircleRing = new THREE.Mesh(
+        new THREE.TorusGeometry(0.32 * hScale, 0.028, 10, 28),
+        coneCircleMat
+      );
+      coneCircleRing.rotation.x = Math.PI / 2;
+      coneCircleRing.position.y = 0.09 * hScale;
+      headGroup.add(coneCircleRing);
+
+      // Glowing Top Finial Sphere at the tip of the cone ("un punto arriba que lo identifique")
+      const topDotCore = new THREE.Mesh(
+        new THREE.SphereGeometry(0.075 * hScale, 14, 14),
+        new THREE.MeshBasicMaterial({ color: 0xffffff })
+      );
+      topDotCore.position.y = 0.53 * hScale;
+      headGroup.add(topDotCore);
+
+      const topDotAura = new THREE.Mesh(
+        new THREE.SphereGeometry(0.11 * hScale, 14, 14),
+        new THREE.MeshBasicMaterial({
+          color: isWhite ? 0x38bdf8 : saberColor,
+          transparent: true,
+          opacity: 0.85
+        })
+      );
+      topDotAura.position.y = 0.53 * hScale;
+      headGroup.add(topDotAura);
     } else if (type === 'p') {
       // Curved Roman Centurion / Legionary Plume Crest (Cresta Romana curva en abanico)
       const crestGroup = new THREE.Group();
