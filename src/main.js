@@ -787,20 +787,26 @@ function animate(now) {
 
   controls.update();
 
-  // Subtle idle breathing & lightsaber plasma pulse for pieces
-  if (!isAnimating) {
-    let idx = 0;
-    for (const mesh of pieceMeshes.values()) {
-      const parts = mesh.userData.parts;
+  // Subtle idle breathing, lightsaber plasma pulse & oscillating Cylon/Cyber scanner eyes
+  let idx = 0;
+  for (const mesh of pieceMeshes.values()) {
+    const parts = mesh.userData.parts;
+    const scanners = mesh.userData.scanners;
+    if (scanners) {
+      for (const s of scanners) {
+        s.mesh.position.x = Math.sin(elapsedTime * s.speed + idx * 0.65) * s.range;
+      }
+    }
+    if (!isAnimating) {
       if (parts?.upperBody && mesh.userData.type !== 'n') {
-        const baseH = mesh.userData.type === 'r' ? 0.55 : 0.62 * (mesh.userData.type === 'p' ? 0.82 : 1.1);
+        const baseH = mesh.userData.type === 'r' ? 0.55 : 0.62 * (mesh.userData.type === 'p' ? 0.85 : 1.1);
         parts.upperBody.position.y = baseH + Math.sin(elapsedTime * 2.4 + idx) * 0.025;
       }
       if (parts?.rightArm) {
         parts.rightArm.rotation.z = Math.sin(elapsedTime * 2.0 + idx) * 0.04;
       }
-      idx++;
     }
+    idx++;
   }
 
   // Rotate watchtower crystals

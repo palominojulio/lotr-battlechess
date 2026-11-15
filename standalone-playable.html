@@ -356,8 +356,8 @@
       }
     }
 
-    // Draws a Medieval Heater Shield ("Escudito") with Gondor or Mordor emblem
-    function drawPawnShield(ctx, x, y, isW, info) {
+    // Draws a Medieval Heater Shield ("Escudito") with Gondor or Mordor emblem & scanning eye
+    function drawPawnShield(ctx, x, y, isW, info, scanVal = 0) {
       ctx.save();
       ctx.translate(x, y);
 
@@ -375,7 +375,7 @@
       ctx.fill();
       ctx.stroke();
 
-      // Shield Emblem (White Tree / Star for Gondor, Flaming Eye for Mordor)
+      // Shield Emblem (White Tree / Star for Gondor, Scanning Flaming Eye for Mordor)
       if (isW) {
         ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 1.6;
@@ -386,13 +386,13 @@
         ctx.lineTo(4, 0);
         ctx.stroke();
       } else {
-        // Eye of Sauron on Black Pawn Shield
+        // Eye of Sauron on Black Pawn Shield with oscillating pupil
         ctx.fillStyle = '#fbbf24';
         ctx.beginPath();
-        ctx.ellipse(0, 0, 4.2, 2.5, 0, 0, Math.PI * 2);
+        ctx.ellipse(0, 0, 4.5, 2.6, 0, 0, Math.PI * 2);
         ctx.fill();
         ctx.fillStyle = '#dc2626';
-        ctx.fillRect(-0.8, -2.5, 1.6, 5);
+        ctx.fillRect(scanVal * 2.4 - 0.9, -2.5, 1.8, 5);
       }
 
       ctx.restore();
@@ -402,6 +402,7 @@
       const info = ROSTER[piece.color][piece.type];
       const isW = piece.color === 'w';
       const isPawn = piece.type === 'p';
+      const scanVal = Math.sin((performance.now() * 0.0055) + x * 0.05);
       ctx.save();
       ctx.translate(x, y);
 
@@ -418,7 +419,7 @@
       let upperOffsetY = 0;
       let headOffsetX = 0;
       let headOffsetY = 0;
-      let saberAngle = animState?.saberAngle ?? (isW ? -0.5 : 0.5);
+      let saberAngle = animState?.saberAngle ?? (isW ? 0.35 : -0.35);
       let alpha = animState?.alpha ?? 1;
 
       if (animState?.isDying) {
@@ -441,7 +442,7 @@
 
       ctx.globalAlpha = alpha;
 
-      // KNIGHT ('n'): Draw Robotic Cyber-Horse Base with High-Contrast Trim
+      // KNIGHT ('n'): Draw Robotic Cyber-Horse Base with Scanning Laser Visor
       if (piece.type === 'n') {
         ctx.fillStyle = isW ? '#cbd5e1' : '#58151c';
         ctx.strokeStyle = info.rim;
@@ -449,13 +450,16 @@
         ctx.fillRect(-11 + upperOffsetX * 0.4, -15, 22, 11);
         ctx.strokeRect(-11 + upperOffsetX * 0.4, -15, 22, 11);
 
-        // Horse Cyber Head & Glowing Laser Visor
+        // Horse Cyber Head & Oscillating Laser Visor
         const hx = (isW ? 6 : -15) + headOffsetX * 0.5;
         const hy = -25 + headOffsetY * 0.5;
         ctx.fillRect(hx, hy, 9, 12);
         ctx.strokeRect(hx, hy, 9, 12);
+        const vx = (isW ? 9.5 : -14.5) + headOffsetX * 0.5;
+        ctx.fillStyle = '#090d16';
+        ctx.fillRect(vx, -23 + headOffsetY * 0.5, 6.5, 3.2);
         ctx.fillStyle = info.saber;
-        ctx.fillRect((isW ? 11 : -17) + headOffsetX * 0.5, -23 + headOffsetY * 0.5, 5, 3.2);
+        ctx.fillRect(vx + 2.2 + scanVal * 1.8, -23 + headOffsetY * 0.5, 2.4, 3.2);
       }
 
       // Lower Armored Skirt / Legs with Bright Rim Outline
@@ -494,7 +498,7 @@
       ctx.fillStyle = info.accent;
       ctx.fillRect(-4 * hScale, -25 * hScale, 8 * hScale, 8 * hScale);
 
-      // Lightsaber / Plasma Broadsword (held in rear/sword hand, angled forward toward enemy)
+      // Lightsaber / Plasma Broadsword
       ctx.save();
       ctx.translate((isW ? -8 : 8) * hScale, -21 * hScale);
       ctx.rotate(saberAngle);
@@ -523,13 +527,12 @@
       ctx.restore();
 
       // PAWN SPECIAL: Prominent Heraldic Medieval Shield ("Escudito") in FRONT facing the enemy army!
-      // White advances toward top-right (+X, -Y); Black advances toward bottom-left (-X, +Y)
       if (isPawn) {
-        drawPawnShield(ctx, isW ? 8 : -8, isW ? -19 : -15, isW, info);
+        drawPawnShield(ctx, isW ? 8 : -8, isW ? -19 : -15, isW, info, scanVal);
       }
       ctx.restore();
 
-      // Head & Role-Specific Helmet/Crown/Wizard Hat
+      // Head & Role-Specific Helmet/Crown/Wizard Hat + Oscillating Scanner Visor
       ctx.save();
       ctx.translate(upperOffsetX + headOffsetX, upperOffsetY + headOffsetY);
       ctx.fillStyle = isW ? '#fde68a' : '#7c2d12';
@@ -540,9 +543,17 @@
       ctx.fill();
       ctx.stroke();
 
-      // Glowing Cyber/Jedi/Sith Visor
+      // Dark Visor Track + Oscillating Cyber Scanner Eye Dot
+      ctx.fillStyle = '#05070a';
+      ctx.fillRect(-4.6 * hScale, -34.5 * hScale, 9.2 * hScale, 2.8);
+      ctx.save();
+      ctx.shadowColor = info.saber;
+      ctx.shadowBlur = 6;
       ctx.fillStyle = info.saber;
-      ctx.fillRect(-4 * hScale, -34 * hScale, 8 * hScale, 2.3);
+      ctx.fillRect((scanVal * 3.1 - 1.5) * hScale, -34.5 * hScale, 3.0 * hScale, 2.8);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect((scanVal * 3.1 - 0.7) * hScale, -34.2 * hScale, 1.4 * hScale, 2.2);
+      ctx.restore();
 
       // Role headgear
       if (piece.type === 'k' || piece.type === 'q') {

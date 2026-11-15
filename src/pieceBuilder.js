@@ -119,7 +119,7 @@ function createLightsaber({
  * Builds a prominent Medieval Heraldic Heater Shield ("Escudito") for Pawns
  * with Gondor White Tree / Star emblem or Mordor Flaming Eye emblem
  */
-function createPawnShield(isWhite, saberColor) {
+function createPawnShield(isWhite, saberColor, scanners = []) {
   const shieldGroup = new THREE.Group();
 
   // Classic medieval heater shield silhouette
@@ -183,15 +183,16 @@ function createPawnShield(isWhite, saberColor) {
       shieldGroup.add(crossBar);
     });
   } else {
-    // Mordor Emblem on both front and back of shield: Blazing Eye of Sauron
+    // Mordor Emblem on both front and back of shield: Blazing Eye of Sauron with scanning pupil
     [0.06, -0.025].forEach((zPos) => {
       const eyeRing = new THREE.Mesh(new THREE.TorusGeometry(0.11, 0.028, 8, 20), emblemMat);
       eyeRing.position.set(0, 0.0, zPos);
       shieldGroup.add(eyeRing);
 
-      const slitPupil = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.24, 0.04), glowMat);
-      slitPupil.position.set(0, 0.0, zPos);
+      const slitPupil = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.22, 0.04), glowMat);
+      slitPupil.position.set(0, 0.0, zPos + (zPos > 0 ? 0.005 : -0.005));
       shieldGroup.add(slitPupil);
+      scanners.push({ mesh: slitPupil, range: 0.065, speed: 4.2 });
     });
   }
 
@@ -199,9 +200,52 @@ function createPawnShield(isWhite, saberColor) {
 }
 
 /**
+ * Helper to create a Cyber Visor with an oscillating scanner eye dot/beam
+ */
+function createScannerVisor(width, height, depth, saberColor, scanners) {
+  const visorGroup = new THREE.Group();
+
+  // Dark recessed visor slot
+  const slotMat = new THREE.MeshBasicMaterial({ color: 0x05070a });
+  const slotMesh = new THREE.Mesh(new THREE.BoxGeometry(width, height, depth), slotMat);
+  visorGroup.add(slotMesh);
+
+  // Subtle glowing visor rail
+  const railMat = new THREE.MeshBasicMaterial({
+    color: saberColor,
+    transparent: true,
+    opacity: 0.32
+  });
+  const railMesh = new THREE.Mesh(new THREE.BoxGeometry(width * 0.96, height * 0.45, depth * 1.02), railMat);
+  visorGroup.add(railMesh);
+
+  // Bright oscillating Cylon/Cyber scanner eye core + aura
+  const eyeGroup = new THREE.Group();
+  const coreMesh = new THREE.Mesh(
+    new THREE.SphereGeometry(height * 0.65, 10, 10),
+    new THREE.MeshBasicMaterial({ color: 0xffffff })
+  );
+  const glowMesh = new THREE.Mesh(
+    new THREE.SphereGeometry(height * 1.15, 10, 10),
+    new THREE.MeshBasicMaterial({ color: saberColor, transparent: true, opacity: 0.85 })
+  );
+  eyeGroup.add(coreMesh, glowMesh);
+  eyeGroup.position.z = depth * 0.52;
+  visorGroup.add(eyeGroup);
+
+  scanners.push({
+    mesh: eyeGroup,
+    range: width * 0.36,
+    speed: 4.8
+  });
+
+  return visorGroup;
+}
+
+/**
  * Builds a Robotic Cyber-Horse (Caballo Robot) for Knights (n)
  */
-function buildRobotHorse(isWhite, saberColor) {
+function buildRobotHorse(isWhite, saberColor, scanners = []) {
   const mountGroup = new THREE.Group();
 
   const chassisMat = new THREE.MeshStandardMaterial({
@@ -278,13 +322,13 @@ function buildRobotHorse(isWhite, saberColor) {
   maneMesh.position.set(0, 0.2, -0.12);
   neckGroup.add(maneMesh);
 
-  // Robotic Snout + Laser Visor Eyes
+  // Robotic Snout + Scanning Laser Visor Eyes
   const headMesh = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.2, 0.44), chassisMat);
   headMesh.position.set(0, 0.38, 0.12);
   neckGroup.add(headMesh);
 
-  const visorMesh = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.06, 0.16), neonMat);
-  visorMesh.position.set(0, 0.41, 0.22);
+  const visorMesh = createScannerVisor(0.28, 0.065, 0.16, saberColor, scanners);
+  visorMesh.position.set(0, 0.41, 0.26);
   neckGroup.add(visorMesh);
 
   mountGroup.add(neckGroup);
@@ -393,10 +437,11 @@ export function createLOTRPieceMesh(type, color) {
   let rightArm = new THREE.Group();
   let leftArm = new THREE.Group();
   let headGroup = new THREE.Group();
+  const scanners = [];
 
   if (type === 'n') {
     // KNIGHT: Robotic Cyber-Horse + Medieval Rider with Laser Lance
-    mountGroup = buildRobotHorse(isWhite, saberColor);
+    mountGroup = buildRobotHorse(isWhite, saberColor, scanners);
     lowerBody.add(mountGroup);
 
     upperBody.position.set(0, 0.72, -0.05);
@@ -409,8 +454,8 @@ export function createLOTRPieceMesh(type, color) {
     headGroup.position.set(0, 0.58, 0);
     const helm = new THREE.Mesh(new THREE.SphereGeometry(0.16, 14, 14), armorMat);
     headGroup.add(helm);
-    const visor = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.06, 0.16), ringMat);
-    visor.position.set(0, 0.02, 0.1);
+    const visor = createScannerVisor(0.24, 0.06, 0.16, saberColor, scanners);
+    visor.position.set(0, 0.02, 0.11);
     headGroup.add(visor);
 
     const crest = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.26, 6), trimMat);
@@ -464,8 +509,8 @@ export function createLOTRPieceMesh(type, color) {
     headGroup.position.set(0, 0.78, 0);
     const headMesh = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.32, 0.32), armorMat);
     headGroup.add(headMesh);
-    const eyeVisor = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.07, 0.34), ringMat);
-    eyeVisor.position.y = 0.04;
+    const eyeVisor = createScannerVisor(0.3, 0.075, 0.18, saberColor, scanners);
+    eyeVisor.position.set(0, 0.04, 0.12);
     headGroup.add(eyeVisor);
     upperBody.add(headGroup);
 
@@ -516,9 +561,9 @@ export function createLOTRPieceMesh(type, color) {
     const headSphere = new THREE.Mesh(new THREE.SphereGeometry(0.18 * hScale, 16, 16), skinMat);
     headGroup.add(headSphere);
 
-    // Glowing Cyber/Jedi/Sith Eyes
-    const visor = new THREE.Mesh(new THREE.BoxGeometry(0.22 * hScale, 0.05 * hScale, 0.18 * hScale), ringMat);
-    visor.position.set(0, 0.03 * hScale, 0.1 * hScale);
+    // Oscillating Cyber/Jedi/Sith Scanner Eyes
+    const visor = createScannerVisor(0.24 * hScale, 0.055 * hScale, 0.16 * hScale, saberColor, scanners);
+    visor.position.set(0, 0.03 * hScale, 0.12 * hScale);
     headGroup.add(visor);
 
     // Role-specific headgear
@@ -534,6 +579,7 @@ export function createLOTRPieceMesh(type, color) {
         const eye = new THREE.Mesh(new THREE.OctahedronGeometry(0.14), ringMat);
         eye.position.y = 0.42 * hScale;
         headGroup.add(eye);
+        scanners.push({ mesh: eye, range: 0.12, speed: 3.6 });
       }
     } else if (type === 'q') {
       const diadem = new THREE.Mesh(new THREE.TorusGeometry(0.2 * hScale, 0.03, 8, 20), trimMat);
@@ -570,7 +616,7 @@ export function createLOTRPieceMesh(type, color) {
     leftArm.position.set(-0.22 * hScale, 0.36 * hScale, 0.22);
     if (type === 'p') {
       // Prominent front-facing Medieval Heater Shield ("escudito") held forward toward the enemy!
-      const pawnShield = createPawnShield(isWhite, saberColor);
+      const pawnShield = createPawnShield(isWhite, saberColor, scanners);
       pawnShield.position.set(0.12, -0.04, 0.14);
       pawnShield.rotation.y = 0.12;
       leftArm.add(pawnShield);
@@ -579,7 +625,7 @@ export function createLOTRPieceMesh(type, color) {
       orb.position.set(0, 0.1, 0.18);
       leftArm.add(orb);
     } else {
-      const royalShield = createPawnShield(isWhite, saberColor);
+      const royalShield = createPawnShield(isWhite, saberColor, scanners);
       royalShield.scale.setScalar(0.85);
       royalShield.position.set(0.06, -0.05, 0.12);
       royalShield.rotation.y = 0.18;
@@ -604,6 +650,7 @@ export function createLOTRPieceMesh(type, color) {
     mountGroup,
     sliceRing
   };
+  root.userData.scanners = scanners;
 
   return root;
 }
