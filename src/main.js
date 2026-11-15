@@ -1,0 +1,841 @@
+import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { Chess } from 'chess.js';
+import { getPieceLore } from './lotrLore.js';
+import { createLOTRPieceMesh } from './pieceBuilder.js';
+import { animateWalk, executeCinematicCombat, spawnParticleBurst } from './combatSystem.js';
+import { chooseBestMove } from './aiEngine.js';
+import { soundFX } from './soundFX.js';
+
+// --- Constants & Board Mapping ---
+const TILE_SIZE = 1.65;
+const FILES = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+
+function squareToWorld(square) {
+  const file = FILES.indexOf(square[0]);
+  const rank = parseInt(square[1], 10) - 1;
+  // White on rank 1 (+Z), Black on rank 8 (-Z)
+  const x = (file - 3.5) * TILE_SIZE;
+  const z = (3.5 - rank) * TILE_SIZE;
+  return new THREE.Vector3(x, 0, z);
+}
+
+function coordsToSquare(fileIdx, rankIdx) {
+  return `${FILES[fileIdx]}${rankIdx + 1}`;
+}
+
+// --- Game State ---
+const chess = new Chess();
+let gameMode = 'ai-2'; // 'ai-1', 'ai-2', 'ai-3', 'pvp'
+let cinematicCameraEnabled = true;
+let isAnimating = false;
+let selectedSquare = null;
+let legalMovesForSelected = [];
+
+const pieceMeshes = new Map(); // square -> THREE.Group
+const tileMeshes = new Map();  // square -> THREE.Mesh
+const highlightMeshes = [];
+const activeParticles = [];
+
+const capturedByWhite = [];
+const capturedByBlack = [];
+
+// --- Three.js Scene Setup ---
+const container = document.getElementById('canvas-container');
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x080a10);
+scene.fog = new THREE.FogExp2(0x080a10, 0.024);
+
+const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 150);
+const defaultWhiteCamPos = new THREE.Vector3(0, 12.2, 13.8);
+camera.position.copy(defaultWhiteCamPos);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+container.appendChild(renderer.domElement);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.06;
+controls.maxPolarAngle = Math.PI / 2 - 0.06;
+controls.minDistance = 5;
+controls.maxDistance = 28;
+controls.target.set(0, 0.5, 0);
+
+// --- Lighting (Gondor Blue-Gold vs. Mordor Crimson Lava) ---
+const ambientLight = new THREE.AmbientLight(0xdbeafe, 0.65);
+scene.add(ambientLight);
+
+const mainSun = new THREE.DirectionalLight(0xfffbeb, 1.45);
+mainSun.position.set(8, 18, 10);
+mainSun.castShadow = true;
+mainSun.shadow.mapSize.width = 2048;
+mainSun.shadow.mapSize.height = 2048;
+mainSun.shadow.camera.near = 1;
+mainSun.shadow.camera.far = 45;
+const d = 10;
+mainSun.shadow.camera.left = -d;
+mainSun.shadow.camera.right = d;
+mainSun.shadow.camera.top = d;
+mainSun.shadow.camera.bottom = -d;
+scene.add(mainSun);
+
+const gondorLight = new THREE.PointLight(0x38bdf8, 2.2, 22);
+gondorLight.position.set(0, 5, 9);
+scene.add(gondorLight);
+
+const mordorLight = new THREE.PointLight(0xff3300, 2.5, 22);
+mordorLight.position.set(0, 5, -9);
+scene.add(mordorLight);
+
+// --- Build Middle-earth x Cyber-Laser Board & Environment ---
+const boardGroup = new THREE.Group();
+scene.add(boardGroup);
+
+function buildBoardArena() {
+  // Outer Citadel Frame
+  const frameSize = TILE_SIZE * 8 + 1.3;
+  const frameGeo = new THREE.BoxGeometry(frameSize, 0.45, frameSize);
+  const frameMat = new THREE.MeshStandardMaterial({
+    color: 0x161922,
+    metalness: 0.78,
+    roughness: 0.32
+  });
+  const frameMesh = new THREE.Mesh(frameGeo, frameMat);
+  frameMesh.position.y = -0.24;
+  frameMesh.receiveShadow = true;
+  boardGroup.add(frameMesh);
+
+  // Glowing Runic Cyber Border
+  const borderLineGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(frameSize + 0.04, 0.46, frameSize + 0.04));
+  const borderLineMat = new THREE.LineBasicMaterial({ color: 0xe6c259 });
+  const borderLines = new THREE.LineSegments(borderLineGeo, borderLineMat);
+  borderLines.position.y = -0.24;
+  boardGroup.add(borderLines);
+
+  // 64 Squares
+  const lightTileMat = new THREE.MeshStandardMaterial({
+    color: 0xd6d3c9,
+    metalness: 0.25,
+    roughness: 0.35
+  });
+  const darkTileMat = new THREE.MeshStandardMaterial({
+    color: 0x1e2430,
+    metalness: 0.55,
+    roughness: 0.35
+  });
+
+  const tileGeo = new THREE.BoxGeometry(TILE_SIZE * 0.98, 0.16, TILE_SIZE * 0.98);
+
+  for (let r = 0; r < 8; r++) {
+    for (let f = 0; f < 8; f++) {
+      const isLight = (r + f) % 2 === 1;
+      const square = coordsToSquare(f, r);
+      const tile = new THREE.Mesh(tileGeo, isLight ? lightTileMat.clone() : darkTileMat.clone());
+      const pos = squareToWorld(square);
+      tile.position.set(pos.x, -0.08, pos.z);
+      tile.receiveShadow = true;
+      tile.userData = { square, isLight };
+      boardGroup.add(tile);
+      tileMeshes.set(square, tile);
+    }
+  }
+
+  // 4 Corner Cyber-Medieval Watchtowers (Gondor Blue on +Z, Mordor Red on -Z)
+  const corners = [
+    [-1, 1, 0x00e5ff],
+    [1, 1, 0x00e5ff],
+    [-1, -1, 0xff1133],
+    [1, -1, 0xff1133]
+  ];
+  const offset = (TILE_SIZE * 4) + 0.85;
+  corners.forEach(([cx, cz, crystalColor]) => {
+    const pillarGroup = new THREE.Group();
+    pillarGroup.position.set(cx * offset, 0, cz * offset);
+
+    const col = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.32, 0.44, 2.2, 8),
+      frameMat
+    );
+    col.position.y = 0.9;
+    col.castShadow = true;
+    pillarGroup.add(col);
+
+    const crystal = new THREE.Mesh(
+      new THREE.OctahedronGeometry(0.28, 0),
+      new THREE.MeshBasicMaterial({ color: crystalColor })
+    );
+    crystal.position.y = 2.4;
+    crystal.userData.isCrystal = true;
+    pillarGroup.add(crystal);
+
+    boardGroup.add(pillarGroup);
+  });
+}
+
+buildBoardArena();
+
+// --- Sync Pieces with Chess.js State ---
+function rebuildAllPieces() {
+  for (const mesh of pieceMeshes.values()) {
+    scene.remove(mesh);
+  }
+  pieceMeshes.clear();
+
+  const board = chess.board();
+  for (let r = 0; r < 8; r++) {
+    for (let f = 0; f < 8; f++) {
+      const cell = board[7 - r][f];
+      if (cell) {
+        const sq = coordsToSquare(f, r);
+        const mesh = createLOTRPieceMesh(cell.type, cell.color);
+        mesh.position.copy(squareToWorld(sq));
+        mesh.userData.square = sq;
+        scene.add(mesh);
+        pieceMeshes.set(sq, mesh);
+      }
+    }
+  }
+}
+
+// --- Highlights for Selected Square & Legal Moves ---
+function clearHighlights() {
+  while (highlightMeshes.length > 0) {
+    const m = highlightMeshes.pop();
+    scene.remove(m);
+  }
+}
+
+function showHighlights(originSquare, moves) {
+  clearHighlights();
+
+  // Origin ring
+  const originPos = squareToWorld(originSquare);
+  const selGeo = new THREE.RingGeometry(0.55, 0.72, 28);
+  selGeo.rotateX(-Math.PI / 2);
+  const selMat = new THREE.MeshBasicMaterial({ color: 0xfacc15, side: THREE.DoubleSide });
+  const selMesh = new THREE.Mesh(selGeo, selMat);
+  selMesh.position.set(originPos.x, 0.02, originPos.z);
+  scene.add(selMesh);
+  highlightMeshes.push(selMesh);
+
+  // Legal destination markers
+  moves.forEach((m) => {
+    const pos = squareToWorld(m.to);
+    const isCapture = Boolean(m.captured);
+    const geo = isCapture
+      ? new THREE.RingGeometry(0.52, 0.76, 6)
+      : new THREE.CircleGeometry(0.28, 24);
+    geo.rotateX(-Math.PI / 2);
+
+    const mat = new THREE.MeshBasicMaterial({
+      color: isCapture ? 0xff1e1e : 0x38bdf8,
+      transparent: true,
+      opacity: 0.82,
+      side: THREE.DoubleSide
+    });
+
+    const marker = new THREE.Mesh(geo, mat);
+    marker.position.set(pos.x, 0.025, pos.z);
+    scene.add(marker);
+    highlightMeshes.push(marker);
+  });
+}
+
+// --- Camera Transitions ---
+let camAnim = null;
+
+function animateCameraTo(targetPos, targetLookAt, duration = 650) {
+  return new Promise((resolve) => {
+    camAnim = {
+      startPos: camera.position.clone(),
+      endPos: targetPos.clone(),
+      startLook: controls.target.clone(),
+      endLook: targetLookAt.clone(),
+      startTime: performance.now(),
+      duration,
+      resolve
+    };
+  });
+}
+
+function setCameraPreset(preset) {
+  if (preset === 'white') {
+    animateCameraTo(new THREE.Vector3(0, 12.2, 13.8), new THREE.Vector3(0, 0.5, 0));
+  } else if (preset === 'black') {
+    animateCameraTo(new THREE.Vector3(0, 12.2, -13.8), new THREE.Vector3(0, 0.5, 0));
+  } else if (preset === 'top') {
+    animateCameraTo(new THREE.Vector3(0, 18.5, 0.01), new THREE.Vector3(0, 0, 0));
+  } else if (preset === 'side') {
+    animateCameraTo(new THREE.Vector3(14.5, 8.5, 0), new THREE.Vector3(0, 0.8, 0));
+  }
+}
+
+// --- UI Updates ---
+const turnDot = document.getElementById('turn-dot');
+const turnFactionName = document.getElementById('turn-faction-name');
+const gameStatusText = document.getElementById('game-status-text');
+const battleLog = document.getElementById('battle-log');
+const moveCounterEl = document.getElementById('move-counter');
+const capturedBlackEl = document.getElementById('captured-black');
+const capturedWhiteEl = document.getElementById('captured-white');
+
+const champFactionEl = document.getElementById('champ-faction');
+const champRoleEl = document.getElementById('champ-chess-type');
+const champNameEl = document.getElementById('champ-name');
+const champWeaponEl = document.getElementById('champ-weapon');
+const champLoreEl = document.getElementById('champ-lore');
+const champStyleEl = document.getElementById('champ-combat-style');
+
+const combatOverlay = document.getElementById('combat-overlay');
+const combatAttackerName = document.getElementById('combat-attacker-name');
+const combatDefenderName = document.getElementById('combat-defender-name');
+const combatAttackerHp = document.getElementById('combat-attacker-hp');
+const combatDefenderHp = document.getElementById('combat-defender-hp');
+const combatCaption = document.getElementById('combat-caption');
+
+function inspectPieceUI(color, type) {
+  const lore = getPieceLore(color, type);
+  champFactionEl.textContent = lore.faction;
+  champFactionEl.className = `champion-badge ${color === 'b' ? 'mordor' : ''}`;
+  champRoleEl.textContent = lore.chessRole;
+  champNameEl.textContent = `${lore.icon} ${lore.name}`;
+  champWeaponEl.textContent = lore.weapon;
+  champLoreEl.textContent = `"${lore.lore}"`;
+  champStyleEl.textContent = `⚔️ Finisher: ${lore.combatStyle}`;
+}
+
+function updateHUD() {
+  const turn = chess.turn();
+  const isWhite = turn === 'w';
+  turnDot.className = `faction-dot ${isWhite ? 'white-faction' : 'black-faction'}`;
+  turnFactionName.textContent = isWhite
+    ? 'Turno: Orden de Gondor (Blancas)'
+    : 'Turno: Imperio de Mordor (Negras)';
+
+  if (chess.isCheckmate()) {
+    const winner = isWhite ? 'Imperio de Mordor (Negras)' : 'Orden de Gondor (Blancas)';
+    gameStatusText.textContent = `¡JAQUE MATE! Victoria de ${winner}`;
+  } else if (chess.isDraw()) {
+    gameStatusText.textContent = '¡Tablas! Tregua en la Tierra Media';
+  } else if (chess.inCheck()) {
+    const kingName = isWhite ? 'Aragorn' : 'Darth Sauron';
+    gameStatusText.textContent = `⚠️ ¡JAQUE A ${kingName.toUpperCase()}!`;
+  } else {
+    gameStatusText.textContent = isAnimating
+      ? '⚔️ Duelo cinemático en curso...'
+      : 'Selecciona un campeón o casilla';
+  }
+
+  moveCounterEl.textContent = `Jugada ${chess.moveNumber()}`;
+}
+
+function renderCasualties() {
+  capturedBlackEl.innerHTML = capturedByWhite
+    .map((l) => `<span class="casualty-chip" title="${l.name}">${l.icon} ${l.shortName}</span>`)
+    .join('');
+  capturedWhiteEl.innerHTML = capturedByBlack
+    .map((l) => `<span class="casualty-chip" title="${l.name}">${l.icon} ${l.shortName}</span>`)
+    .join('');
+}
+
+function appendBattleLog(moveResult) {
+  const attLore = getPieceLore(moveResult.color, moveResult.piece);
+  const li = document.createElement('li');
+
+  if (moveResult.captured) {
+    const defColor = moveResult.color === 'w' ? 'b' : 'w';
+    const defLore = getPieceLore(defColor, moveResult.captured);
+    li.className = 'log-entry capture-log';
+    li.textContent = `⚔️ ${attLore.shortName} ejecuta a ${defLore.shortName} en ${moveResult.to.toUpperCase()} (${attLore.combatStyle})`;
+  } else {
+    li.className = `log-entry ${moveResult.color === 'w' ? 'white-move' : 'black-move'}`;
+    li.textContent = `${attLore.icon} ${attLore.shortName} avanza de ${moveResult.from.toUpperCase()} a ${moveResult.to.toUpperCase()}`;
+  }
+
+  battleLog.prepend(li);
+}
+
+// --- Dialogs (Native <dialog> following modern-web-guidance) ---
+const promoDialog = document.getElementById('promotion-dialog');
+const gameoverDialog = document.getElementById('gameover-dialog');
+const gameoverTitle = document.getElementById('gameover-title');
+const gameoverMessage = document.getElementById('gameover-message');
+
+// Guard `cancel` event on promotion-dialog (`closedby="none"`) so Esc doesn't skip choosing a promotion piece
+promoDialog.addEventListener('cancel', (e) => {
+  e.preventDefault();
+});
+
+// Fallback for light-dismiss on `dialog[closedby="any"]` where closedBy is unsupported
+if (!('closedBy' in HTMLDialogElement.prototype)) {
+  const outside = (e, dialog) => {
+    const r = dialog.getBoundingClientRect();
+    return e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom;
+  };
+  for (const dialog of document.querySelectorAll('dialog[closedby="any"]')) {
+    let pressedOutside = false;
+    dialog.addEventListener('pointerdown', (e) => { pressedOutside = outside(e, dialog); });
+    dialog.addEventListener('pointerup', (e) => { if (pressedOutside && outside(e, dialog)) dialog.close(); });
+  }
+}
+
+gameoverDialog.addEventListener('close', () => {
+  const choice = gameoverDialog.returnValue;
+  gameoverDialog.returnValue = '';
+  if (choice === 'new-game') {
+    resetGame();
+  }
+});
+
+function promptPawnPromotion(color) {
+  return new Promise((resolve) => {
+    const isW = color === 'w';
+    document.getElementById('promo-name-q').textContent = isW ? 'Dama Galadriel (Sable Doble)' : 'Rey Brujo (Sable Doble)';
+    document.getElementById('promo-name-r').textContent = isW ? 'Mecha-Bárbol (Torre)' : 'Ciber-Troll (Torre)';
+    document.getElementById('promo-name-b').textContent = isW ? 'Gandalf Cyber-Maia' : 'Conde Saruman';
+    document.getElementById('promo-name-n').textContent = isW ? 'Rohirrim en Caballo Robot' : 'Nazgûl en Caballo Robot';
+
+    function onClose() {
+      promoDialog.removeEventListener('close', onClose);
+      const val = promoDialog.returnValue || 'q';
+      promoDialog.returnValue = '';
+      resolve(val);
+    }
+
+    promoDialog.addEventListener('close', onClose);
+    promoDialog.showModal();
+  });
+}
+
+// --- Execute Move + Battle Chess Animations ---
+function triggerBurst(pos, colorHex, count = 28, speed = 4.2) {
+  const burst = spawnParticleBurst(scene, pos, colorHex, count, speed);
+  activeParticles.push(...burst);
+}
+
+async function performChessMove(from, to, promotionPiece = null) {
+  if (isAnimating) return false;
+  isAnimating = true;
+  clearHighlights();
+  selectedSquare = null;
+  legalMovesForSelected = [];
+
+  // Check if promotion is needed
+  const movingPiece = chess.get(from);
+  const targetRank = to[1];
+  const isPromo =
+    movingPiece &&
+    movingPiece.type === 'p' &&
+    ((movingPiece.color === 'w' && targetRank === '8') ||
+      (movingPiece.color === 'b' && targetRank === '1'));
+
+  let promo = promotionPiece;
+  if (isPromo && !promo) {
+    const isAITurn = gameMode.startsWith('ai') && movingPiece.color === 'b';
+    promo = isAITurn ? 'q' : await promptPawnPromotion(movingPiece.color);
+  }
+
+  let moveResult;
+  try {
+    moveResult = chess.move({ from, to, promotion: promo || 'q' });
+  } catch {
+    isAnimating = false;
+    return false;
+  }
+
+  if (!moveResult) {
+    isAnimating = false;
+    return false;
+  }
+
+  updateHUD();
+
+  const attackerMesh = pieceMeshes.get(from);
+  const targetPos = squareToWorld(to);
+
+  // Handle En Passant captured square
+  let capturedSquare = to;
+  if (moveResult.flags.includes('e')) {
+    capturedSquare = `${to[0]}${from[1]}`;
+  }
+
+  const defenderMesh = moveResult.captured ? pieceMeshes.get(capturedSquare) : null;
+
+  if (attackerMesh && defenderMesh) {
+    // BATTLE CHESS CINEMATIC CAPTURE DUEL!
+    const attLore = attackerMesh.userData.lore;
+    const defLore = defenderMesh.userData.lore;
+
+    // Show Combat Overlay
+    combatOverlay.hidden = false;
+    combatAttackerName.textContent = `${attLore.icon} ${attLore.name}`;
+    combatDefenderName.textContent = `${defLore.icon} ${defLore.name}`;
+    combatAttackerHp.style.width = '100%';
+    combatDefenderHp.style.width = '100%';
+    combatCaption.textContent = `⚔️ ¡Duelo a muerte en ${to.toUpperCase()}!`;
+
+    const savedCamPos = camera.position.clone();
+    const savedTarget = controls.target.clone();
+
+    if (cinematicCameraEnabled) {
+      const midpoint = attackerMesh.position.clone().lerp(defenderMesh.position, 0.55);
+      const dir = new THREE.Vector3().subVectors(defenderMesh.position, attackerMesh.position).normalize();
+      // Perpendicular dramatic side-angle camera
+      const side = new THREE.Vector3(-dir.z, 0, dir.x).normalize();
+      const duelCamPos = midpoint.clone().addScaledVector(side, 4.6).add(new THREE.Vector3(0, 3.1, 0));
+      await animateCameraTo(duelCamPos, midpoint.clone().add(new THREE.Vector3(0, 0.7, 0)), 480);
+    }
+
+    await executeCinematicCombat({
+      scene,
+      attackerMesh,
+      defenderMesh,
+      targetPos,
+      spawnBurst: triggerBurst,
+      onCombatProgress: ({ attackerHp, defenderHp, caption }) => {
+        combatAttackerHp.style.width = `${attackerHp}%`;
+        combatDefenderHp.style.width = `${defenderHp}%`;
+        if (caption) combatCaption.textContent = caption;
+      }
+    });
+
+    // Remove slain defender mesh and record casualty
+    scene.remove(defenderMesh);
+    pieceMeshes.delete(capturedSquare);
+
+    if (moveResult.color === 'w') {
+      capturedByWhite.push(defLore);
+    } else {
+      capturedByBlack.push(defLore);
+    }
+    renderCasualties();
+
+    if (cinematicCameraEnabled) {
+      await animateCameraTo(savedCamPos, savedTarget, 520);
+    }
+    combatOverlay.hidden = true;
+  } else if (attackerMesh) {
+    // Normal walk / gallop
+    await animateWalk(attackerMesh, targetPos, 540);
+  }
+
+  // Update piece map & handle Castling or Promotion mesh replacement
+  if (attackerMesh) {
+    pieceMeshes.delete(from);
+    attackerMesh.userData.square = to;
+    pieceMeshes.set(to, attackerMesh);
+  }
+
+  // Handle Castling Rook movement (`k` or `q` flags)
+  if (moveResult.flags.includes('k') || moveResult.flags.includes('q')) {
+    const rank = moveResult.color === 'w' ? '1' : '8';
+    const rookFrom = moveResult.flags.includes('k') ? `h${rank}` : `a${rank}`;
+    const rookTo = moveResult.flags.includes('k') ? `f${rank}` : `d${rank}`;
+    const rookMesh = pieceMeshes.get(rookFrom);
+    if (rookMesh) {
+      await animateWalk(rookMesh, squareToWorld(rookTo), 400);
+      pieceMeshes.delete(rookFrom);
+      rookMesh.userData.square = rookTo;
+      pieceMeshes.set(rookTo, rookMesh);
+    }
+  }
+
+  // Handle Pawn Promotion mesh upgrade
+  if (moveResult.promotion) {
+    const oldMesh = pieceMeshes.get(to);
+    if (oldMesh) scene.remove(oldMesh);
+    const promotedMesh = createLOTRPieceMesh(moveResult.promotion, moveResult.color);
+    promotedMesh.position.copy(targetPos);
+    promotedMesh.userData.square = to;
+    scene.add(promotedMesh);
+    pieceMeshes.set(to, promotedMesh);
+    triggerBurst(targetPos, promotedMesh.userData.lore.saberColor, 35, 4.5);
+    soundFX.playHornFanfare();
+  }
+
+  appendBattleLog(moveResult);
+  isAnimating = false;
+  updateHUD();
+
+  // Check Game Over
+  if (chess.isGameOver()) {
+    soundFX.playHornFanfare();
+    if (chess.isCheckmate()) {
+      const winnerIsWhite = moveResult.color === 'w';
+      gameoverTitle.textContent = winnerIsWhite
+        ? '☀️ ¡Victoria de la Orden de Gondor!'
+        : '👁️ ¡Triunfo del Imperio de Mordor!';
+      gameoverMessage.textContent = winnerIsWhite
+        ? 'Aragorn y los Pueblos Libres han destruido el poder oscuro de Darth Sauron con sus sables de luz.'
+        : 'Las legiones cibernéticas de Mordor y los Caballos Robot Nazgûl han conquistado la Tierra Media.';
+    } else {
+      gameoverTitle.textContent = '⚖️ ¡Tregua en la Tierra Media!';
+      gameoverMessage.textContent = 'La batalla ha terminado en tablas tras un duelo legendario.';
+    }
+    gameoverDialog.showModal();
+    return true;
+  }
+
+  // Trigger AI move if it's Black's turn in AI mode
+  if (gameMode.startsWith('ai') && chess.turn() === 'b') {
+    const aiLevel = parseInt(gameMode.split('-')[1], 10) || 2;
+    setTimeout(async () => {
+      if (chess.turn() === 'b' && !chess.isGameOver() && !isAnimating) {
+        const aiMove = chooseBestMove(chess, aiLevel);
+        if (aiMove) {
+          await performChessMove(aiMove.from, aiMove.to, aiMove.promotion);
+        }
+      }
+    }, 320);
+  }
+
+  return true;
+}
+
+// --- Raycasting & Click Interaction ---
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+let pointerDownPos = { x: 0, y: 0 };
+
+renderer.domElement.addEventListener('pointerdown', (e) => {
+  pointerDownPos = { x: e.clientX, y: e.clientY };
+});
+
+renderer.domElement.addEventListener('pointerup', async (e) => {
+  const dist = Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y);
+  if (dist > 6 || isAnimating) return; // Ignore camera drag
+
+  const rect = renderer.domElement.getBoundingClientRect();
+  pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+  pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+  raycaster.setFromCamera(pointer, camera);
+
+  // Check pieces and board tiles
+  const allTargets = [...tileMeshes.values(), ...pieceMeshes.values()];
+  const intersects = raycaster.intersectObjects(allTargets, true);
+  if (intersects.length === 0) return;
+
+  let hitObj = intersects[0].object;
+  while (hitObj && !hitObj.userData?.square && hitObj.parent) {
+    hitObj = hitObj.parent;
+  }
+  const clickedSquare = hitObj?.userData?.square;
+  if (!clickedSquare) return;
+
+  // If a piece is already selected and user clicked a legal destination square:
+  const matchingMove = legalMovesForSelected.find((m) => m.to === clickedSquare);
+  if (selectedSquare && matchingMove) {
+    await performChessMove(selectedSquare, clickedSquare);
+    return;
+  }
+
+  // Otherwise check if user clicked a piece
+  const pieceOnSquare = chess.get(clickedSquare);
+  if (pieceOnSquare) {
+    inspectPieceUI(pieceOnSquare.color, pieceOnSquare.type);
+    soundFX.playSelect();
+
+    // Only allow selecting active turn's pieces (and only White if vs AI)
+    const isHumanTurn =
+      pieceOnSquare.color === chess.turn() &&
+      !(gameMode.startsWith('ai') && pieceOnSquare.color === 'b');
+
+    if (isHumanTurn) {
+      selectedSquare = clickedSquare;
+      legalMovesForSelected = chess.moves({ square: clickedSquare, verbose: true });
+      showHighlights(clickedSquare, legalMovesForSelected);
+    } else {
+      clearHighlights();
+      selectedSquare = null;
+      legalMovesForSelected = [];
+    }
+  } else {
+    clearHighlights();
+    selectedSquare = null;
+    legalMovesForSelected = [];
+  }
+});
+
+// --- UI Controls Wiring ---
+document.getElementById('game-mode-select').addEventListener('change', (e) => {
+  gameMode = e.target.value;
+});
+
+const btnCinematic = document.getElementById('btn-cinematic');
+btnCinematic.addEventListener('click', () => {
+  cinematicCameraEnabled = !cinematicCameraEnabled;
+  btnCinematic.classList.toggle('active', cinematicCameraEnabled);
+  btnCinematic.textContent = `🎥 Cámara Combate: ${cinematicCameraEnabled ? 'ON' : 'OFF'}`;
+});
+
+const btnSound = document.getElementById('btn-sound');
+btnSound.addEventListener('click', () => {
+  const on = soundFX.toggle();
+  btnSound.classList.toggle('active', on);
+  btnSound.textContent = `🔊 Sonido: ${on ? 'ON' : 'OFF'}`;
+});
+
+function resetGame() {
+  if (isAnimating) return;
+  chess.reset();
+  capturedByWhite.length = 0;
+  capturedByBlack.length = 0;
+  renderCasualties();
+  clearHighlights();
+  selectedSquare = null;
+  legalMovesForSelected = [];
+  rebuildAllPieces();
+  updateHUD();
+  battleLog.innerHTML =
+    '<li class="log-entry lore-intro">⚔️ Nueva guerra iniciada: Sables láser encendidos y corceles robot listos.</li>';
+  soundFX.playHornFanfare();
+}
+
+document.getElementById('btn-reset').addEventListener('click', resetGame);
+
+document.getElementById('btn-undo').addEventListener('click', () => {
+  if (isAnimating) return;
+  chess.undo();
+  if (gameMode.startsWith('ai')) {
+    chess.undo();
+  }
+  clearHighlights();
+  selectedSquare = null;
+  legalMovesForSelected = [];
+  rebuildAllPieces();
+  updateHUD();
+});
+
+// "⚔️ Probar Combate" button: immediately triggers a capture duel (or sets up an instant clash!)
+document.getElementById('btn-demo-battle').addEventListener('click', async () => {
+  if (isAnimating || chess.isGameOver()) return;
+
+  // Check if there is already a capture available on the board
+  let allMoves = chess.moves({ verbose: true });
+  let captures = allMoves.filter((m) => m.captured);
+
+  if (captures.length > 0) {
+    const chosen = captures[Math.floor(Math.random() * captures.length)];
+    inspectPieceUI(chosen.color, chosen.piece);
+    await performChessMove(chosen.from, chosen.to);
+    return;
+  }
+
+  // If no capture is currently available (e.g., turn 1), quickly play a center gambit (e4 -> d5 -> exd5)
+  // so the user immediately sees a full Battle Chess lightsaber/mecha execution!
+  const savedMode = gameMode;
+  gameMode = 'pvp'; // Temporarily pause auto-AI so we can orchestrate the clash
+  const openingSteps = [
+    ['e2', 'e4'],
+    ['d7', 'd5'],
+    ['e4', 'd5']
+  ];
+  for (const [from, to] of openingSteps) {
+    const legal = chess.moves({ verbose: true }).find((m) => m.from === from && m.to === to);
+    if (legal) {
+      await performChessMove(from, to);
+    }
+  }
+  gameMode = savedMode;
+  // If after our scripted clash it's Black's turn in AI mode, let AI respond
+  if (gameMode.startsWith('ai') && chess.turn() === 'b' && !chess.isGameOver()) {
+    const aiLevel = parseInt(gameMode.split('-')[1], 10) || 2;
+    const aiMove = chooseBestMove(chess, aiLevel);
+    if (aiMove) {
+      await performChessMove(aiMove.from, aiMove.to, aiMove.promotion);
+    }
+  }
+});
+
+document.querySelectorAll('.btn-cam').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    setCameraPreset(btn.dataset.cam);
+  });
+});
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// --- Main Render & Idle Animation Loop ---
+const clock = new THREE.Clock();
+
+function animate(now) {
+  requestAnimationFrame(animate);
+  const dt = Math.min(0.05, clock.getDelta());
+  const elapsedTime = clock.getElapsedTime();
+
+  // Camera smooth interpolation
+  if (camAnim) {
+    const t = Math.min(1, (now - camAnim.startTime) / camAnim.duration);
+    const ease = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+    camera.position.lerpVectors(camAnim.startPos, camAnim.endPos, ease);
+    controls.target.lerpVectors(camAnim.startLook, camAnim.endLook, ease);
+    if (t >= 1) {
+      const done = camAnim.resolve;
+      camAnim = null;
+      done();
+    }
+  }
+
+  controls.update();
+
+  // Subtle idle breathing & lightsaber plasma pulse for pieces
+  if (!isAnimating) {
+    let idx = 0;
+    for (const mesh of pieceMeshes.values()) {
+      const parts = mesh.userData.parts;
+      if (parts?.upperBody && mesh.userData.type !== 'n') {
+        const baseH = mesh.userData.type === 'r' ? 0.55 : 0.62 * (mesh.userData.type === 'p' ? 0.82 : 1.1);
+        parts.upperBody.position.y = baseH + Math.sin(elapsedTime * 2.4 + idx) * 0.025;
+      }
+      if (parts?.rightArm) {
+        parts.rightArm.rotation.z = Math.sin(elapsedTime * 2.0 + idx) * 0.04;
+      }
+      idx++;
+    }
+  }
+
+  // Rotate watchtower crystals
+  boardGroup.traverse((obj) => {
+    if (obj.userData?.isCrystal) {
+      obj.rotation.y = elapsedTime * 1.8;
+      obj.position.y = 2.4 + Math.sin(elapsedTime * 3) * 0.08;
+    }
+  });
+
+  // Update active 3D combat sparks / explosion debris
+  for (let i = activeParticles.length - 1; i >= 0; i--) {
+    const p = activeParticles[i];
+    p.life -= dt * 1.45;
+    if (p.life <= 0) {
+      scene.remove(p.mesh);
+      activeParticles.splice(i, 1);
+    } else {
+      p.velocity.y -= 9.8 * dt; // Gravity
+      p.mesh.position.addScaledVector(p.velocity, dt);
+      p.mesh.rotation.x += 6 * dt;
+      p.mesh.rotation.y += 6 * dt;
+      p.mesh.material.opacity = p.life;
+      if (p.mesh.position.y < 0.05) {
+        p.mesh.position.y = 0.05;
+        p.velocity.y *= -0.45; // Bounce off stone board
+      }
+    }
+  }
+
+  renderer.render(scene, camera);
+}
+
+// Initialize Board & Start Loop
+rebuildAllPieces();
+inspectPieceUI('w', 'k');
+updateHUD();
+requestAnimationFrame(animate);

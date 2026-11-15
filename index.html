@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Battle Chess: El Señor de los Anillos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Cinzel:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- Canvas 3D container -->
+    <div id="canvas-container" aria-label="Tablero 3D de Battle Chess El Señor de los Anillos"></div>
+
+    <!-- Top Header HUD -->
+    <header class="hud-header">
+      <div class="brand">
+        <span class="ring-icon" aria-hidden="true">💍</span>
+        <div>
+          <h1>Battle Chess: Tierra Media × Cyber-Laser</h1>
+          <p class="subtitle">Caballeros de Gondor vs. Imperio de Mordor · Sables Láser y Corceles Robot</p>
+        </div>
+      </div>
+
+      <div class="turn-banner" id="turn-banner">
+        <span class="faction-dot white-faction" id="turn-dot"></span>
+        <div class="turn-text-wrap">
+          <span class="turn-label" id="turn-faction-name">Turno: Pueblos Libres (Blancas)</span>
+          <span class="status-subtext" id="game-status-text">Selecciona un campeón para mover</span>
+        </div>
+      </div>
+
+      <div class="header-controls">
+        <label class="control-pill">
+          <span>Modo:</span>
+          <select id="game-mode-select" aria-label="Modo de juego">
+            <option value="ai-2" selected>vs. Sauron IA (Normal)</option>
+            <option value="ai-1">vs. Orco IA (Fácil)</option>
+            <option value="ai-3">vs. Señor Oscuro IA (Difícil)</option>
+            <option value="pvp">2 Jugadores (Local)</option>
+          </select>
+        </label>
+
+        <button type="button" class="btn-hud active" id="btn-cinematic" title="Activar/desactivar cámara cinemática en capturas">
+          🎥 Cámara Combate: ON
+        </button>
+        <button type="button" class="btn-hud active" id="btn-sound" title="Activar/desactivar efectos de sonido">
+          🔊 Sonido: ON
+        </button>
+        <button type="button" class="btn-hud btn-accent" id="btn-demo-battle" title="Ejecutar una jugada con captura inmediata para ver el combate">
+          ⚔️ Probar Combate
+        </button>
+      </div>
+    </header>
+
+    <!-- Left Sidebar: Battle Log & Casualties -->
+    <aside class="hud-panel hud-left">
+      <section class="panel-section">
+        <h2 class="panel-title">Bajas en Combate</h2>
+        <div class="casualties-group">
+          <div class="casualties-label">Caídos de Mordor (Capturados por Blancas):</div>
+          <div class="casualties-tray" id="captured-black"></div>
+        </div>
+        <div class="casualties-group">
+          <div class="casualties-label">Caídos de los Pueblos Libres (Capturados por Negras):</div>
+          <div class="casualties-tray" id="captured-white"></div>
+        </div>
+      </section>
+
+      <section class="panel-section log-section">
+        <div class="panel-header-row">
+          <h2 class="panel-title">Crónicas del Anillo</h2>
+          <span class="move-counter" id="move-counter">Jugada 1</span>
+        </div>
+        <ol class="battle-log" id="battle-log">
+          <li class="log-entry lore-intro">⚔️ Los ejércitos se despliegan entre Minas Tirith y el Monte del Destino.</li>
+        </ol>
+      </section>
+
+      <div class="panel-actions">
+        <button type="button" class="btn-action" id="btn-undo">↩ Deshacer</button>
+        <button type="button" class="btn-action btn-danger" id="btn-reset">🔄 Nueva Guerra</button>
+      </div>
+    </aside>
+
+    <!-- Right Sidebar: Champion Lore & Camera Presets -->
+    <aside class="hud-panel hud-right">
+      <section class="panel-section champion-card" id="champion-card">
+        <div class="champion-header">
+          <span class="champion-badge" id="champ-faction">Pueblos Libres</span>
+          <span class="champion-chess-role" id="champ-chess-type">Rey (King)</span>
+        </div>
+        <h2 class="champion-name" id="champ-name">Aragorn Elessar</h2>
+        <p class="champion-weapon" id="champ-weapon">🗡️ Arma: Andúril, Llama del Oeste</p>
+        <p class="champion-lore" id="champ-lore">
+          "Heredero de Isildur y Rey de Gondor. En combate cuerpo a cuerpo, blande a Andúril con estocadas reales."
+        </p>
+        <div class="champion-combat-tag" id="champ-combat-style">
+          Animación de ataque: Mandoble Real de Gondor
+        </div>
+      </section>
+
+      <section class="panel-section roster-guide">
+        <h2 class="panel-title">Guía de Campeones</h2>
+        <div class="roster-grid">
+          <div class="roster-col">
+            <h3 class="roster-col-title light">☀️ Pueblos Libres</h3>
+            <ul>
+              <li><strong>Rey:</strong> Aragorn</li>
+              <li><strong>Reina:</strong> Galadriel</li>
+              <li><strong>Torre:</strong> Bárbol (Ent)</li>
+              <li><strong>Alfil:</strong> Gandalf</li>
+              <li><strong>Caballo:</strong> Rohirrim</li>
+              <li><strong>Peón:</strong> Guardia Hobbit</li>
+            </ul>
+          </div>
+          <div class="roster-col">
+            <h3 class="roster-col-title dark">👁️ Mordor</h3>
+            <ul>
+              <li><strong>Rey:</strong> Sauron</li>
+              <li><strong>Reina:</strong> Rey Brujo</li>
+              <li><strong>Torre:</strong> Troll Olog-hai</li>
+              <li><strong>Alfil:</strong> Saruman</li>
+              <li><strong>Caballo:</strong> Nazgûl</li>
+              <li><strong>Peón:</strong> Orco Uruk</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel-section camera-controls">
+        <h2 class="panel-title">Vistas de Cámara</h2>
+        <div class="camera-btn-grid">
+          <button type="button" class="btn-cam" data-cam="white">🛡️ Vista Gondor</button>
+          <button type="button" class="btn-cam" data-cam="black">👁️ Vista Mordor</button>
+          <button type="button" class="btn-cam" data-cam="top">🦅 Vista Águila</button>
+          <button type="button" class="btn-cam" data-cam="side">🎬 Vista Lateral</button>
+        </div>
+      </section>
+    </aside>
+
+    <!-- Cinematic Combat Overlay (shown during Battle Chess capture animations) -->
+    <div class="combat-overlay" id="combat-overlay" hidden>
+      <div class="combat-duel-bar">
+        <div class="combatant attacker-box">
+          <div class="combatant-name" id="combat-attacker-name">Gandalf el Blanco</div>
+          <div class="hp-bar-track">
+            <div class="hp-bar-fill attacker-hp" id="combat-attacker-hp"></div>
+          </div>
+        </div>
+
+        <div class="vs-medallion">⚔️ VS</div>
+
+        <div class="combatant defender-box">
+          <div class="combatant-name" id="combat-defender-name">Orco Uruk</div>
+          <div class="hp-bar-track">
+            <div class="hp-bar-fill defender-hp" id="combat-defender-hp"></div>
+          </div>
+        </div>
+      </div>
+      <div class="combat-caption" id="combat-caption">¡Duelo a muerte en el centro de la Tierra Media!</div>
+    </div>
+  </div>
+
+  <!-- Native Modal Dialog for Pawn Promotion (following modern-web-guidance dialog rules) -->
+  <dialog id="promotion-dialog" closedby="none" aria-labelledby="promo-title">
+    <h2 id="promo-title">Coronación en el Campo de Batalla</h2>
+    <p class="dialog-desc">Tu campeón ha alcanzado las líneas enemigas. Elige en qué héroe o bestia se convertirá:</p>
+    <form method="dialog" class="promo-choices" id="promo-form">
+      <button type="submit" value="q" class="promo-btn" autofocus>
+        <span class="promo-role">👑 Reina</span>
+        <strong id="promo-name-q">Galadriel / Rey Brujo</strong>
+      </button>
+      <button type="submit" value="r" class="promo-btn">
+        <span class="promo-role">🏰 Torre</span>
+        <strong id="promo-name-r">Bárbol (Ent) / Troll Olog-hai</strong>
+      </button>
+      <button type="submit" value="b" class="promo-btn">
+        <span class="promo-role">🪄 Alfil</span>
+        <strong id="promo-name-b">Gandalf / Saruman</strong>
+      </button>
+      <button type="submit" value="n" class="promo-btn">
+        <span class="promo-role">🐎 Caballo</span>
+        <strong id="promo-name-n">Rohirrim / Nazgûl</strong>
+      </button>
+    </form>
+  </dialog>
+
+  <!-- Native Modal Dialog for Game Over -->
+  <dialog id="gameover-dialog" closedby="any" aria-labelledby="gameover-title">
+    <h2 id="gameover-title">¡Fin de la Batalla por la Tierra Media!</h2>
+    <p class="dialog-desc" id="gameover-message">Los Pueblos Libres han triunfado sobre la oscuridad de Mordor.</p>
+    <form method="dialog" class="dialog-actions">
+      <button type="submit" value="new-game" class="btn-action btn-accent" autofocus>⚔️ Jugar Nueva Batalla</button>
+      <button type="submit" value="inspect" class="btn-action">Ver Tablero</button>
+    </form>
+  </dialog>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
