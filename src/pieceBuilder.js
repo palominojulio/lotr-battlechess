@@ -249,6 +249,165 @@ function createScannerVisor(width, height, depth, saberColor, scanners) {
 }
 
 /**
+ * Builds a tiered Cyber-Medieval Cape / Royal Mantle for Bishops ('b'), Queens ('q'), and Kings ('k')
+ * scaled and ornamented according to their hierarchical status.
+ */
+function createStatusCape(type, isWhite, saberColor, hScale) {
+  const capeGroup = new THREE.Group();
+  // Position at shoulder height on the back (-Z in local space)
+  capeGroup.position.set(0, 0.52 * hScale, -0.14 * hScale);
+
+  // Status hierarchy dimensions:
+  // 'b' (Bishop): Arcane Cloak (medium width & length)
+  // 'q' (Queen): Royal Flowing Mantle + High Collar (wider, floor-length, elegant flare)
+  // 'k' (King): Grand Sovereign Imperial Cape + Pauldron Clasps + Crown Mantle (widest, longest, double-trimmed)
+  const tierConfig = {
+    b: {
+      topW: 0.28 * hScale,
+      botW: 0.44 * hScale,
+      len: 0.78 * hScale,
+      curveDepth: 0.14,
+      hasHighCollar: false,
+      hasRoyalClasps: false,
+      capeColor: isWhite ? 0x1e3a8a : 0x7e22ce,
+      trimColor: isWhite ? 0x38bdf8 : 0xfacc15
+    },
+    q: {
+      topW: 0.34 * hScale,
+      botW: 0.62 * hScale,
+      len: 0.96 * hScale,
+      curveDepth: 0.22,
+      hasHighCollar: true,
+      hasRoyalClasps: true,
+      capeColor: isWhite ? 0x1d4ed8 : 0xdc2626,
+      trimColor: isWhite ? 0xfde047 : 0xfacc15
+    },
+    k: {
+      topW: 0.42 * hScale,
+      botW: 0.76 * hScale,
+      len: 1.06 * hScale,
+      curveDepth: 0.26,
+      hasHighCollar: true,
+      hasRoyalClasps: true,
+      capeColor: isWhite ? 0x172554 : 0xb91c1c,
+      trimColor: isWhite ? 0xfacc15 : 0xffaa00
+    }
+  }[type];
+
+  if (!tierConfig) return capeGroup;
+
+  // Build trapezoidal flared cape silhouette
+  const shape = new THREE.Shape();
+  shape.moveTo(-tierConfig.topW / 2, 0);
+  shape.lineTo(tierConfig.topW / 2, 0);
+  shape.quadraticCurveTo(
+    tierConfig.botW * 0.54,
+    -tierConfig.len * 0.55,
+    tierConfig.botW / 2,
+    -tierConfig.len
+  );
+  // Scalloped / rounded royal bottom hem
+  shape.quadraticCurveTo(0, -tierConfig.len * 1.08, -tierConfig.botW / 2, -tierConfig.len);
+  shape.quadraticCurveTo(
+    -tierConfig.botW * 0.54,
+    -tierConfig.len * 0.55,
+    -tierConfig.topW / 2,
+    0
+  );
+  shape.closePath();
+
+  const capeGeo = new THREE.ExtrudeGeometry(shape, {
+    depth: 0.028,
+    bevelEnabled: true,
+    bevelSegments: 2,
+    steps: 1,
+    bevelSize: 0.008,
+    bevelThickness: 0.008
+  });
+
+  const capeMat = new THREE.MeshStandardMaterial({
+    color: tierConfig.capeColor,
+    emissive: isWhite ? 0x0a192f : 0x2a050d,
+    roughness: 0.4,
+    metalness: 0.35,
+    side: THREE.DoubleSide
+  });
+
+  const capeMesh = new THREE.Mesh(capeGeo, capeMat);
+  // Tilt backward so it drapes gracefully behind the lower skirt
+  capeMesh.rotation.x = 0.24;
+  capeMesh.castShadow = true;
+  capeGroup.add(capeMesh);
+
+  // Glowing Heraldic Trim Border around the entire cape
+  const borderEdges = new THREE.EdgesGeometry(capeGeo);
+  const borderMat = new THREE.LineBasicMaterial({
+    color: tierConfig.trimColor
+  });
+  const borderLines = new THREE.LineSegments(borderEdges, borderMat);
+  capeMesh.add(borderLines);
+
+  // For King ('k'): Add an inner royal gold/crimson mantle layer & central glowing plasma spine
+  if (type === 'k') {
+    const innerMantleGeo = new THREE.BoxGeometry(tierConfig.topW * 1.05, 0.22 * hScale, 0.05);
+    const innerMantleMat = new THREE.MeshStandardMaterial({
+      color: isWhite ? 0xfacc15 : 0xb91c1c,
+      metalness: 0.8,
+      roughness: 0.25
+    });
+    const innerMantle = new THREE.Mesh(innerMantleGeo, innerMantleMat);
+    innerMantle.position.set(0, -0.08 * hScale, -0.02);
+    capeMesh.add(innerMantle);
+
+    const centerStrip = new THREE.Mesh(
+      new THREE.BoxGeometry(0.05, tierConfig.len * 0.9, 0.036),
+      new THREE.MeshBasicMaterial({ color: saberColor })
+    );
+    centerStrip.position.set(0, -tierConfig.len * 0.48, 0.015);
+    capeMesh.add(centerStrip);
+  }
+
+  // High Royal / Arcane Collar for Queen & King
+  if (tierConfig.hasHighCollar) {
+    const collarGeo = new THREE.CylinderGeometry(
+      0.23 * hScale,
+      0.20 * hScale,
+      type === 'k' ? 0.20 * hScale : 0.16 * hScale,
+      16,
+      1,
+      true,
+      Math.PI * 0.55,
+      Math.PI * 0.9
+    );
+    const collarMat = new THREE.MeshStandardMaterial({
+      color: tierConfig.trimColor,
+      metalness: 0.85,
+      roughness: 0.2,
+      side: THREE.DoubleSide
+    });
+    const collar = new THREE.Mesh(collarGeo, collarMat);
+    collar.position.set(0, 0.08 * hScale, 0.10 * hScale);
+    capeGroup.add(collar);
+  }
+
+  // Twin Glowing Shoulder Clasps / Royal Brooches for Queen & King (single central clasp for Bishop)
+  const claspMat = new THREE.MeshBasicMaterial({ color: tierConfig.trimColor });
+  if (tierConfig.hasRoyalClasps) {
+    [-tierConfig.topW * 0.42, tierConfig.topW * 0.42].forEach((cx) => {
+      const brooch = new THREE.Mesh(new THREE.OctahedronGeometry(0.065 * hScale, 0), claspMat);
+      brooch.position.set(cx, 0.02, 0.12 * hScale);
+      capeGroup.add(brooch);
+    });
+  } else {
+    const bishopBrooch = new THREE.Mesh(new THREE.OctahedronGeometry(0.055 * hScale, 0), claspMat);
+    bishopBrooch.position.set(0, 0.02, 0.16 * hScale);
+    capeGroup.add(bishopBrooch);
+  }
+
+  return capeGroup;
+}
+
+/**
  * Builds an anatomical, sculpted Bionic Cyber-Horse (Caballo Robot) for Knights (n)
  * featuring a rounded chest/barrel/croup, visible muscular thighs, hydraulic knees,
  * and a long, flowing natural-shaped cybernetic fiber-optic tail.
@@ -257,16 +416,16 @@ function buildRobotHorse(isWhite, saberColor, scanners = []) {
   const mountGroup = new THREE.Group();
 
   const chassisMat = new THREE.MeshStandardMaterial({
-    color: isWhite ? 0xdbeafe : 0x4c1d24,
-    emissive: isWhite ? 0x091526 : 0x2a080c,
-    metalness: 0.82,
-    roughness: 0.24
+    color: isWhite ? 0xdbeafe : 0xb91c1c,
+    emissive: isWhite ? 0x091526 : 0x450a0a,
+    metalness: 0.45,
+    roughness: 0.32
   });
   const muscleMat = new THREE.MeshStandardMaterial({
-    color: isWhite ? 0x94a3b8 : 0x7f1d1d,
-    emissive: isWhite ? 0x000000 : 0x3b0707,
-    metalness: 0.88,
-    roughness: 0.28
+    color: isWhite ? 0x94a3b8 : 0xea580c,
+    emissive: isWhite ? 0x000000 : 0x431407,
+    metalness: 0.5,
+    roughness: 0.3
   });
   const neonMat = new THREE.MeshBasicMaterial({
     color: saberColor
@@ -461,31 +620,32 @@ export function createLOTRPieceMesh(type, color) {
     lore
   };
 
-  // High-Contrast Faction Materials so Black pieces stand out vividly on dark tiles
+  // High-Contrast Faction Materials so Black (Mordor) pieces stand out vividly on ALL tiles
   const baseMat = new THREE.MeshStandardMaterial({
-    color: isWhite ? 0xcbd5e1 : 0x5c1922,
-    emissive: isWhite ? 0x0f172a : 0x2e080d,
-    metalness: 0.72,
-    roughness: 0.28
+    color: isWhite ? 0xe2e8f0 : 0x991b1b,
+    emissive: isWhite ? 0x0f172a : 0x450a0a,
+    metalness: 0.4,
+    roughness: 0.32
   });
   const ringMat = new THREE.MeshBasicMaterial({
-    color: isWhite ? 0x38bdf8 : 0xff4500
+    color: isWhite ? 0x38bdf8 : 0xffaa00
   });
   const armorMat = new THREE.MeshStandardMaterial({
     color: lore.primaryColor,
-    emissive: isWhite ? 0x091526 : 0x330a10,
-    metalness: 0.68,
-    roughness: 0.26
+    emissive: isWhite ? 0x091526 : 0x4c0519,
+    metalness: 0.38,
+    roughness: 0.32
   });
   const trimMat = new THREE.MeshStandardMaterial({
     color: lore.accentColor,
-    emissive: isWhite ? 0x1a1200 : 0x421000,
-    metalness: 0.85,
-    roughness: 0.2
+    emissive: isWhite ? 0x1a1200 : 0x5c2400,
+    metalness: 0.65,
+    roughness: 0.25
   });
   const skinMat = new THREE.MeshStandardMaterial({
-    color: isWhite ? 0xfde68a : 0x7c2d12,
-    roughness: 0.45
+    color: isWhite ? 0xfde68a : 0xfca5a5,
+    emissive: isWhite ? 0x000000 : 0x3b0d0d,
+    roughness: 0.4
   });
 
   // 1. Pedestal Base with High-Contrast Glowing Faction Rings
@@ -536,6 +696,7 @@ export function createLOTRPieceMesh(type, color) {
   const hScale = scaleMap[type] || 1.0;
 
   let mountGroup = null;
+  let capeGroup = null;
   let rightArm = new THREE.Group();
   let leftArm = new THREE.Group();
   let headGroup = new THREE.Group();
@@ -750,6 +911,12 @@ export function createLOTRPieceMesh(type, color) {
 
     upperBody.add(headGroup);
 
+    // Attach Hierarchical Status Cape for Bishops ('b'), Queens ('q'), and Kings ('k')
+    if (type === 'b' || type === 'q' || type === 'k') {
+      capeGroup = createStatusCape(type, isWhite, saberColor, hScale);
+      upperBody.add(capeGroup);
+    }
+
     // Right Arm + Lightsaber Weapon
     rightArm.position.set(0.32 * hScale, 0.42 * hScale, 0);
     const saber = createLightsaber({
@@ -799,6 +966,7 @@ export function createLOTRPieceMesh(type, color) {
     rightArm,
     leftArm,
     mountGroup,
+    capeGroup,
     sliceRing
   };
   root.userData.scanners = scanners;

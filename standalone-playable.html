@@ -96,12 +96,12 @@
         p: { name: 'Hobbit Guardia Jedi', role: 'Peón', weapon: 'Escudo de Gondor y Daga Láser', saber: '#00d2ff', body: '#e0f2fe', accent: '#1d4ed8', rim: '#facc15', style: 'saber_slice', finisher: 'Golpe de Escudo y Decapitación' }
       },
       b: {
-        k: { name: 'Darth Sauron', role: 'Rey', weapon: 'Mandoble Cruzado y Maza Sith', saber: '#ff0033', body: '#5c141b', accent: '#ea580c', rim: '#fb923c', style: 'saber_slice', finisher: 'Desmembramiento Carmesí' },
-        q: { name: 'Rey Brujo Inquisidor', role: 'Reina', weapon: 'Sable Doble Giratorio Morgul', saber: '#ff1133', body: '#4c1d4b', accent: '#e11d48', rim: '#f43f5e', style: 'force', finisher: 'Torbellino Sith Decapitador' },
-        r: { name: 'Ciber-Troll Olog-Mech', role: 'Torre', weapon: 'Martillo Térmico de Mordor', saber: '#ff4500', body: '#6b2114', accent: '#f97316', rim: '#fdba74', style: 'mecha', finisher: 'Explosión Sísmica de Chasis' },
-        b: { name: 'Conde Saruman', role: 'Alfil', weapon: 'Sable Curvo y Rayos Sith', saber: '#c084fc', body: '#4a1d5e', accent: '#a855f7', rim: '#d8b4fe', style: 'force', finisher: 'Electrocución y Sacrificio' },
-        n: { name: 'Nazgûl Caballo Robot', role: 'Caballo', weapon: 'Corcel Biónico + Guadaña Láser', saber: '#ff0022', body: '#58151c', accent: '#dc2626', rim: '#f87171', style: 'horse_laser', finisher: 'Salto Propulsado + Láser Rojo' },
-        p: { name: 'Trooper Uruk-Sith', role: 'Peón', weapon: 'Escudo del Ojo Rojo y Cimitarra Láser', saber: '#ff1a1a', body: '#63171b', accent: '#dc2626', rim: '#fb923c', style: 'saber_slice', finisher: 'Embate de Escudo y Corte de Plasma' }
+        k: { name: 'Darth Sauron', role: 'Rey', weapon: 'Mandoble Cruzado y Gran Capa Imperial', saber: '#ff0033', body: '#dc2626', accent: '#f59e0b', rim: '#fde047', cape: '#991b1b', style: 'saber_slice', finisher: 'Desmembramiento Carmesí' },
+        q: { name: 'Rey Brujo Inquisidor', role: 'Reina', weapon: 'Sable Doble y Manto Real Morgul', saber: '#ff1133', body: '#b91c1c', accent: '#fbbf24', rim: '#facc15', cape: '#7f1d1d', style: 'force', finisher: 'Torbellino Sith Decapitador' },
+        r: { name: 'Ciber-Troll Olog-Mech', role: 'Torre', weapon: 'Martillo Térmico de Mordor', saber: '#ff4500', body: '#ea580c', accent: '#facc15', rim: '#fde047', style: 'mecha', finisher: 'Explosión Sísmica de Chasis' },
+        b: { name: 'Conde Saruman', role: 'Alfil', weapon: 'Sable Curvo, Capa Arcana y Rayos Sith', saber: '#c084fc', body: '#9333ea', accent: '#facc15', rim: '#fde047', cape: '#6b21a8', style: 'force', finisher: 'Electrocución y Sacrificio' },
+        n: { name: 'Nazgûl Caballo Robot', role: 'Caballo', weapon: 'Corcel Biónico + Guadaña Láser', saber: '#ff0022', body: '#dc2626', accent: '#f97316', rim: '#facc15', style: 'horse_laser', finisher: 'Salto Propulsado + Láser Rojo' },
+        p: { name: 'Trooper Uruk-Sith', role: 'Peón', weapon: 'Escudo del Ojo Rojo y Cimitarra Láser', saber: '#ff1a1a', body: '#ef4444', accent: '#f59e0b', rim: '#fde047', style: 'saber_slice', finisher: 'Embate de Escudo y Corte de Plasma' }
       }
     };
 
@@ -406,10 +406,10 @@
       ctx.save();
       ctx.translate(x, y);
 
-      // High-Contrast Pedestal Base so Black pieces never blend into dark squares
-      ctx.fillStyle = isW ? '#e2e8f0' : '#450a0a';
-      ctx.strokeStyle = isW ? '#38bdf8' : '#ff5500';
-      ctx.lineWidth = 2.4;
+      // High-Contrast Pedestal Base so Black (Mordor) pieces glow vividly on all squares
+      ctx.fillStyle = isW ? '#e2e8f0' : '#991b1b';
+      ctx.strokeStyle = isW ? '#38bdf8' : '#facc15';
+      ctx.lineWidth = 2.6;
       ctx.beginPath();
       ctx.ellipse(0, 0, isPawn ? 12.5 : 14.5, isPawn ? 6.2 : 7.2, 0, 0, Math.PI * 2);
       ctx.fill();
@@ -441,10 +441,51 @@
       }
 
       ctx.globalAlpha = alpha;
+      const hScale = isPawn ? 0.84 : 1.0;
+      const dir = isW ? 1 : -1;
+
+      // STATUS CAPE for Bishops ('b'), Queens ('q'), and Kings ('k') — scaled by hierarchical rank!
+      if (piece.type === 'b' || piece.type === 'q' || piece.type === 'k') {
+        ctx.save();
+        ctx.translate(upperOffsetX * 0.7, upperOffsetY * 0.7);
+        const billow = Math.sin(performance.now() * 0.003 + x) * 2.2;
+        const capeWidth = piece.type === 'k' ? 16 : piece.type === 'q' ? 13.5 : 10.5;
+        const capeBottomY = piece.type === 'k' ? 2 : piece.type === 'q' ? 0 : -4;
+        const backPull = -dir * (piece.type === 'k' ? 8 : piece.type === 'q' ? 6 : 4);
+
+        ctx.fillStyle = info.cape || (isW ? '#1d4ed8' : '#991b1b');
+        ctx.strokeStyle = piece.type === 'k' ? '#facc15' : info.rim;
+        ctx.lineWidth = piece.type === 'k' ? 2.4 : 1.8;
+
+        ctx.beginPath();
+        ctx.moveTo(-6, -26);
+        ctx.lineTo(6, -26);
+        ctx.quadraticCurveTo(capeWidth + backPull + billow, -12, capeWidth * 0.85 + backPull + billow, capeBottomY);
+        ctx.quadraticCurveTo(backPull + billow, capeBottomY + 4, -capeWidth * 0.85 + backPull + billow, capeBottomY);
+        ctx.quadraticCurveTo(-capeWidth + backPull + billow, -12, -6, -26);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // High Royal Collar for Queen ('q') & King ('k')
+        if (piece.type === 'q' || piece.type === 'k') {
+          ctx.fillStyle = isW ? '#1e3a8a' : '#7f1d1d';
+          ctx.strokeStyle = '#facc15';
+          ctx.lineWidth = 1.6;
+          ctx.beginPath();
+          ctx.moveTo(-8, -27);
+          ctx.lineTo(-10, -35);
+          ctx.lineTo(10, -35);
+          ctx.lineTo(8, -27);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
 
       // KNIGHT ('n'): Sculpted Bionic Cyber-Horse with Muscular Thighs, Rounded Body & Long Cyber Tail
       if (piece.type === 'n') {
-        const dir = isW ? 1 : -1;
         const bx = upperOffsetX * 0.4;
 
         // 1. Long Flowing Natural-Cyber Tail at rear (-dir)
@@ -466,10 +507,10 @@
         ctx.stroke();
         ctx.restore();
 
-        // 2. Sculpted Organic Equine Barrel, Chest & Haunches (not a square box)
-        ctx.fillStyle = isW ? '#cbd5e1' : '#58151c';
+        // 2. Sculpted Organic Equine Barrel, Chest & Haunches (vivid crimson for Mordor)
+        ctx.fillStyle = isW ? '#cbd5e1' : '#dc2626';
         ctx.strokeStyle = info.rim;
-        ctx.lineWidth = 1.5;
+        ctx.lineWidth = 1.6;
         ctx.beginPath();
         ctx.ellipse(bx, -12, 12, 5.8, 0, 0, Math.PI * 2);
         ctx.fill();
@@ -483,23 +524,20 @@
 
         // 3. Visible Muscular Thighs (Muslos) & Articulated Legs with Cyber Knee Joints
         [-dir * 7.5, dir * 7.5].forEach((lx) => {
-          // Muscular upper thigh (Muslo ancho)
-          ctx.fillStyle = isW ? '#94a3b8' : '#7f1d1d';
+          ctx.fillStyle = isW ? '#94a3b8' : '#b91c1c';
           ctx.strokeStyle = info.rim;
-          ctx.lineWidth = 1.2;
+          ctx.lineWidth = 1.3;
           ctx.beginPath();
           ctx.ellipse(lx + bx, -8.5, 3.6, 5.2, dir * 0.2, 0, Math.PI * 2);
           ctx.fill();
           ctx.stroke();
 
-          // Glowing Cyber Knee Joint
           ctx.fillStyle = info.saber;
           ctx.beginPath();
           ctx.arc(lx + bx, -4.2, 2.0, 0, Math.PI * 2);
           ctx.fill();
 
-          // Lower leg to hoof
-          ctx.strokeStyle = isW ? '#e2e8f0' : '#fca5a5';
+          ctx.strokeStyle = isW ? '#e2e8f0' : '#fde047';
           ctx.lineWidth = 2.2;
           ctx.beginPath();
           ctx.moveTo(lx + bx, -4);
@@ -510,7 +548,7 @@
         // 4. Arched Equine Neck, Tapered Snout & Continuous Glowing Visor Line + Scanner
         const hx = dir * 9 + headOffsetX * 0.5;
         const hy = -23 + headOffsetY * 0.5;
-        ctx.fillStyle = isW ? '#cbd5e1' : '#58151c';
+        ctx.fillStyle = isW ? '#cbd5e1' : '#dc2626';
         ctx.strokeStyle = info.rim;
         ctx.lineWidth = 1.5;
         ctx.beginPath();
@@ -518,7 +556,6 @@
         ctx.fill();
         ctx.stroke();
 
-        // Tapered Equine Head
         ctx.beginPath();
         ctx.ellipse(hx + dir * 3, hy - 1, 6.2, 3.8, dir * 0.25, 0, Math.PI * 2);
         ctx.fill();
@@ -532,10 +569,9 @@
       }
 
       // Lower Armored Skirt / Legs with Bright Rim Outline
-      const hScale = isPawn ? 0.84 : 1.0;
       ctx.fillStyle = info.body;
       ctx.strokeStyle = info.rim;
-      ctx.lineWidth = 1.5;
+      ctx.lineWidth = 1.6;
       ctx.beginPath();
       ctx.moveTo(-8 * hScale, -2);
       ctx.lineTo(8 * hScale, -2);
@@ -560,12 +596,21 @@
       ctx.translate(upperOffsetX, upperOffsetY);
       ctx.fillStyle = info.body;
       ctx.strokeStyle = info.rim;
-      ctx.lineWidth = 1.5;
+      ctx.lineWidth = 1.6;
       ctx.fillRect(-7 * hScale, -27 * hScale, 14 * hScale, 12 * hScale);
       ctx.strokeRect(-7 * hScale, -27 * hScale, 14 * hScale, 12 * hScale);
 
       ctx.fillStyle = info.accent;
       ctx.fillRect(-4 * hScale, -25 * hScale, 8 * hScale, 8 * hScale);
+
+      // Shoulder Clasp Brooches for Cape-wearers ('b', 'q', 'k')
+      if (piece.type === 'b' || piece.type === 'q' || piece.type === 'k') {
+        ctx.fillStyle = '#facc15';
+        ctx.beginPath();
+        ctx.arc(-5, -26, 2.2, 0, Math.PI * 2);
+        ctx.arc(5, -26, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
 
       // Lightsaber / Plasma Broadsword
       ctx.save();
@@ -604,9 +649,9 @@
       // Head & Role-Specific Helmet/Crown/Wizard Hat + Continuous Visor Line with Scanner Dot
       ctx.save();
       ctx.translate(upperOffsetX + headOffsetX, upperOffsetY + headOffsetY);
-      ctx.fillStyle = isW ? '#fde68a' : '#7c2d12';
+      ctx.fillStyle = isW ? '#fde68a' : '#fca5a5';
       ctx.strokeStyle = info.rim;
-      ctx.lineWidth = 1.4;
+      ctx.lineWidth = 1.6;
       ctx.beginPath();
       ctx.arc(0, -33 * hScale, 5.8 * hScale, 0, Math.PI * 2);
       ctx.fill();

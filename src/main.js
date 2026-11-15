@@ -87,9 +87,13 @@ const gondorLight = new THREE.PointLight(0x38bdf8, 2.2, 22);
 gondorLight.position.set(0, 5, 9);
 scene.add(gondorLight);
 
-const mordorLight = new THREE.PointLight(0xff3300, 2.5, 22);
-mordorLight.position.set(0, 5, -9);
+const mordorLight = new THREE.PointLight(0xff6600, 3.8, 28);
+mordorLight.position.set(0, 7, -8.5);
 scene.add(mordorLight);
+
+const mordorFill = new THREE.DirectionalLight(0xffedd5, 0.95);
+mordorFill.position.set(-8, 15, -12);
+scene.add(mordorFill);
 
 // --- Build Middle-earth x Cyber-Laser Board & Environment ---
 const boardGroup = new THREE.Group();
@@ -123,9 +127,9 @@ function buildBoardArena() {
     roughness: 0.35
   });
   const darkTileMat = new THREE.MeshStandardMaterial({
-    color: 0x2b3648,
-    metalness: 0.4,
-    roughness: 0.38
+    color: 0x364359,
+    metalness: 0.3,
+    roughness: 0.42
   });
 
   const tileGeo = new THREE.BoxGeometry(TILE_SIZE * 0.98, 0.16, TILE_SIZE * 0.98);
@@ -808,6 +812,10 @@ function animate(now) {
       if (parts?.mountGroup?.userData?.tailGroup) {
         parts.mountGroup.userData.tailGroup.rotation.z = Math.sin(elapsedTime * 2.2 + idx) * 0.14;
         parts.mountGroup.userData.tailGroup.rotation.x = Math.cos(elapsedTime * 1.6 + idx) * 0.08;
+      }
+      if (parts?.capeGroup) {
+        parts.capeGroup.rotation.x = 0.06 + Math.sin(elapsedTime * 2.0 + idx) * 0.05;
+        parts.capeGroup.rotation.z = Math.cos(elapsedTime * 1.7 + idx) * 0.04;
       }
     }
     idx++;
