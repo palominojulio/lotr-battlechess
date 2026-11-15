@@ -585,6 +585,21 @@
         // Fortress / Mecha Turret Battlements
         ctx.fillStyle = info.accent;
         ctx.fillRect(-6, -41, 12, 4);
+      } else if (piece.type === 'p') {
+        // High-Contrast Pawn Helmet Crest (Cresta Uruk de Mordor / Penacho de Gondor)
+        ctx.save();
+        ctx.fillStyle = isW ? '#facc15' : '#ffaa00';
+        ctx.strokeStyle = isW ? '#38bdf8' : '#ff1a1a';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(-4.5, -37 * hScale);
+        ctx.lineTo(-2.5, -45 * hScale);
+        ctx.lineTo(2.5, -45 * hScale);
+        ctx.lineTo(4.5, -37 * hScale);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
       }
       ctx.restore();
 

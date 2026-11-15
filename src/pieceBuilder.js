@@ -597,10 +597,24 @@ export function createLOTRPieceMesh(type, color) {
       hatCone.position.y = 0.28 * hScale;
       headGroup.add(hatCone);
     } else if (type === 'p') {
-      // Infantry Helmet Crest for Pawns so they look like armored medieval guards
-      const helmCrest = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.14, 0.26), trimMat);
-      helmCrest.position.set(0, 0.16 * hScale, 0);
+      // High-visibility Infantry Helmet Crest for Pawns (Uruk Spiked Fin for Mordor / Winged Plume for Gondor)
+      const crestColor = isWhite ? 0xfacc15 : 0xffaa00;
+      const crestMat = new THREE.MeshBasicMaterial({ color: crestColor });
+      const helmCrest = new THREE.Mesh(
+        new THREE.BoxGeometry(0.075, 0.24 * hScale, 0.34 * hScale),
+        crestMat
+      );
+      helmCrest.position.set(0, 0.25 * hScale, -0.02);
       headGroup.add(helmCrest);
+
+      // Glowing neon plasma ridge along the top of the pawn crest
+      const ridgeMat = new THREE.MeshBasicMaterial({ color: isWhite ? 0x38bdf8 : 0xff2200 });
+      const ridge = new THREE.Mesh(
+        new THREE.BoxGeometry(0.09, 0.06 * hScale, 0.38 * hScale),
+        ridgeMat
+      );
+      ridge.position.set(0, 0.37 * hScale, -0.02);
+      headGroup.add(ridge);
     }
 
     upperBody.add(headGroup);
