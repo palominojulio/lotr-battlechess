@@ -185,6 +185,7 @@ export function executeCinematicCombat({
           }
           if (!clashed1 && t > 0.28) {
             clashed1 = true;
+            soundFX.playSaberSwing();
             soundFX.playLaserShot();
             const eyeOrigin = attackerMesh.position.clone().add(new THREE.Vector3(0, 1.15, 0));
             const hitPoint = defenderMesh.position.clone().add(new THREE.Vector3(0, 0.85, 0));
@@ -202,6 +203,7 @@ export function executeCinematicCombat({
               scene.remove(activeBeam);
               activeBeam = null;
             }
+            soundFX.playSaberSwing();
             soundFX.playSwordClash();
             spawnBurst(defenderMesh.position, 0xffffff, 26, 4.5);
           }
@@ -220,6 +222,8 @@ export function executeCinematicCombat({
           }
           if (!clashed1 && t > 0.25) {
             clashed1 = true;
+            soundFX.playSaberSwing();
+            soundFX.playSwordClash();
             soundFX.playMagicBlast();
             const startBeam = attackerMesh.position.clone().add(new THREE.Vector3(0, 1.0, 0));
             const endBeam = defenderMesh.position.clone().add(new THREE.Vector3(0, 1.35, 0));
@@ -238,6 +242,7 @@ export function executeCinematicCombat({
               activeBeam = null;
             }
             soundFX.playSaberSwing();
+            soundFX.playSwordClash();
           }
         } else {
           // MEDIEVAL LIGHTSABER DUEL: Multiple rapid slashes & defensive parries
@@ -256,6 +261,7 @@ export function executeCinematicCombat({
 
           if (!clashed1 && t > 0.24) {
             clashed1 = true;
+            soundFX.playSaberSwing();
             soundFX.playSwordClash();
             const midPoint = attackerMesh.position.clone().lerp(defenderMesh.position, 0.55);
             spawnBurst(midPoint, attLore.saberColor, 24, 3.8);

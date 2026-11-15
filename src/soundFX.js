@@ -313,31 +313,61 @@ class SoundFX {
     if (!this.ctx) return;
 
     const now = this.ctx.currentTime;
+
+    // 1. Authentic Star Wars "Snap-Hiss" plasma ignition burst
+    const bufSize = Math.floor(this.ctx.sampleRate * 0.28);
+    const buf = this.ctx.createBuffer(1, bufSize, this.ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < bufSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (this.ctx.sampleRate * 0.07));
+    }
+    const hiss = this.ctx.createBufferSource();
+    hiss.buffer = buf;
+    const hissFilter = this.ctx.createBiquadFilter();
+    hissFilter.type = 'bandpass';
+    hissFilter.Q.setValueAtTime(2.2, now);
+    hissFilter.frequency.setValueAtTime(2800, now);
+    hissFilter.frequency.exponentialRampToValueAtTime(750, now + 0.25);
+    const hissGain = this.ctx.createGain();
+    hissGain.gain.setValueAtTime(0.22, now);
+    hissGain.gain.exponentialRampToValueAtTime(0.001, now + 0.26);
+    hiss.connect(hissFilter);
+    hissFilter.connect(hissGain);
+    hissGain.connect(this.ctx.destination);
+    hiss.start(now);
+
+    // 2. Twin-core Ben Burtt Lightsaber Hum ("Kshhh-VWOOOOOM")
     const hum1 = this.ctx.createOscillator();
     const hum2 = this.ctx.createOscillator();
+    const humFilter = this.ctx.createBiquadFilter();
     const gain = this.ctx.createGain();
 
     hum1.type = 'sawtooth';
     hum2.type = 'triangle';
-    hum1.frequency.setValueAtTime(95, now);
-    hum1.frequency.exponentialRampToValueAtTime(148, now + 0.12);
-    hum1.frequency.exponentialRampToValueAtTime(118, now + 0.32);
+    hum1.frequency.setValueAtTime(88, now);
+    hum1.frequency.exponentialRampToValueAtTime(168, now + 0.11);
+    hum1.frequency.exponentialRampToValueAtTime(118, now + 0.44);
 
-    hum2.frequency.setValueAtTime(190, now);
-    hum2.frequency.exponentialRampToValueAtTime(295, now + 0.12);
-    hum2.frequency.exponentialRampToValueAtTime(236, now + 0.32);
+    hum2.frequency.setValueAtTime(176, now);
+    hum2.frequency.exponentialRampToValueAtTime(336, now + 0.11);
+    hum2.frequency.exponentialRampToValueAtTime(236, now + 0.44);
+
+    humFilter.type = 'lowpass';
+    humFilter.frequency.setValueAtTime(950, now);
 
     gain.gain.setValueAtTime(0.01, now);
-    gain.gain.linearRampToValueAtTime(0.11, now + 0.06);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.34);
+    gain.gain.linearRampToValueAtTime(0.18, now + 0.06);
+    gain.gain.setValueAtTime(0.14, now + 0.25);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.46);
 
-    hum1.connect(gain);
-    hum2.connect(gain);
+    hum1.connect(humFilter);
+    hum2.connect(humFilter);
+    humFilter.connect(gain);
     gain.connect(this.ctx.destination);
     hum1.start(now);
     hum2.start(now);
-    hum1.stop(now + 0.35);
-    hum2.stop(now + 0.35);
+    hum1.stop(now + 0.47);
+    hum2.stop(now + 0.47);
   }
 
   playSaberSwing() {
@@ -348,30 +378,38 @@ class SoundFX {
     const now = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
     const oscSub = this.ctx.createOscillator();
+    const filter = this.ctx.createBiquadFilter();
     const gain = this.ctx.createGain();
 
     osc.type = 'sawtooth';
-    oscSub.type = 'sine';
-    // Classic Doppler lightsaber whoosh ("Vwooooom")
-    osc.frequency.setValueAtTime(115, now);
-    osc.frequency.exponentialRampToValueAtTime(240, now + 0.11);
-    osc.frequency.exponentialRampToValueAtTime(88, now + 0.26);
+    oscSub.type = 'triangle';
+    // Classic Doppler lightsaber whoosh ("Vwooooom-vwoom")
+    osc.frequency.setValueAtTime(105, now);
+    osc.frequency.exponentialRampToValueAtTime(265, now + 0.13);
+    osc.frequency.exponentialRampToValueAtTime(86, now + 0.32);
 
-    oscSub.frequency.setValueAtTime(58, now);
-    oscSub.frequency.exponentialRampToValueAtTime(120, now + 0.11);
-    oscSub.frequency.exponentialRampToValueAtTime(44, now + 0.26);
+    oscSub.frequency.setValueAtTime(52.5, now);
+    oscSub.frequency.exponentialRampToValueAtTime(132.5, now + 0.13);
+    oscSub.frequency.exponentialRampToValueAtTime(43, now + 0.32);
 
-    gain.gain.setValueAtTime(0.02, now);
-    gain.gain.linearRampToValueAtTime(0.15, now + 0.1);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.27);
+    filter.type = 'bandpass';
+    filter.Q.setValueAtTime(1.8, now);
+    filter.frequency.setValueAtTime(240, now);
+    filter.frequency.exponentialRampToValueAtTime(780, now + 0.13);
+    filter.frequency.exponentialRampToValueAtTime(210, now + 0.32);
 
-    osc.connect(gain);
-    oscSub.connect(gain);
+    gain.gain.setValueAtTime(0.01, now);
+    gain.gain.linearRampToValueAtTime(0.24, now + 0.12);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.33);
+
+    osc.connect(filter);
+    oscSub.connect(filter);
+    filter.connect(gain);
     gain.connect(this.ctx.destination);
     osc.start(now);
     oscSub.start(now);
-    osc.stop(now + 0.28);
-    oscSub.stop(now + 0.28);
+    osc.stop(now + 0.34);
+    oscSub.stop(now + 0.34);
   }
 
   playStep(isMecha = false) {
@@ -410,22 +448,47 @@ class SoundFX {
     if (!this.ctx) return;
 
     const now = this.ctx.currentTime;
-    // Lightsaber plasma crackle + metallic clash ("KZZZ-CLANG!")
-    const freqs = [920, 1480, 2240, 180];
+
+    // 1. High-voltage lightsaber blade collision crackle (white noise + resonant bandpass)
+    const bufSize = Math.floor(this.ctx.sampleRate * 0.32);
+    const buf = this.ctx.createBuffer(1, bufSize, this.ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < bufSize; i++) {
+      // Modulate crackle with fast 55Hz plasma arc flutter
+      const flutter = 0.6 + 0.4 * Math.sin(i * 0.08);
+      data[i] = (Math.random() * 2 - 1) * flutter * Math.exp(-i / (this.ctx.sampleRate * 0.11));
+    }
+    const crackle = this.ctx.createBufferSource();
+    crackle.buffer = buf;
+    const bp = this.ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.Q.setValueAtTime(3.0, now);
+    bp.frequency.setValueAtTime(2400, now);
+    bp.frequency.exponentialRampToValueAtTime(920, now + 0.3);
+    const cGain = this.ctx.createGain();
+    cGain.gain.setValueAtTime(0.28, now);
+    cGain.gain.exponentialRampToValueAtTime(0.001, now + 0.31);
+    crackle.connect(bp);
+    bp.connect(cGain);
+    cGain.connect(this.ctx.destination);
+    crackle.start(now);
+
+    // 2. Lightsaber harmonic plasma flash ("KZZZT-VWOOOM!")
+    const freqs = [1120, 1680, 2540, 145];
     freqs.forEach((f, idx) => {
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
       osc.type = idx % 2 === 0 ? 'sawtooth' : 'square';
       osc.frequency.setValueAtTime(f, now);
-      osc.frequency.exponentialRampToValueAtTime(f * 0.65, now + 0.26);
+      osc.frequency.exponentialRampToValueAtTime(f * 0.58, now + 0.28);
 
-      gain.gain.setValueAtTime(0.06, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.27);
+      gain.gain.setValueAtTime(0.075, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.29);
 
       osc.connect(gain);
       gain.connect(this.ctx.destination);
       osc.start(now);
-      osc.stop(now + 0.28);
+      osc.stop(now + 0.3);
     });
   }
 
@@ -509,12 +572,49 @@ class SoundFX {
     if (!this.ctx) return;
 
     const now = this.ctx.currentTime;
-    // Plasma cauterize + armor shatter noise burst
-    const bufferSize = this.ctx.sampleRate * 0.45;
+
+    // 1. Heavy Lightsaber Execution Slash ("VWOOOOOOM-KZZZT!")
+    const slash1 = this.ctx.createOscillator();
+    const slash2 = this.ctx.createOscillator();
+    const slashFilter = this.ctx.createBiquadFilter();
+    const slashGain = this.ctx.createGain();
+
+    slash1.type = 'sawtooth';
+    slash2.type = 'triangle';
+    slash1.frequency.setValueAtTime(115, now);
+    slash1.frequency.exponentialRampToValueAtTime(320, now + 0.14);
+    slash1.frequency.exponentialRampToValueAtTime(72, now + 0.48);
+
+    slash2.frequency.setValueAtTime(230, now);
+    slash2.frequency.exponentialRampToValueAtTime(640, now + 0.14);
+    slash2.frequency.exponentialRampToValueAtTime(144, now + 0.48);
+
+    slashFilter.type = 'bandpass';
+    slashFilter.Q.setValueAtTime(2.0, now);
+    slashFilter.frequency.setValueAtTime(300, now);
+    slashFilter.frequency.exponentialRampToValueAtTime(1250, now + 0.14);
+    slashFilter.frequency.exponentialRampToValueAtTime(190, now + 0.48);
+
+    slashGain.gain.setValueAtTime(0.01, now);
+    slashGain.gain.linearRampToValueAtTime(0.32, now + 0.11);
+    slashGain.gain.exponentialRampToValueAtTime(0.001, now + 0.50);
+
+    slash1.connect(slashFilter);
+    slash2.connect(slashFilter);
+    slashFilter.connect(slashGain);
+    slashGain.connect(this.ctx.destination);
+    slash1.start(now);
+    slash2.start(now);
+    slash1.stop(now + 0.52);
+    slash2.stop(now + 0.52);
+
+    // 2. Plasma Cauterize & Bisection Sizzle (modulated white noise burst)
+    const bufferSize = Math.floor(this.ctx.sampleRate * 0.55);
     const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
     const data = buffer.getChannelData(0);
     for (let i = 0; i < bufferSize; i++) {
-      data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (this.ctx.sampleRate * 0.14));
+      const arc = 0.65 + 0.35 * Math.sin(i * 0.11);
+      data[i] = (Math.random() * 2 - 1) * arc * Math.exp(-i / (this.ctx.sampleRate * 0.18));
     }
 
     const noise = this.ctx.createBufferSource();
@@ -522,16 +622,42 @@ class SoundFX {
 
     const filter = this.ctx.createBiquadFilter();
     filter.type = 'bandpass';
-    filter.frequency.setValueAtTime(1100, now);
+    filter.Q.setValueAtTime(2.5, now);
+    filter.frequency.setValueAtTime(2100, now);
+    filter.frequency.exponentialRampToValueAtTime(650, now + 0.52);
 
     const gain = this.ctx.createGain();
-    gain.gain.setValueAtTime(0.24, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.44);
+    gain.gain.setValueAtTime(0.28, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.54);
 
     noise.connect(filter);
     filter.connect(gain);
     gain.connect(this.ctx.destination);
     noise.start(now);
+
+    // 3. Iconic Star Wars Lightsaber Retraction / Deactivation ("SHHHH-KSSHH-VWOOM") after the fatal cut
+    const retract1 = this.ctx.createOscillator();
+    const retract2 = this.ctx.createOscillator();
+    const retractGain = this.ctx.createGain();
+    const rStart = now + 0.36;
+    retract1.type = 'sawtooth';
+    retract2.type = 'triangle';
+    retract1.frequency.setValueAtTime(380, rStart);
+    retract1.frequency.exponentialRampToValueAtTime(58, rStart + 0.38);
+    retract2.frequency.setValueAtTime(760, rStart);
+    retract2.frequency.exponentialRampToValueAtTime(116, rStart + 0.38);
+
+    retractGain.gain.setValueAtTime(0.001, rStart);
+    retractGain.gain.linearRampToValueAtTime(0.18, rStart + 0.04);
+    retractGain.gain.exponentialRampToValueAtTime(0.001, rStart + 0.40);
+
+    retract1.connect(retractGain);
+    retract2.connect(retractGain);
+    retractGain.connect(this.ctx.destination);
+    retract1.start(rStart);
+    retract2.start(rStart);
+    retract1.stop(rStart + 0.42);
+    retract2.stop(rStart + 0.42);
 
     this.playHeavySmash();
   }
