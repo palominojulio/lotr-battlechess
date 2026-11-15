@@ -48,7 +48,7 @@ export function extractRoomCode(rawInput) {
 }
 
 export class OnlineRoomManager {
-  constructor({ onStatusChange, onRemoteMove, onRemoteReset, onConnected }) {
+  constructor({ onStatusChange, onRemoteMove, onRemoteReset, onConnected, onRemoteChat }) {
     this.peer = null;
     this.conn = null;
     this.roomCode = null;
@@ -62,6 +62,7 @@ export class OnlineRoomManager {
     this.onRemoteMove = onRemoteMove;
     this.onRemoteReset = onRemoteReset;
     this.onConnected = onConnected;
+    this.onRemoteChat = onRemoteChat;
 
     // When returning from WhatsApp app on mobile/desktop, automatically ensure room is active
     document.addEventListener('visibilitychange', () => {
@@ -234,6 +235,12 @@ export class OnlineRoomManager {
         });
       } else if (data.type === 'reset') {
         this.onRemoteReset?.();
+      } else if (data.type === 'chat') {
+        this.onRemoteChat?.({
+          text: String(data.text || '').slice(0, 240),
+          sender: String(data.sender || 'Rival').slice(0, 24),
+          color: data.color || 'b'
+        });
       }
     });
 
@@ -263,6 +270,21 @@ export class OnlineRoomManager {
     if (this.isConnected && this.conn?.open) {
       this.conn.send({ type: 'reset' });
     }
+  }
+
+  sendChat(text, sender = 'Jugador') {
+    const cleanText = String(text || '').trim().slice(0, 240);
+    if (!cleanText) return false;
+    if (this.isConnected && this.conn?.open) {
+      this.conn.send({
+        type: 'chat',
+        text: cleanText,
+        sender,
+        color: this.myColor
+      });
+      return true;
+    }
+    return false;
   }
 
   getShareUrl() {

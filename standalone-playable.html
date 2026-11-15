@@ -83,11 +83,23 @@
           </div>
         </div>
 
-        <div class="bg-[var(--background)] border border-[var(--border)] rounded-lg p-3 flex-1 flex flex-col min-h-[140px]">
-          <div class="text-xs font-semibold text-[var(--foreground)] mb-1.5">Crónicas de Combate</div>
-          <div id="battle-log" class="text-xs text-[var(--muted-foreground)] space-y-1 overflow-y-auto max-h-[115px]">
-            <div>🛡️ Peones equipados con escudos heráldicos y armaduras de alto contraste.</div>
+        <div class="bg-[var(--background)] border border-[var(--border)] rounded-lg p-2.5 flex-1 flex flex-col min-h-[165px]">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-xs font-semibold text-[var(--foreground)]">💬 Chat en Vivo & Crónicas</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-medium">Gondor ↔ Mordor</span>
           </div>
+          <div id="battle-log" class="text-xs text-[var(--muted-foreground)] space-y-1 overflow-y-auto max-h-[82px] mb-1.5 pr-1">
+            <div class="text-emerald-400">📡 Canal de chat abierto entre Gondor y Mordor.</div>
+          </div>
+          <div class="flex flex-wrap gap-1 mb-1.5">
+            <button type="button" class="chat-chip px-1.5 py-0.5 rounded text-[10px] bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)] hover:opacity-80 cursor-pointer" data-msg="⚔️ ¡Por Gondor!">⚔️ ¡Por Gondor!</button>
+            <button type="button" class="chat-chip px-1.5 py-0.5 rounded text-[10px] bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)] hover:opacity-80 cursor-pointer" data-msg="👁️ ¡Yo soy tu padre!">👁️ ¡Soy tu padre!</button>
+            <button type="button" class="chat-chip px-1.5 py-0.5 rounded text-[10px] bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)] hover:opacity-80 cursor-pointer" data-msg="👏 ¡Buena jugada, Santi!">👏 ¡Buena, Santi!</button>
+          </div>
+          <form id="inline-chat-form" class="flex gap-1 mt-auto">
+            <input id="inline-chat-input" type="text" placeholder="Escribe a Santi..." class="flex-1 min-w-0 px-2 py-1 rounded text-xs bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)] focus:outline-none" />
+            <button type="submit" class="px-2 py-1 rounded text-xs font-semibold bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90 cursor-pointer">Enviar</button>
+          </form>
         </div>
       </div>
     </div>
@@ -1426,6 +1438,34 @@
       const gameUrl = `https://palominojulio.github.io/lotr-battlechess/?room=${roomCode}`;
       const msg = `⚔️ ¡Santi! Te reto a nuestro Battle Chess 3D (El Señor de los Anillos x Star Wars). Entra en este enlace para jugar contra mí:\n${gameUrl}`;
       window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer');
+    });
+
+    function sendInlineChat(text) {
+      const clean = String(text || '').trim();
+      if (!clean) return;
+      playSound('r2d2');
+      logEvent(`💬 ☀️ Tú (Gondor): ${clean}`);
+      setTimeout(() => {
+        const replies = [
+          '💬 👁️ Mordor: «¡No conoces el poder del Lado Oscuro del Anillo!»',
+          '💬 👁️ Mordor: «¡Mis caballos robot aplastarán Minas Tirith!»',
+          '💬 👁️ Mordor: «¡Buena jugada! Prepárate para el duelo de sables láser.»'
+        ];
+        playSound('orc');
+        logEvent(replies[Math.floor(Math.random() * replies.length)]);
+      }, 650);
+    }
+
+    document.getElementById('inline-chat-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const inp = document.getElementById('inline-chat-input');
+      if (!inp.value) return;
+      sendInlineChat(inp.value);
+      inp.value = '';
+    });
+
+    document.querySelectorAll('.chat-chip').forEach((btn) => {
+      btn.addEventListener('click', () => sendInlineChat(btn.dataset.msg));
     });
 
     document.getElementById('btn-reset').addEventListener('click', initBoard);

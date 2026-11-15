@@ -693,7 +693,7 @@ renderer.domElement.addEventListener('pointerup', async (e) => {
   }
 });
 
-// --- Online P2P Multiplayer & WhatsApp Sharing ---
+// --- Online P2P Multiplayer, In-Game Chat & WhatsApp Sharing ---
 const onlineDialog = document.getElementById('online-dialog');
 const onlineShareBox = document.getElementById('online-share-box');
 const onlineRoomCodeEl = document.getElementById('online-room-code');
@@ -702,6 +702,41 @@ const onlineJoinInput = document.getElementById('online-join-input');
 const onlineStatusBanner = document.getElementById('online-status-banner');
 const gameModeSelect = document.getElementById('game-mode-select');
 const btnOnlineRoom = document.getElementById('btn-online-room');
+
+const chatMessagesEl = document.getElementById('chat-messages');
+const chatForm = document.getElementById('chat-form');
+const chatInput = document.getElementById('chat-input');
+const chatStatusBadge = document.getElementById('chat-status-badge');
+let lastChatSent = '';
+
+const AI_CHAT_REPLIES = [
+  '👁️ Darth Sauron: «¡No conoces el poder del Lado Oscuro del Anillo Único!»',
+  '🤖 Nazgûl Ciber: «¡Nuestros caballos robot y sables rojos aplastarán Minas Tirith!»',
+  '🔥 Uruk-Sith: «¡La era de los Jedi de Gondor ha terminado!»',
+  '⚡ Conde Saruman: «¡Mis rayos de la Fuerza reducirán tus torres a cenizas!»'
+];
+
+function appendChatMessage({ sender, text, color = 'w', isSystem = false, playAudio = true }) {
+  if (!chatMessagesEl || !text) return;
+  const div = document.createElement('div');
+  if (isSystem) {
+    div.className = 'chat-msg system-msg';
+    div.textContent = text;
+  } else {
+    div.className = `chat-msg ${color === 'w' ? 'white-msg' : 'black-msg'}`;
+    const strong = document.createElement('span');
+    strong.className = 'chat-sender';
+    strong.textContent = `${sender}:`;
+    div.appendChild(strong);
+    div.appendChild(document.createTextNode(` ${text}`));
+    if (playAudio) {
+      if (color === 'w') soundFX.playR2D2Chirp();
+      else soundFX.playOrcGrowl();
+    }
+  }
+  chatMessagesEl.appendChild(div);
+  chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+}
 
 const onlineManager = new OnlineRoomManager({
   onStatusChange: ({ state, roomCode, shareUrl, message }) => {
@@ -712,6 +747,7 @@ const onlineManager = new OnlineRoomManager({
       onlineShareBox.hidden = false;
       onlineRoomCodeEl.textContent = roomCode;
       onlineShareUrlInput.value = shareUrl;
+      if (chatStatusBadge) chatStatusBadge.textContent = `⏳ Sala ${roomCode}`;
     }
   },
   onConnected: ({ myColor, roomCode }) => {
@@ -724,6 +760,13 @@ const onlineManager = new OnlineRoomManager({
     if (btnOnlineRoom) {
       btnOnlineRoom.textContent = `🟢 Online: ${roomCode}`;
     }
+    if (chatStatusBadge) {
+      chatStatusBadge.textContent = `🟢 En Vivo (${roomCode})`;
+    }
+    appendChatMessage({
+      isSystem: true,
+      text: `🎉 ¡Conectado en directo con Santi en la sala ${roomCode}! Escribe abajo para hablar.`
+    });
     setCameraPreset(myColor === 'w' ? 'white' : 'black');
     soundFX.playHornFanfare();
     resetGame(true);
@@ -736,7 +779,43 @@ const onlineManager = new OnlineRoomManager({
   },
   onRemoteReset: () => {
     resetGame(true);
+  },
+  onRemoteChat: ({ text, sender, color }) => {
+    appendChatMessage({ sender, text, color, playAudio: true });
   }
+});
+
+function handleSendChat(rawText) {
+  const clean = String(rawText || '').trim();
+  if (!clean) return;
+
+  const myColor = onlineManager.isConnected ? onlineManager.myColor : chess.turn();
+  const senderName = myColor === 'w' ? '☀️ Gondor (Blancas)' : '👁️ Mordor (Negras)';
+
+  lastChatSent = clean;
+  appendChatMessage({ sender: senderName, text: clean, color: myColor, playAudio: true });
+
+  if (onlineManager.isConnected) {
+    onlineManager.sendChat(clean, senderName);
+  } else if (gameMode.startsWith('ai')) {
+    setTimeout(() => {
+      const reply = AI_CHAT_REPLIES[Math.floor(Math.random() * AI_CHAT_REPLIES.length)];
+      appendChatMessage({ sender: '👁️ Mordor IA', text: reply, color: 'b', playAudio: true });
+    }, 650);
+  }
+}
+
+chatForm?.addEventListener('submit', (e) => {
+  e.preventDefault();
+  if (!chatInput?.value) return;
+  handleSendChat(chatInput.value);
+  chatInput.value = '';
+});
+
+document.querySelectorAll('.chat-chip').forEach((chip) => {
+  chip.addEventListener('click', () => {
+    if (chip.dataset.msg) handleSendChat(chip.dataset.msg);
+  });
 });
 
 if (btnOnlineRoom && onlineDialog) {
@@ -800,8 +879,12 @@ document.getElementById('btn-whatsapp-turn')?.addEventListener('click', () => {
     if (lastMoveSnapshot.promotion) {
       shareUrl.searchParams.set('promo', lastMoveSnapshot.promotion);
     }
+    if (lastChatSent) {
+      shareUrl.searchParams.set('chat', lastChatSent);
+    }
     const nextTurnName = chess.turn() === 'w' ? 'Gondor (Blancas)' : 'Mordor (Negras)';
-    const text = `⚔️ ¡Santi! He movido de ${lastMoveSnapshot.from.toUpperCase()} a ${lastMoveSnapshot.to.toUpperCase()} en nuestro Battle Chess. Abre este enlace público para ver el duelo láser y hacer tu jugada con ${nextTurnName}:\n${shareUrl.toString()}`;
+    const chatPart = lastChatSent ? `\n💬 Mensaje: "${lastChatSent}"` : '';
+    const text = `⚔️ ¡Santi! He movido de ${lastMoveSnapshot.from.toUpperCase()} a ${lastMoveSnapshot.to.toUpperCase()} en nuestro Battle Chess.${chatPart}\nAbre este enlace público para ver el duelo láser y hacer tu jugada con ${nextTurnName}:\n${shareUrl.toString()}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
   } else {
     // No move made yet -> open the Online Room modal and auto-create a room for Santi!
@@ -1051,11 +1134,12 @@ function checkUrlParamsOnLoad() {
   const fromParam = params.get('from');
   const toParam = params.get('to');
   const promoParam = params.get('promo');
+  const chatParam = params.get('chat');
 
   if (roomParam) {
     gameMode = 'online';
     if (gameModeSelect) gameModeSelect.value = 'online';
-    if (onlineJoinInput) onlineJoinInput.value = roomParam;
+    if (onlineJoinInput) onlineJoinInput.value = extractRoomCode(roomParam);
     onlineDialog?.showModal();
     onlineManager.joinRoom(roomParam);
   } else if (preFenParam && fromParam && toParam) {
@@ -1065,9 +1149,17 @@ function checkUrlParamsOnLoad() {
       if (gameModeSelect) gameModeSelect.value = 'pvp';
       rebuildAllPieces();
       updateHUD();
-      // Rotate camera to the player who is about to receive the move
-      const receiverColor = chess.turn() === 'w' ? 'b' : 'w';
+      const senderColor = chess.turn();
+      const receiverColor = senderColor === 'w' ? 'b' : 'w';
       setCameraPreset(receiverColor === 'w' ? 'white' : 'black');
+      if (chatParam) {
+        appendChatMessage({
+          sender: senderColor === 'w' ? '☀️ Gondor (Blancas)' : '👁️ Mordor (Negras)',
+          text: chatParam,
+          color: senderColor,
+          playAudio: false
+        });
+      }
       setTimeout(() => {
         performChessMove(fromParam, toParam, promoParam || null, true);
       }, 650);

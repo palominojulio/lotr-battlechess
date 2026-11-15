@@ -90,6 +90,34 @@
         </ol>
       </section>
 
+      <section class="panel-section chat-section" id="chat-section">
+        <div class="panel-header-row">
+          <h2 class="panel-title">💬 Chat en Vivo (Julio & Santi)</h2>
+          <span class="chat-status-dot" id="chat-status-badge">Online / Local</span>
+        </div>
+        <div class="chat-messages" id="chat-messages" aria-live="polite">
+          <div class="chat-msg system-msg">📡 Canal de transmisión abierto entre Gondor y Mordor.</div>
+        </div>
+        <div class="chat-quick-row">
+          <button type="button" class="chat-chip" data-msg="⚔️ ¡Por Gondor!">⚔️ ¡Por Gondor!</button>
+          <button type="button" class="chat-chip" data-msg="👁️ ¡Yo soy tu padre!">👁️ ¡Yo soy tu padre!</button>
+          <button type="button" class="chat-chip" data-msg="🧙‍♂️ ¡No puedes pasar!">🧙‍♂️ ¡No pasarás!</button>
+          <button type="button" class="chat-chip" data-msg="👏 ¡Buena jugada, Santi!">👏 ¡Buena, Santi!</button>
+        </div>
+        <form class="chat-form" id="chat-form">
+          <input
+            type="text"
+            id="chat-input"
+            class="chat-input"
+            placeholder="Escribe un mensaje a Santi..."
+            maxlength="200"
+            autocomplete="off"
+            aria-label="Mensaje de chat"
+          />
+          <button type="submit" class="btn-chat-send" id="btn-chat-send">Enviar</button>
+        </form>
+      </section>
+
       <div class="panel-actions">
         <button type="button" class="btn-action" id="btn-undo">↩ Deshacer</button>
         <button type="button" class="btn-action btn-danger" id="btn-reset">🔄 Nueva Guerra</button>
