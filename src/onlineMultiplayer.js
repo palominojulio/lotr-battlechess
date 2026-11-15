@@ -290,6 +290,7 @@ export class OnlineRoomManager {
   getShareUrl() {
     const url = new URL(PUBLIC_GAME_URL);
     url.searchParams.set('room', this.roomCode);
+    url.searchParams.set('v', '3');
     return url.toString();
   }
 }

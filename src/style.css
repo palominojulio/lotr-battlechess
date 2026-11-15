@@ -212,11 +212,12 @@ html, body {
   position: absolute;
   top: 84px;
   bottom: 16px;
-  width: 280px;
+  width: 288px;
   z-index: 10;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
+  overflow-y: auto;
   pointer-events: none;
 }
 
@@ -755,9 +756,10 @@ dialog h2 {
 .chat-section {
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
   gap: 6px;
-  max-height: 225px;
-  border-color: rgba(16, 185, 129, 0.45);
+  border: 2px solid #10b981;
+  box-shadow: 0 0 18px rgba(16, 185, 129, 0.25);
 }
 
 .chat-status-dot {
