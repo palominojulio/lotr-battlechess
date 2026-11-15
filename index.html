@@ -40,12 +40,12 @@
             <option value="ai-1">vs. Orco IA (Fácil)</option>
             <option value="ai-3">vs. Legión IA (Difícil)</option>
             <option value="pvp">2 Jugadores (Local)</option>
-            <option value="online">🌐 Online con Santi</option>
+            <option value="online">🌐 Online (Amigos / Invitado)</option>
           </select>
         </label>
 
-        <button type="button" class="btn-hud btn-online" id="btn-online-room" title="Crear sala online o invitar a Santi por WhatsApp">
-          🌐 Jugar Online con Santi
+        <button type="button" class="btn-hud btn-online" id="btn-online-room" title="Crear sala online o invitar a un amigo por WhatsApp">
+          🌐 Jugar Online / Invitar
         </button>
 
         <button type="button" class="btn-hud active" id="btn-cinematic" title="Activar/desactivar cámara cinemática en capturas">
@@ -70,7 +70,7 @@
     <aside class="hud-panel hud-left">
       <section class="panel-section chat-section" id="chat-section">
         <div class="panel-header-row">
-          <h2 class="panel-title">💬 Chat en Vivo (Julio & Santi)</h2>
+          <h2 class="panel-title">💬 Chat en Vivo (Sala / Invitado)</h2>
           <span class="chat-status-dot" id="chat-status-badge">Online / Local</span>
         </div>
         <div class="chat-messages" id="chat-messages" aria-live="polite">
@@ -80,14 +80,26 @@
           <button type="button" class="chat-chip" data-msg="⚔️ ¡Por la Alianza Solar!">⚔️ ¡Por la Alianza!</button>
           <button type="button" class="chat-chip" data-msg="👁️ ¡Temed el acero de Antracita!">👁️ ¡Temed mi acero!</button>
           <button type="button" class="chat-chip" data-msg="🧙‍♂️ ¡No pasaréis de esta fila!">🧙‍♂️ ¡No pasaréis!</button>
-          <button type="button" class="chat-chip" data-msg="👏 ¡Buena jugada, Santi!">👏 ¡Buena, Santi!</button>
+          <button type="button" class="chat-chip" data-msg="👏 ¡Buena jugada!">👏 ¡Buena jugada!</button>
         </div>
         <form class="chat-form" id="chat-form">
           <input
             type="text"
+            id="chat-nick-input"
+            class="chat-input"
+            style="max-width: 86px; flex: 0 0 86px;"
+            placeholder="Tu apodo"
+            value="Invitado"
+            maxlength="18"
+            autocomplete="off"
+            aria-label="Tu nombre o apodo"
+            title="Tu nombre o apodo para el chat"
+          />
+          <input
+            type="text"
             id="chat-input"
             class="chat-input"
-            placeholder="Escribe un mensaje a Santi..."
+            placeholder="Escribe al rival / invitado..."
             maxlength="200"
             autocomplete="off"
             aria-label="Mensaje de chat"
@@ -141,7 +153,7 @@
         <button type="button" class="btn-action" id="btn-undo">↩ Deshacer</button>
         <button type="button" class="btn-action btn-danger" id="btn-reset">🔄 Nueva Guerra</button>
         <button type="button" class="btn-action btn-whatsapp" id="btn-whatsapp-turn" style="grid-column: 1 / -1;">
-          💬 Mandar Jugada por WhatsApp a Santi
+          💬 Invitar Amigo / Mandar Jugada por WhatsApp
         </button>
       </div>
     </aside>
@@ -259,11 +271,11 @@
     </form>
   </dialog>
 
-  <!-- Native Modal Dialog for P2P Online Multiplayer with Santi -->
+  <!-- Native Modal Dialog for P2P Online Multiplayer with Friends / Guests -->
   <dialog id="online-dialog" closedby="any" aria-labelledby="online-title">
-    <h2 id="online-title">🌐 Multijugador Online con Santi</h2>
+    <h2 id="online-title">🌐 Multijugador Online (Amigos / Invitado)</h2>
     <p class="dialog-desc">
-      Crea una sala en tiempo real y envíale el enlace a Santi por WhatsApp, o introduce su código de sala para jugar cada uno desde su móvil u ordenador.
+      Crea una sala en tiempo real y envíale el enlace a un amigo o invitado por WhatsApp, o introduce el código de sala para jugar cada uno desde su móvil u ordenador.
     </p>
 
     <div class="online-section">
@@ -280,31 +292,31 @@
 
     <div class="online-share-box" id="online-share-box" hidden>
       <div class="online-code-badge">
-        Código de Sala: <strong id="online-room-code">SANTI-0000</strong>
+        Código de Sala: <strong id="online-room-code">SALA-0000</strong>
       </div>
-      <input type="text" id="online-share-url" class="online-input" readonly aria-label="Enlace de invitación para Santi" />
+      <input type="text" id="online-share-url" class="online-input" readonly aria-label="Enlace de invitación para amigo o invitado" />
       <div class="online-btn-row">
         <button type="button" class="btn-action btn-accent" id="btn-copy-link">📋 Copiar Enlace</button>
-        <button type="button" class="btn-action btn-whatsapp" id="btn-whatsapp-share">💬 Enviar por WhatsApp</button>
+        <button type="button" class="btn-action btn-whatsapp" id="btn-whatsapp-share">💬 Enviar Invitación por WhatsApp</button>
       </div>
     </div>
 
     <div class="online-section">
-      <div class="online-subtitle">2. O Unirse a la Sala de Santi</div>
+      <div class="online-subtitle">2. O Unirse a la Sala de un Amigo / Invitado</div>
       <div class="online-join-row">
         <input
           type="text"
           id="online-join-input"
           class="online-input"
-          placeholder="Ej: SANTI-4821"
-          aria-label="Código de sala de Santi"
+          placeholder="Ej: SALA-4821"
+          aria-label="Código de sala del amigo o anfitrión"
         />
         <button type="button" class="btn-action btn-accent" id="btn-join-room">⚔️ Conectar</button>
       </div>
     </div>
 
     <div class="online-status-banner" id="online-status-banner">
-      Selecciona crear sala o introduce el código de Santi.
+      Selecciona crear sala o introduce el código de tu amigo.
     </div>
 
     <form method="dialog" class="dialog-actions">

@@ -28,8 +28,8 @@
         <button id="btn-duel" type="button" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90 transition cursor-pointer">
           ⚔️ Probar Combate
         </button>
-        <button id="btn-whatsapp" type="button" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-500 transition cursor-pointer" title="Enviar partida o jugada a Santi por WhatsApp">
-          💬 WhatsApp a Santi
+        <button id="btn-whatsapp" type="button" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-500 transition cursor-pointer" title="Enviar invitación de partida a un amigo o invitado por WhatsApp">
+          💬 Invitar Amigo (WhatsApp)
         </button>
         <button id="btn-cam" type="button" class="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)] hover:opacity-90 transition cursor-pointer">
           🎥 Vista 2.5D
@@ -103,10 +103,11 @@
           <div class="flex flex-wrap gap-1 mb-1.5">
             <button type="button" class="chat-chip px-1.5 py-0.5 rounded text-[10px] bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)] hover:opacity-80 cursor-pointer" data-msg="⚔️ ¡Por la Alianza Solar!">⚔️ ¡Por la Alianza!</button>
             <button type="button" class="chat-chip px-1.5 py-0.5 rounded text-[10px] bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)] hover:opacity-80 cursor-pointer" data-msg="👁️ ¡Teme a la Legión!">👁️ ¡Teme a la Legión!</button>
-            <button type="button" class="chat-chip px-1.5 py-0.5 rounded text-[10px] bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)] hover:opacity-80 cursor-pointer" data-msg="👏 ¡Buena jugada, Santi!">👏 ¡Buena, Santi!</button>
+            <button type="button" class="chat-chip px-1.5 py-0.5 rounded text-[10px] bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)] hover:opacity-80 cursor-pointer" data-msg="👏 ¡Buena jugada!">👏 ¡Buena jugada!</button>
           </div>
           <form id="inline-chat-form" class="flex gap-1 mt-auto">
-            <input id="inline-chat-input" type="text" placeholder="Escribe a Santi..." class="flex-1 min-w-0 px-2 py-1 rounded text-xs bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)] focus:outline-none" />
+            <input id="inline-nick-input" type="text" value="Invitado" placeholder="Apodo" class="w-16 px-1.5 py-1 rounded text-xs bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)] focus:outline-none" title="Tu nombre o apodo" />
+            <input id="inline-chat-input" type="text" placeholder="Escribe al amigo / invitado..." class="flex-1 min-w-0 px-2 py-1 rounded text-xs bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)] focus:outline-none" />
             <button type="submit" class="px-2 py-1 rounded text-xs font-semibold bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90 cursor-pointer">Enviar</button>
           </form>
         </div>
@@ -1501,17 +1502,18 @@
     });
 
     document.getElementById('btn-whatsapp').addEventListener('click', () => {
-      const roomCode = `SANTI-${Math.floor(1000 + Math.random() * 9000)}`;
+      const roomCode = `SALA-${Math.floor(1000 + Math.random() * 9000)}`;
       const gameUrl = `https://palominojulio.github.io/lotr-battlechess/?room=${roomCode}`;
-      const msg = `⚔️ ¡Santi! Te reto a nuestro Cyber-Medieval Battle Chess 3D (Alianza Solar vs. Legión de Antracita). Entra en este enlace para jugar contra mí:\n${gameUrl}`;
+      const msg = `⚔️ ¡Te reto a una partida online de nuestro Cyber-Medieval Battle Chess 3D (Alianza Solar vs. Legión de Antracita)! Entra como Invitado en este enlace (${roomCode}):\n${gameUrl}`;
       window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer');
     });
 
     function sendInlineChat(text) {
       const clean = String(text || '').trim();
       if (!clean) return;
+      const nick = document.getElementById('inline-nick-input')?.value?.trim() || 'Invitado';
       playSound('r2d2');
-      logEvent(`💬 ☀️ Tú (Alianza): ${clean}`);
+      logEvent(`💬 ☀️ ${nick} (Alianza): ${clean}`);
       setTimeout(() => {
         const replies = [
           '💬 👁️ Legión: «¡No conoces el poder de la Forja de Antracita!»',

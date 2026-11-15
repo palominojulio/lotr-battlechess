@@ -17,17 +17,17 @@ const PEER_CONFIG = {
 };
 
 /**
- * Extracts a clean room code (e.g. "SANTI-5420") even if the user pastes the full
- * URL ("https://palominojulio.github.io/lotr-battlechess/?room=SANTI-5420"),
+ * Extracts a clean room code (e.g. "SALA-5420") even if the user pastes the full
+ * URL ("https://palominojulio.github.io/lotr-battlechess/?room=SALA-5420"),
  * a full WhatsApp message, or just the 4 digits ("5420").
  */
 export function extractRoomCode(rawInput) {
   if (!rawInput) return '';
   const str = String(rawInput).trim();
 
-  // 1. Look for SANTI-XXXX anywhere in the pasted string or URL
-  const santiMatch = str.match(/SANTI-\d{3,6}/i);
-  if (santiMatch) return santiMatch[0].toUpperCase();
+  // 1. Look for SALA-XXXX, DUELO-XXXX, INVITADO-XXXX or SANTI-XXXX anywhere in the pasted string or URL
+  const codeMatch = str.match(/(?:SALA|DUELO|INVITADO|SANTI)-\d{3,6}/i);
+  if (codeMatch) return codeMatch[0].toUpperCase();
 
   // 2. Look for ?room=... parameter if it's a URL
   try {
@@ -39,9 +39,9 @@ export function extractRoomCode(rawInput) {
   const roomQueryMatch = str.match(/[?&]room=([A-Za-z0-9-_]+)/i);
   if (roomQueryMatch) return roomQueryMatch[1].toUpperCase();
 
-  // 3. If user only typed numbers like "5420", prefix with SANTI-
+  // 3. If user only typed numbers like "5420", prefix with SALA-
   if (/^\d{3,6}$/.test(str)) {
-    return `SANTI-${str}`;
+    return `SALA-${str}`;
   }
 
   return str.toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 20);
@@ -92,7 +92,7 @@ export class OnlineRoomManager {
 
   createRoom(hostColor = 'w') {
     const randomNum = Math.floor(1000 + Math.random() * 9000);
-    const code = this.roomCode || `SANTI-${randomNum}`;
+    const code = this.roomCode || `SALA-${randomNum}`;
     this.enterRoom(code, hostColor);
   }
 
@@ -139,7 +139,7 @@ export class OnlineRoomManager {
         roomCode: this.roomCode,
         myColor: this.myColor,
         shareUrl: this.getShareUrl(),
-        message: `🟢 Sala ${this.roomCode} abierta y esperando. Envíale el enlace por WhatsApp a Santi; en cuanto él lo abra se conectará automáticamente.`
+        message: `🟢 Sala ${this.roomCode} abierta y esperando. Envía el enlace por WhatsApp a tu amigo o invitado; en cuanto lo abra se conectará automáticamente.`
       });
     });
 

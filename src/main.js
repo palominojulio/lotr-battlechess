@@ -761,6 +761,7 @@ const btnOnlineRoom = document.getElementById('btn-online-room');
 const chatMessagesEl = document.getElementById('chat-messages');
 const chatForm = document.getElementById('chat-form');
 const chatInput = document.getElementById('chat-input');
+const chatNickInput = document.getElementById('chat-nick-input');
 const chatStatusBadge = document.getElementById('chat-status-badge');
 let lastChatSent = '';
 
@@ -820,7 +821,7 @@ const onlineManager = new OnlineRoomManager({
     }
     appendChatMessage({
       isSystem: true,
-      text: `🎉 ¡Conectado en directo con Santi en la sala ${roomCode}! Escribe abajo para hablar.`
+      text: `🎉 ¡Conectado en directo con tu amigo / invitado en la sala ${roomCode}! Escribe abajo para hablar.`
     });
     setCameraPreset(myColor === 'w' ? 'white' : 'black');
     soundFX.playHornFanfare();
@@ -845,7 +846,9 @@ function handleSendChat(rawText) {
   if (!clean) return;
 
   const myColor = onlineManager.isConnected ? onlineManager.myColor : chess.turn();
-  const senderName = myColor === 'w' ? '☀️ Alianza (Blancas)' : '👁️ Legión (Negras)';
+  const customNick = chatNickInput?.value?.trim();
+  const baseName = customNick || (onlineManager.isHost ? 'Anfitrión' : 'Invitado');
+  const senderName = myColor === 'w' ? `☀️ ${baseName} (Blancas)` : `👁️ ${baseName} (Negras)`;
 
   lastChatSent = clean;
   appendChatMessage({ sender: senderName, text: clean, color: myColor, playAudio: true });
@@ -913,16 +916,16 @@ document.getElementById('btn-copy-link')?.addEventListener('click', async (e) =>
 document.getElementById('btn-whatsapp-share')?.addEventListener('click', () => {
   const url = onlineShareUrlInput?.value || PUBLIC_GAME_URL;
   const code = onlineManager.roomCode || '';
-  const text = `⚔️ ¡Santi! Entra a mi sala online de Battle Chess 3D (Crónicas de Plasma) para jugar en directo (Sala ${code}):\n${url}`;
+  const text = `⚔️ ¡Te reto a una partida online de Battle Chess 3D (Crónicas de Plasma)! Entra a mi sala en directo (${code}) como Invitado:\n${url}`;
   window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
 });
 
-// Asynchronous / Instant WhatsApp Turn Share button ("💬 Mandar Jugada por WhatsApp a Santi")
+// Asynchronous / Instant WhatsApp Turn Share button ("💬 Invitar Amigo / Mandar Jugada por WhatsApp")
 document.getElementById('btn-whatsapp-turn')?.addEventListener('click', () => {
   const shareUrl = new URL(PUBLIC_GAME_URL);
   if (onlineManager.roomCode) {
     shareUrl.searchParams.set('room', onlineManager.roomCode);
-    const text = `⚔️ ¡Santi! Estoy en la sala en vivo ${onlineManager.roomCode} de Battle Chess. Entra aquí desde tu móvil u ordenador para jugar en directo:\n${shareUrl.toString()}`;
+    const text = `⚔️ ¡Estoy en la sala en vivo ${onlineManager.roomCode} de Battle Chess 3D! Entra aquí como Invitado desde tu móvil u ordenador para jugar en directo:\n${shareUrl.toString()}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
     return;
   }
@@ -939,10 +942,10 @@ document.getElementById('btn-whatsapp-turn')?.addEventListener('click', () => {
     }
     const nextTurnName = chess.turn() === 'w' ? 'Alianza Solar (Blancas)' : 'Legión de Antracita (Negras)';
     const chatPart = lastChatSent ? `\n💬 Mensaje: "${lastChatSent}"` : '';
-    const text = `⚔️ ¡Santi! He movido de ${lastMoveSnapshot.from.toUpperCase()} a ${lastMoveSnapshot.to.toUpperCase()} en nuestro Battle Chess.${chatPart}\nAbre este enlace público para ver el duelo de plasma y hacer tu jugada con ${nextTurnName}:\n${shareUrl.toString()}`;
+    const text = `⚔️ He movido de ${lastMoveSnapshot.from.toUpperCase()} a ${lastMoveSnapshot.to.toUpperCase()} en nuestro Battle Chess 3D.${chatPart}\nAbre este enlace para ver el duelo de plasma y hacer tu jugada como Invitado con ${nextTurnName}:\n${shareUrl.toString()}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
   } else {
-    // No move made yet -> open the Online Room modal and auto-create a room for Santi!
+    // No move made yet -> open the Online Room modal and auto-create a room for a friend / guest!
     onlineDialog?.showModal();
     onlineManager.createRoom('w');
   }
