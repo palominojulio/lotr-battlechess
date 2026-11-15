@@ -597,24 +597,59 @@ export function createLOTRPieceMesh(type, color) {
       hatCone.position.y = 0.28 * hScale;
       headGroup.add(hatCone);
     } else if (type === 'p') {
-      // High-visibility Infantry Helmet Crest for Pawns (Uruk Spiked Fin for Mordor / Winged Plume for Gondor)
-      const crestColor = isWhite ? 0xfacc15 : 0xffaa00;
-      const crestMat = new THREE.MeshBasicMaterial({ color: crestColor });
-      const helmCrest = new THREE.Mesh(
-        new THREE.BoxGeometry(0.075, 0.24 * hScale, 0.34 * hScale),
-        crestMat
-      );
-      helmCrest.position.set(0, 0.25 * hScale, -0.02);
-      headGroup.add(helmCrest);
+      // Curved Roman Centurion / Legionary Plume Crest (Cresta Romana curva en abanico)
+      const crestGroup = new THREE.Group();
+      crestGroup.position.set(0, 0.06 * hScale, -0.02 * hScale);
 
-      // Glowing neon plasma ridge along the top of the pawn crest
-      const ridgeMat = new THREE.MeshBasicMaterial({ color: isWhite ? 0x38bdf8 : 0xff2200 });
-      const ridge = new THREE.Mesh(
-        new THREE.BoxGeometry(0.09, 0.06 * hScale, 0.38 * hScale),
-        ridgeMat
-      );
-      ridge.position.set(0, 0.37 * hScale, -0.02);
-      headGroup.add(ridge);
+      // Metallic crest spine (support arch above helmet)
+      const spineGeo = new THREE.TorusGeometry(0.16 * hScale, 0.025, 8, 20, Math.PI * 1.15);
+      spineGeo.rotateY(Math.PI / 2);
+      spineGeo.rotateX(-Math.PI * 0.08);
+      const spineMesh = new THREE.Mesh(spineGeo, trimMat);
+      crestGroup.add(spineMesh);
+
+      // Sweeping curved Roman horsehair plume fan (extruded curved sector)
+      const plumeShape = new THREE.Shape();
+      const innerR = 0.16 * hScale;
+      const outerR = 0.34 * hScale;
+      const startAngle = -0.15;
+      const endAngle = Math.PI + 0.25;
+      plumeShape.absarc(0, 0, outerR, startAngle, endAngle, false);
+      plumeShape.absarc(0, 0, innerR, endAngle, startAngle, true);
+      plumeShape.closePath();
+
+      const plumeGeo = new THREE.ExtrudeGeometry(plumeShape, {
+        depth: 0.065,
+        bevelEnabled: true,
+        bevelSegments: 2,
+        steps: 1,
+        bevelSize: 0.012,
+        bevelThickness: 0.012
+      });
+      plumeGeo.center();
+      plumeGeo.rotateY(Math.PI / 2);
+
+      const plumeMat = new THREE.MeshStandardMaterial({
+        color: isWhite ? 0xfacc15 : 0xff3b00,
+        emissive: isWhite ? 0x3b2f00 : 0x661100,
+        roughness: 0.35,
+        metalness: 0.3
+      });
+      const plumeMesh = new THREE.Mesh(plumeGeo, plumeMat);
+      plumeMesh.position.set(0, 0.14 * hScale, 0);
+      crestGroup.add(plumeMesh);
+
+      // Glowing outer neon plasma arc along the top edge of the Roman crest
+      const rimArcGeo = new THREE.TorusGeometry(outerR + 0.01, 0.018, 8, 24, Math.PI * 1.15);
+      rimArcGeo.rotateY(Math.PI / 2);
+      rimArcGeo.rotateX(-Math.PI * 0.08);
+      const rimArcMat = new THREE.MeshBasicMaterial({
+        color: isWhite ? 0x38bdf8 : 0xffaa00
+      });
+      const rimArc = new THREE.Mesh(rimArcGeo, rimArcMat);
+      crestGroup.add(rimArc);
+
+      headGroup.add(crestGroup);
     }
 
     upperBody.add(headGroup);

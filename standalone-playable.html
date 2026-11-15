@@ -586,19 +586,33 @@
         ctx.fillStyle = info.accent;
         ctx.fillRect(-6, -41, 12, 4);
       } else if (piece.type === 'p') {
-        // High-Contrast Pawn Helmet Crest (Cresta Uruk de Mordor / Penacho de Gondor)
+        // Curved Roman Centurion / Legionary Fan Plume Crest (Cresta tipo Romana curva)
         ctx.save();
-        ctx.fillStyle = isW ? '#facc15' : '#ffaa00';
-        ctx.strokeStyle = isW ? '#38bdf8' : '#ff1a1a';
-        ctx.lineWidth = 1.5;
+        const cy = -34 * hScale;
+        const innerR = 5.5 * hScale;
+        const outerR = 12.2 * hScale;
+        const aStart = Math.PI * 1.12;
+        const aEnd = Math.PI * 1.88;
+
+        ctx.fillStyle = isW ? '#facc15' : '#ff3b00';
+        ctx.strokeStyle = isW ? '#38bdf8' : '#ffaa00';
+        ctx.lineWidth = 1.6;
         ctx.beginPath();
-        ctx.moveTo(-4.5, -37 * hScale);
-        ctx.lineTo(-2.5, -45 * hScale);
-        ctx.lineTo(2.5, -45 * hScale);
-        ctx.lineTo(4.5, -37 * hScale);
+        ctx.arc(0, cy, outerR, aStart, aEnd, false);
+        ctx.arc(0, cy, innerR, aEnd, aStart, true);
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
+
+        // Feather texture lines inside the Roman fan crest
+        ctx.strokeStyle = isW ? 'rgba(255,255,255,0.65)' : 'rgba(255,200,0,0.65)';
+        ctx.lineWidth = 1;
+        for (let a = aStart + 0.18; a < aEnd - 0.1; a += 0.22) {
+          ctx.beginPath();
+          ctx.moveTo(Math.cos(a) * innerR, cy + Math.sin(a) * innerR);
+          ctx.lineTo(Math.cos(a) * (outerR - 1), cy + Math.sin(a) * (outerR - 1));
+          ctx.stroke();
+        }
         ctx.restore();
       }
       ctx.restore();
