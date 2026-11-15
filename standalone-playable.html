@@ -402,7 +402,7 @@
       const info = ROSTER[piece.color][piece.type];
       const isW = piece.color === 'w';
       const isPawn = piece.type === 'p';
-      const scanVal = Math.sin((performance.now() * 0.0055) + x * 0.05);
+      const scanVal = Math.sin((performance.now() * 0.0016) + x * 0.03);
       ctx.save();
       ctx.translate(x, y);
 

@@ -192,7 +192,7 @@ function createPawnShield(isWhite, saberColor, scanners = []) {
       const slitPupil = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.22, 0.04), glowMat);
       slitPupil.position.set(0, 0.0, zPos + (zPos > 0 ? 0.005 : -0.005));
       shieldGroup.add(slitPupil);
-      scanners.push({ mesh: slitPupil, range: 0.065, speed: 4.2 });
+      scanners.push({ mesh: slitPupil, range: 0.065, speed: 1.25 });
     });
   }
 
@@ -242,7 +242,7 @@ function createScannerVisor(width, height, depth, saberColor, scanners) {
   scanners.push({
     mesh: eyeGroup,
     range: width * 0.38,
-    speed: 4.8
+    speed: 1.4
   });
 
   return visorGroup;
@@ -585,7 +585,7 @@ export function createLOTRPieceMesh(type, color) {
         const eye = new THREE.Mesh(new THREE.OctahedronGeometry(0.14), ringMat);
         eye.position.y = 0.42 * hScale;
         headGroup.add(eye);
-        scanners.push({ mesh: eye, range: 0.12, speed: 3.6 });
+        scanners.push({ mesh: eye, range: 0.12, speed: 1.15 });
       }
     } else if (type === 'q') {
       const diadem = new THREE.Mesh(new THREE.TorusGeometry(0.2 * hScale, 0.03, 8, 20), trimMat);
