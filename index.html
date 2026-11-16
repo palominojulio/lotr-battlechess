@@ -48,6 +48,10 @@
           🌐 Jugar Online / Invitar
         </button>
 
+        <button type="button" class="btn-hud" id="btn-save-header" title="Guardar o cargar partidas">
+          💾 Guardar / Cargar
+        </button>
+
         <button type="button" class="btn-hud active" id="btn-cinematic" title="Activar/desactivar cámara cinemática en capturas">
           🎥 Cámara Combate: ON
         </button>
@@ -152,6 +156,9 @@
       <div class="panel-actions">
         <button type="button" class="btn-action" id="btn-undo">↩ Deshacer</button>
         <button type="button" class="btn-action btn-danger" id="btn-reset">🔄 Nueva Guerra</button>
+        <button type="button" class="btn-action btn-save" id="btn-save-manager" style="grid-column: 1 / -1;">
+          💾 Guardar / Cargar Partidas
+        </button>
         <button type="button" class="btn-action btn-whatsapp" id="btn-whatsapp-turn" style="grid-column: 1 / -1;">
           💬 Invitar Amigo / Mandar Jugada por WhatsApp
         </button>
@@ -317,6 +324,51 @@
 
     <div class="online-status-banner" id="online-status-banner">
       Selecciona crear sala o introduce el código de tu amigo.
+    </div>
+
+    <form method="dialog" class="dialog-actions">
+      <button type="submit" value="close" class="btn-action">Cerrar</button>
+    </form>
+  </dialog>
+
+  <!-- Native Modal Dialog for Saving & Loading Games -->
+  <dialog id="save-dialog" closedby="any" aria-labelledby="save-title">
+    <h2 id="save-title">💾 Guardar y Cargar Partidas</h2>
+    <p class="dialog-desc">
+      Guarda tu partida actual para continuarla más tarde (conservando el tablero 3D, las bajas y toda la Planilla de Movimientos), o descárgala en un archivo.
+    </p>
+
+    <div class="online-section">
+      <div class="online-subtitle">1. Guardar Partida Actual</div>
+      <div class="online-join-row" style="margin-bottom: 8px;">
+        <input
+          type="text"
+          id="save-name-input"
+          class="online-input"
+          placeholder="Nombre (ej: Partida con Invitado)"
+          maxlength="40"
+          aria-label="Nombre de la partida a guardar"
+        />
+        <button type="button" class="btn-action btn-accent" id="btn-save-now">💾 Guardar</button>
+      </div>
+      <div class="online-btn-row">
+        <button type="button" class="btn-action" id="btn-export-json">📥 Descargar Archivo (.json)</button>
+        <label class="btn-action file-import-label" for="input-import-json">
+          📤 Importar Archivo (.json)
+          <input type="file" id="input-import-json" accept=".json,application/json" hidden />
+        </label>
+      </div>
+    </div>
+
+    <div class="online-section">
+      <div class="online-subtitle">2. Partidas Guardadas en este Dispositivo</div>
+      <div id="saved-games-list" class="saved-games-list">
+        <div class="saved-empty">No hay partidas guardadas todavía.</div>
+      </div>
+    </div>
+
+    <div class="online-status-banner" id="save-status-banner">
+      💡 Además, el juego realiza un <strong>Guardado Automático</strong> tras cada movimiento.
     </div>
 
     <form method="dialog" class="dialog-actions">

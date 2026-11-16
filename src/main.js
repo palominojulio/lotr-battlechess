@@ -639,6 +639,7 @@ async function performChessMove(from, to, promotionPiece = null, isRemote = fals
   }
 
   appendBattleLog(moveResult);
+  saveAutoGameSnapshot();
   isAnimating = false;
   updateHUD();
 
@@ -835,6 +836,9 @@ const onlineManager = new OnlineRoomManager({
   },
   onRemoteReset: () => {
     resetGame(true);
+  },
+  onRemoteLoadGame: (payload) => {
+    if (payload) loadSavedGame(payload, true);
   },
   onRemoteChat: ({ text, sender, color }) => {
     appendChatMessage({ sender, text, color, playAudio: true });
@@ -1058,6 +1062,260 @@ document.getElementById('btn-copy-pgn')?.addEventListener('click', async (e) => 
     e.target.textContent = '✅ Copiado';
     setTimeout(() => { e.target.textContent = '📋 PGN'; }, 1800);
   } catch {}
+});
+
+// --- Save & Load Games Manager (LocalStorage + AutoSave + JSON Import/Export) ---
+const SAVES_STORAGE_KEY = 'cyber_battlechess_saves_v1';
+const AUTOSAVE_STORAGE_KEY = 'cyber_battlechess_autosave_v1';
+const saveDialog = document.getElementById('save-dialog');
+const saveNameInput = document.getElementById('save-name-input');
+const savedGamesListEl = document.getElementById('saved-games-list');
+const saveStatusBanner = document.getElementById('save-status-banner');
+
+function buildGameSnapshot(customTitle = '') {
+  const history = chess.history({ verbose: true });
+  const moveNumber = Math.floor(history.length / 2) + 1;
+  const turnLabel = chess.turn() === 'w' ? 'Blancas (Alianza)' : 'Negras (Legión)';
+  const nowStr = new Date().toLocaleString('es-ES', {
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+  return {
+    id: `save-${Date.now()}`,
+    title: customTitle.trim() || `Partida · Jugada ${moveNumber} (${nowStr})`,
+    date: nowStr,
+    fen: chess.fen(),
+    pgn: chess.pgn(),
+    moves: history.map((m) => ({ from: m.from, to: m.to, promotion: m.promotion || null })),
+    halfMoves: history.length,
+    turn: chess.turn(),
+    turnLabel,
+    gameMode
+  };
+}
+
+function getSavedGames() {
+  try {
+    const raw = localStorage.getItem(SAVES_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function setSavedGames(list) {
+  try {
+    localStorage.setItem(SAVES_STORAGE_KEY, JSON.stringify(list.slice(0, 25)));
+  } catch {}
+}
+
+function saveAutoGameSnapshot() {
+  try {
+    if (chess.history().length === 0) return;
+    const snap = buildGameSnapshot('⚡ Guardado Automático');
+    snap.id = 'autosave';
+    localStorage.setItem(AUTOSAVE_STORAGE_KEY, JSON.stringify(snap));
+  } catch {}
+}
+
+function getAutoSaveSnapshot() {
+  try {
+    const raw = localStorage.getItem(AUTOSAVE_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function loadSavedGame(snapshot, isRemote = false) {
+  if (!snapshot || isAnimating) return;
+  chess.reset();
+  capturedByWhite.length = 0;
+  capturedByBlack.length = 0;
+
+  if (Array.isArray(snapshot.moves) && snapshot.moves.length > 0) {
+    for (const mv of snapshot.moves) {
+      const res = chess.move({ from: mv.from, to: mv.to, promotion: mv.promotion || 'q' });
+      if (res && res.captured) {
+        if (res.color === 'w') capturedByWhite.push(res.captured);
+        else capturedByBlack.push(res.captured);
+      }
+    }
+  } else if (snapshot.pgn) {
+    try {
+      chess.loadPgn(snapshot.pgn);
+      for (const mv of chess.history({ verbose: true })) {
+        if (mv.captured) {
+          if (mv.color === 'w') capturedByWhite.push(mv.captured);
+          else capturedByBlack.push(mv.captured);
+        }
+      }
+    } catch {
+      if (snapshot.fen) chess.load(snapshot.fen);
+    }
+  } else if (snapshot.fen) {
+    chess.load(snapshot.fen);
+  }
+
+  clearHighlights();
+  selectedSquare = null;
+  legalMovesForSelected = [];
+  rebuildAllPieces();
+  renderCasualties();
+  renderMoveNotation();
+  updateHUD();
+  soundFX.playHornFanfare();
+
+  const li = document.createElement('li');
+  li.className = 'log-entry lore-intro';
+  li.innerHTML = `📂 Partida cargada: <strong>${snapshot.title || 'Partida Guardada'}</strong> (${Math.ceil((snapshot.halfMoves || chess.history().length) / 2)} jugadas).`;
+  battleLog.prepend(li);
+
+  if (gameMode === 'online' && onlineManager.isConnected && !isRemote) {
+    onlineManager.sendLoadGame(snapshot);
+  }
+
+  if (saveStatusBanner) {
+    saveStatusBanner.innerHTML = `✅ Partida <strong>${snapshot.title || ''}</strong> cargada en el tablero.`;
+  }
+  setTimeout(() => {
+    if (saveDialog?.open) saveDialog.close();
+  }, 450);
+}
+
+function renderSavedGamesList() {
+  if (!savedGamesListEl) return;
+  const saves = getSavedGames();
+  const autoSave = getAutoSaveSnapshot();
+  savedGamesListEl.innerHTML = '';
+
+  const allItems = [];
+  if (autoSave && autoSave.halfMoves > 0) {
+    allItems.push({ ...autoSave, isAuto: true });
+  }
+  for (const s of saves) {
+    allItems.push({ ...s, isAuto: false });
+  }
+
+  if (allItems.length === 0) {
+    savedGamesListEl.innerHTML = '<div class="saved-empty">No hay partidas guardadas todavía. Haz algún movimiento y pulsa «💾 Guardar».</div>';
+    return;
+  }
+
+  allItems.forEach((item) => {
+    const card = document.createElement('div');
+    card.className = `saved-game-card ${item.isAuto ? 'autosave-card' : ''}`;
+
+    const info = document.createElement('div');
+    info.className = 'saved-game-info';
+
+    const title = document.createElement('div');
+    title.className = 'saved-game-title';
+    title.textContent = item.title;
+
+    const meta = document.createElement('div');
+    meta.className = 'saved-game-meta';
+    const jugadas = Math.ceil((item.halfMoves || 0) / 2);
+    meta.textContent = `${item.date || ''} · ${jugadas} jugadas · Turno: ${item.turnLabel || ''}`;
+
+    info.appendChild(title);
+    info.appendChild(meta);
+
+    const actions = document.createElement('div');
+    actions.className = 'saved-game-actions';
+
+    const btnLoad = document.createElement('button');
+    btnLoad.type = 'button';
+    btnLoad.className = 'btn-save-item';
+    btnLoad.textContent = '📂 Cargar';
+    btnLoad.addEventListener('click', () => loadSavedGame(item, false));
+    actions.appendChild(btnLoad);
+
+    if (!item.isAuto) {
+      const btnDel = document.createElement('button');
+      btnDel.type = 'button';
+      btnDel.className = 'btn-save-item btn-del';
+      btnDel.textContent = '🗑️';
+      btnDel.title = 'Borrar partida guardada';
+      btnDel.addEventListener('click', () => {
+        const updated = getSavedGames().filter((s) => s.id !== item.id);
+        setSavedGames(updated);
+        renderSavedGamesList();
+      });
+      actions.appendChild(btnDel);
+    }
+
+    card.appendChild(info);
+    card.appendChild(actions);
+    savedGamesListEl.appendChild(card);
+  });
+}
+
+function openSaveDialog() {
+  if (!saveDialog) return;
+  renderSavedGamesList();
+  if (saveNameInput && !saveNameInput.value) {
+    const moveNum = Math.floor(chess.history().length / 2) + 1;
+    const nick = chatNickInput?.value?.trim() || 'Invitado';
+    saveNameInput.placeholder = `Ej: Partida con ${nick} (Jugada ${moveNum})`;
+  }
+  saveDialog.showModal();
+}
+
+document.getElementById('btn-save-header')?.addEventListener('click', openSaveDialog);
+document.getElementById('btn-save-manager')?.addEventListener('click', openSaveDialog);
+
+document.getElementById('btn-save-now')?.addEventListener('click', () => {
+  const snap = buildGameSnapshot(saveNameInput?.value || '');
+  const list = getSavedGames();
+  list.unshift(snap);
+  setSavedGames(list);
+  if (saveNameInput) saveNameInput.value = '';
+  renderSavedGamesList();
+  soundFX.playSelect();
+  if (saveStatusBanner) {
+    saveStatusBanner.innerHTML = `✅ Partida guardada como <strong>${snap.title}</strong>.`;
+  }
+});
+
+document.getElementById('btn-export-json')?.addEventListener('click', () => {
+  const snap = buildGameSnapshot(saveNameInput?.value || '');
+  const blob = new Blob([JSON.stringify(snap, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `partida-battlechess-${Date.now()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  if (saveStatusBanner) {
+    saveStatusBanner.innerHTML = '📥 Archivo <code>.json</code> descargado correctamente.';
+  }
+});
+
+document.getElementById('input-import-json')?.addEventListener('change', (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const parsed = JSON.parse(String(reader.result));
+      if (parsed && (parsed.fen || parsed.moves || parsed.pgn)) {
+        const list = getSavedGames();
+        list.unshift(parsed);
+        setSavedGames(list);
+        renderSavedGamesList();
+        loadSavedGame(parsed, false);
+      }
+    } catch {
+      if (saveStatusBanner) {
+        saveStatusBanner.textContent = '⚠️ El archivo seleccionado no es una partida válida.';
+      }
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
 });
 
 // "⚔️ Probar Combate" button: immediately triggers a capture duel (or sets up an instant clash!)

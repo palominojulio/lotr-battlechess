@@ -48,12 +48,12 @@ export function extractRoomCode(rawInput) {
 }
 
 export class OnlineRoomManager {
-  constructor({ onStatusChange, onRemoteMove, onRemoteReset, onConnected, onRemoteChat }) {
+  constructor({ onStatusChange, onRemoteMove, onRemoteReset, onConnected, onRemoteChat, onRemoteLoadGame }) {
     this.peer = null;
     this.conn = null;
     this.roomCode = null;
     this.preferredColor = 'w';
-    this.myColor = 'w'; // 'w' (Gondor) or 'b' (Mordor)
+    this.myColor = 'w'; // 'w' (Alianza) or 'b' (Legión)
     this.isConnected = false;
     this.isHost = false;
     this.retryTimer = null;
@@ -63,6 +63,7 @@ export class OnlineRoomManager {
     this.onRemoteReset = onRemoteReset;
     this.onConnected = onConnected;
     this.onRemoteChat = onRemoteChat;
+    this.onRemoteLoadGame = onRemoteLoadGame;
 
     // When returning from WhatsApp app on mobile/desktop, automatically ensure room is active
     document.addEventListener('visibilitychange', () => {
@@ -235,6 +236,8 @@ export class OnlineRoomManager {
         });
       } else if (data.type === 'reset') {
         this.onRemoteReset?.();
+      } else if (data.type === 'load_game') {
+        this.onRemoteLoadGame?.(data.payload);
       } else if (data.type === 'chat') {
         this.onRemoteChat?.({
           text: String(data.text || '').slice(0, 240),
@@ -269,6 +272,12 @@ export class OnlineRoomManager {
   sendReset() {
     if (this.isConnected && this.conn?.open) {
       this.conn.send({ type: 'reset' });
+    }
+  }
+
+  sendLoadGame(payload) {
+    if (this.isConnected && this.conn?.open && payload) {
+      this.conn.send({ type: 'load_game', payload });
     }
   }
 

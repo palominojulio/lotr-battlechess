@@ -31,6 +31,12 @@
         <button id="btn-whatsapp" type="button" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-500 transition cursor-pointer" title="Enviar invitación de partida a un amigo o invitado por WhatsApp">
           💬 Invitar Amigo (WhatsApp)
         </button>
+        <button id="btn-save-inline" type="button" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-sky-600 text-white hover:bg-sky-500 transition cursor-pointer" title="Guardar partida actual">
+          💾 Guardar
+        </button>
+        <button id="btn-load-inline" type="button" class="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)] hover:opacity-90 transition cursor-pointer" title="Cargar partida guardada">
+          📂 Cargar
+        </button>
         <button id="btn-cam" type="button" class="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)] hover:opacity-90 transition cursor-pointer">
           🎥 Vista 2.5D
         </button>
@@ -1538,6 +1544,50 @@
     });
 
     document.getElementById('btn-reset').addEventListener('click', initBoard);
+
+    const INLINE_SAVE_KEY = 'cyber_battlechess_inline_save_v1';
+    let memorySavedGame = null;
+
+    document.getElementById('btn-save-inline').addEventListener('click', (e) => {
+      const snapshot = {
+        board: JSON.parse(JSON.stringify(board)),
+        turn,
+        moveHistory: JSON.parse(JSON.stringify(moveHistory)),
+        date: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+      };
+      memorySavedGame = snapshot;
+      try {
+        localStorage.setItem(INLINE_SAVE_KEY, JSON.stringify(snapshot));
+      } catch {}
+      playSound('r2d2');
+      logEvent(`💾 Partida guardada (${Math.ceil(moveHistory.length / 2)} jugadas, ${snapshot.date}).`);
+      e.target.textContent = '✅ Guardada';
+      setTimeout(() => { e.target.textContent = '💾 Guardar'; }, 1600);
+    });
+
+    document.getElementById('btn-load-inline').addEventListener('click', () => {
+      if (activeCombat) return;
+      let snapshot = memorySavedGame;
+      if (!snapshot) {
+        try {
+          const raw = localStorage.getItem(INLINE_SAVE_KEY);
+          if (raw) snapshot = JSON.parse(raw);
+        } catch {}
+      }
+      if (!snapshot || !snapshot.board) {
+        logEvent('⚠️ No hay ninguna partida guardada todavía. Haz clic en «💾 Guardar» primero.');
+        return;
+      }
+      board = JSON.parse(JSON.stringify(snapshot.board));
+      turn = snapshot.turn || 'w';
+      moveHistory = JSON.parse(JSON.stringify(snapshot.moveHistory || []));
+      selected = null;
+      validMoves = [];
+      renderInlineNotation();
+      playSound('ignite');
+      updateStatus(`Turno: ${turn === 'w' ? 'Alianza Solar (Blancas)' : 'Legión de Antracita (Negras)'} (Partida Cargada)`);
+      logEvent(`📂 Partida cargada correctamente (${Math.ceil(moveHistory.length / 2)} jugadas).`);
+    });
 
     initBoard();
     requestAnimationFrame(renderLoop);
