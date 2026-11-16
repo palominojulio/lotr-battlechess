@@ -31,6 +31,16 @@
         <button id="btn-whatsapp" type="button" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-500 transition cursor-pointer" title="Enviar invitación de partida a un amigo o invitado por WhatsApp">
           💬 Invitar Amigo (WhatsApp)
         </button>
+        <select id="select-tournament-inline" class="px-2 py-1.5 rounded-lg text-xs font-semibold bg-purple-600/25 text-[var(--foreground)] border border-purple-400/50 cursor-pointer" title="Cargar partida de Torneo Mundial o Apertura para estudiar">
+          <option value="">📚 Estudiar Torneo...</option>
+          <option value="opera">🏆 Morphy (Ópera 1858)</option>
+          <option value="kasparov">🏆 Kasparov vs Topalov (1999)</option>
+          <option value="immortal">🏆 Anderssen (La Inmortal 1851)</option>
+          <option value="ruylopez">📘 Apertura Española (Torneo)</option>
+        </select>
+        <button id="btn-study-step" type="button" class="hidden px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-purple-600 text-white hover:bg-purple-500 transition cursor-pointer" title="Avanzar siguiente jugada del torneo">
+          ▶️ Sig. Jugada
+        </button>
         <button id="btn-save-inline" type="button" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-sky-600 text-white hover:bg-sky-500 transition cursor-pointer" title="Guardar partida actual">
           💾 Guardar
         </button>
@@ -1543,7 +1553,85 @@
       btn.addEventListener('click', () => sendInlineChat(btn.dataset.msg));
     });
 
-    document.getElementById('btn-reset').addEventListener('click', initBoard);
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      inlineStudyQueue = [];
+      document.getElementById('btn-study-step').classList.add('hidden');
+      document.getElementById('select-tournament-inline').value = '';
+      initBoard();
+    });
+
+    const INLINE_TOURNAMENTS = {
+      opera: {
+        name: 'Morphy vs. Duque de Brunswick (París 1858)',
+        moves: [
+          ['e2','e4'],['e7','e5'],['g1','f3'],['d7','d6'],['d2','d4'],['c8','g4'],
+          ['d4','e5'],['g4','f3'],['d1','f3'],['d6','e5'],['f1','c4'],['g8','f6'],
+          ['f3','b3'],['d8','e7'],['b1','c3'],['c7','c6'],['c1','g5'],['b7','b5'],
+          ['c3','b5'],['c6','b5'],['c4','b5'],['b8','d7']
+        ]
+      },
+      kasparov: {
+        name: 'Kasparov vs. Topalov (Torneo Wijk aan Zee 1999)',
+        moves: [
+          ['e2','e4'],['d7','d6'],['d2','d4'],['g8','f6'],['b1','c3'],['g7','g6'],
+          ['c1','e3'],['f8','g7'],['d1','d2'],['c7','c6'],['f2','f3'],['b7','b5'],
+          ['g1','e2'],['b8','d7'],['e3','h6'],['g7','h6'],['d2','h6'],['c8','b7']
+        ]
+      },
+      immortal: {
+        name: 'Anderssen vs. Kieseritzky (Torneo de Londres 1851)',
+        moves: [
+          ['e2','e4'],['e7','e5'],['f2','f4'],['e5','f4'],['f1','c4'],['d8','h4'],
+          ['e1','f1'],['b7','b5'],['c4','b5'],['g8','f6'],['g1','f3'],['h4','h6']
+        ]
+      },
+      ruylopez: {
+        name: 'Apertura Española · Ruy López (Línea de Torneo)',
+        moves: [
+          ['e2','e4'],['e7','e5'],['g1','f3'],['b8','c6'],['f1','b5'],['a7','a6'],
+          ['b5','a4'],['g8','f6'],['d2','d3'],['f8','c5']
+        ]
+      }
+    };
+
+    let inlineStudyQueue = [];
+
+    function sqToRC(sq) {
+      return { r: 8 - parseInt(sq[1], 10), c: sq.charCodeAt(0) - 97 };
+    }
+
+    function stepInlineTournament() {
+      if (activeCombat || inlineStudyQueue.length === 0) return;
+      const [fromSq, toSq] = inlineStudyQueue.shift();
+      const f = sqToRC(fromSq);
+      const t = sqToRC(toSq);
+      const btnStep = document.getElementById('btn-study-step');
+      if (inlineStudyQueue.length === 0) {
+        btnStep.textContent = '✅ Fin Estudio';
+        setTimeout(() => btnStep.classList.add('hidden'), 1200);
+      } else {
+        btnStep.textContent = `▶️ Sig. (${inlineStudyQueue.length})`;
+      }
+      if (board[f.r] && board[f.r][f.c]) {
+        inspectPiece(board[f.r][f.c].color, board[f.r][f.c].type);
+        executeMove(f.r, f.c, t.r, t.c, () => {});
+      }
+    }
+
+    document.getElementById('select-tournament-inline').addEventListener('change', (e) => {
+      const key = e.target.value;
+      if (!key || !INLINE_TOURNAMENTS[key]) return;
+      initBoard();
+      const tour = INLINE_TOURNAMENTS[key];
+      inlineStudyQueue = [...tour.moves];
+      const btnStep = document.getElementById('btn-study-step');
+      btnStep.classList.remove('hidden');
+      btnStep.textContent = `▶️ Sig. (${inlineStudyQueue.length})`;
+      logEvent(`🏆 Cargado: ${tour.name}. Pulsa «▶️ Sig.» para estudiar cada jugada.`);
+      stepInlineTournament();
+    });
+
+    document.getElementById('btn-study-step').addEventListener('click', stepInlineTournament);
 
     const INLINE_SAVE_KEY = 'cyber_battlechess_inline_save_v1';
     let memorySavedGame = null;

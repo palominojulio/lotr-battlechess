@@ -52,6 +52,10 @@
           💾 Guardar / Cargar
         </button>
 
+        <button type="button" class="btn-hud btn-study" id="btn-study-header" title="Cargar partidas de torneos mundiales, Lichess y repositorios públicos para estudiar">
+          📚 Torneos / Estudio
+        </button>
+
         <button type="button" class="btn-hud active" id="btn-cinematic" title="Activar/desactivar cámara cinemática en capturas">
           🎥 Cámara Combate: ON
         </button>
@@ -132,6 +136,23 @@
             <button type="button" class="btn-copy-pgn" id="btn-copy-pgn" title="Copiar notación PGN de la partida">📋 PGN</button>
           </div>
         </div>
+
+        <!-- Study & Tournament Replay Bar (shown when studying a loaded tournament/master game) -->
+        <div class="study-bar" id="study-bar" hidden>
+          <div class="study-bar-header">
+            <span class="study-bar-title" id="study-bar-title">🏆 Modo Estudio de Torneo</span>
+            <span class="study-bar-step" id="study-bar-step">0 / 0</span>
+          </div>
+          <div class="study-bar-controls">
+            <button type="button" class="btn-study-ctrl" id="btn-study-first" title="Ir al inicio">⏮️</button>
+            <button type="button" class="btn-study-ctrl" id="btn-study-prev" title="Movimiento anterior">◀️</button>
+            <button type="button" class="btn-study-ctrl btn-study-play" id="btn-study-next" title="Siguiente movimiento (con animación 3D)">▶️ Sig.</button>
+            <button type="button" class="btn-study-ctrl" id="btn-study-auto" title="Auto-reproducir partida jugada a jugada">⏯️ Auto</button>
+            <button type="button" class="btn-study-ctrl" id="btn-study-last" title="Ir al final">⏭️</button>
+            <button type="button" class="btn-study-ctrl btn-study-practice" id="btn-study-practice" title="Jugar y practicar libremente desde esta posición">⚔️ Practicar</button>
+          </div>
+        </div>
+
         <div class="notation-sheet-wrap" id="notation-sheet-wrap">
           <table class="notation-table" aria-label="Registro de nomenclatura de movimientos de ajedrez">
             <thead>
@@ -156,8 +177,11 @@
       <div class="panel-actions">
         <button type="button" class="btn-action" id="btn-undo">↩ Deshacer</button>
         <button type="button" class="btn-action btn-danger" id="btn-reset">🔄 Nueva Guerra</button>
-        <button type="button" class="btn-action btn-save" id="btn-save-manager" style="grid-column: 1 / -1;">
-          💾 Guardar / Cargar Partidas
+        <button type="button" class="btn-action btn-save" id="btn-save-manager">
+          💾 Guardar / Cargar
+        </button>
+        <button type="button" class="btn-action btn-study-action" id="btn-study-manager">
+          📚 Torneos / Estudio
         </button>
         <button type="button" class="btn-action btn-whatsapp" id="btn-whatsapp-turn" style="grid-column: 1 / -1;">
           💬 Invitar Amigo / Mandar Jugada por WhatsApp
@@ -369,6 +393,77 @@
 
     <div class="online-status-banner" id="save-status-banner">
       💡 Además, el juego realiza un <strong>Guardado Automático</strong> tras cada movimiento.
+    </div>
+
+    <form method="dialog" class="dialog-actions">
+      <button type="submit" value="close" class="btn-action">Cerrar</button>
+    </form>
+  </dialog>
+
+  <!-- Native Modal Dialog for Public Repositories, Live Tournaments & Master Study -->
+  <dialog id="study-dialog" closedby="any" aria-labelledby="study-title">
+    <h2 id="study-title">📚 Biblioteca de Torneos y Repositorios Públicos</h2>
+    <p class="dialog-desc">
+      Carga partidas de <strong>Torneos Mundiales (FIDE, Tata Steel, Candidatos)</strong>, conéctate en directo a los repositorios públicos de <strong>Lichess.org</strong> (torneos en vivo, Grandes Maestros o el Reto Diario), o pega cualquier PGN para estudiarlo paso a paso en 3D y practicar desde cualquier jugada.
+    </p>
+
+    <!-- 1. Live Lichess Tournaments, Grandmasters & Daily Puzzle -->
+    <div class="online-section">
+      <div class="online-subtitle">1. Repositorio Público en Vivo (Lichess.org API + Torneos)</div>
+      <div class="study-quick-chips" style="margin-bottom: 8px;">
+        <button type="button" class="chat-chip btn-fetch-tournaments" id="btn-fetch-live-tournaments">
+          🏆 Ver Torneos Oficiales en Vivo (Lichess)
+        </button>
+        <button type="button" class="chat-chip btn-fetch-puzzle" id="btn-fetch-daily-puzzle">
+          🧩 Cargar Reto Táctico Diario
+        </button>
+        <button type="button" class="chat-chip gm-chip" data-user="DrNykterstein">👑 Magnus Carlsen</button>
+        <button type="button" class="chat-chip gm-chip" data-user="Hikaru">⚡ Hikaru Nakamura</button>
+        <button type="button" class="chat-chip gm-chip" data-user="Firouzja2003">🔥 Alireza Firouzja</button>
+        <button type="button" class="chat-chip gm-chip" data-user="DanielNaroditsky">📘 D. Naroditsky</button>
+      </div>
+      <div class="online-join-row">
+        <input
+          type="text"
+          id="study-search-input"
+          class="online-input"
+          placeholder="Usuario Lichess (ej: DrNykterstein), ID Torneo o URL de partida..."
+          aria-label="Buscar jugador, torneo o partida en Lichess"
+        />
+        <button type="button" class="btn-action btn-accent" id="btn-study-search">🔍 Buscar</button>
+      </div>
+    </div>
+
+    <!-- 2. Catalog / Search Results List -->
+    <div class="online-section">
+      <div class="panel-header-row" style="margin-bottom: 6px;">
+        <div class="online-subtitle" id="study-list-heading" style="margin-bottom: 0;">
+          2. Grandes Partidas de Torneos Mundiales y Aperturas
+        </div>
+        <button type="button" class="btn-copy-pgn" id="btn-study-reset-catalog" title="Volver al catálogo de torneos históricos">
+          🏛️ Ver Clásicos de Torneo
+        </button>
+      </div>
+      <div id="study-games-list" class="saved-games-list study-catalog-list"></div>
+    </div>
+
+    <!-- 3. Paste Custom PGN or FEN -->
+    <div class="online-section">
+      <div class="online-subtitle">3. Pegar PGN o FEN de cualquier Torneo Externo (Chess.com / FIDE)</div>
+      <div class="online-join-row">
+        <input
+          type="text"
+          id="study-pgn-input"
+          class="online-input"
+          placeholder="Pega aquí las jugadas PGN (ej: 1. e4 e5 2. Nf3 Nc6 3. Bb5...) o un código FEN"
+          aria-label="Pegar código PGN o FEN"
+        />
+        <button type="button" class="btn-action btn-save" id="btn-study-load-pgn">📥 Cargar PGN</button>
+      </div>
+    </div>
+
+    <div class="online-status-banner" id="study-status-banner">
+      💡 Al cargar una partida, usa los controles <strong>⏮️ ◀️ ▶️ ⏯️ Auto</strong> en la Planilla para avanzar viendo los combates 3D o pulsa <strong>⚔️ Practicar</strong> para jugar tú desde esa posición.
     </div>
 
     <form method="dialog" class="dialog-actions">

@@ -906,6 +906,120 @@ dialog h2 {
   border-color: #7dd3fc;
 }
 
+.btn-hud.btn-study,
+.btn-action.btn-study-action {
+  background: rgba(168, 85, 247, 0.2);
+  border-color: #c084fc;
+  color: #e9d5ff;
+}
+
+.btn-hud.btn-study:hover,
+.btn-action.btn-study-action:hover {
+  background: rgba(168, 85, 247, 0.36);
+  border-color: #d8b4fe;
+}
+
+#study-dialog[open] {
+  width: min(620px, 94vw);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.study-quick-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.btn-fetch-tournaments {
+  background: rgba(230, 194, 89, 0.2) !important;
+  border-color: var(--gold) !important;
+  color: var(--gold-bright) !important;
+  font-weight: 600;
+}
+
+.btn-fetch-puzzle {
+  background: rgba(16, 185, 129, 0.2) !important;
+  border-color: #34d399 !important;
+  color: #a7f3d0 !important;
+  font-weight: 600;
+}
+
+.study-catalog-list {
+  max-height: 220px;
+}
+
+.study-bar {
+  background: rgba(168, 85, 247, 0.14);
+  border: 1px solid rgba(192, 132, 252, 0.45);
+  border-radius: 8px;
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.study-bar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 0.68rem;
+}
+
+.study-bar-title {
+  color: #e9d5ff;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.study-bar-step {
+  color: var(--gold-bright);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.study-bar-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.btn-study-ctrl {
+  flex: 1;
+  min-width: 32px;
+  padding: 4px 5px;
+  border-radius: 5px;
+  border: 1px solid rgba(230, 194, 89, 0.35);
+  background: rgba(10, 12, 20, 0.75);
+  color: var(--text-main);
+  font-size: 0.66rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-study-ctrl:hover {
+  background: rgba(230, 194, 89, 0.25);
+  border-color: var(--gold);
+}
+
+.btn-study-ctrl.btn-study-play {
+  background: rgba(56, 189, 248, 0.22);
+  border-color: #38bdf8;
+  color: #bae6fd;
+}
+
+.btn-study-ctrl.btn-study-practice {
+  background: rgba(16, 185, 129, 0.24);
+  border-color: #10b981;
+  color: #a7f3d0;
+}
+
 .file-import-label {
   display: inline-flex;
   align-items: center;

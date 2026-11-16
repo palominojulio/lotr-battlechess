@@ -7,6 +7,15 @@ import { animateWalk, executeCinematicCombat, spawnParticleBurst } from './comba
 import { chooseBestMove } from './aiEngine.js';
 import { soundFX } from './soundFX.js';
 import { OnlineRoomManager, PUBLIC_GAME_URL, extractRoomCode } from './onlineMultiplayer.js';
+import {
+  CURATED_TOURNAMENT_GAMES,
+  parseMultiGamePgn,
+  fetchLichessLiveTournaments,
+  fetchLichessTournamentGames,
+  fetchLichessUserGames,
+  fetchLichessGameById,
+  fetchLichessDailyPuzzle
+} from './publicLibrary.js';
 
 // --- Constants & Board Mapping ---
 const TILE_SIZE = 1.65;
@@ -1316,6 +1325,403 @@ document.getElementById('input-import-json')?.addEventListener('change', (e) => 
   };
   reader.readAsText(file);
   e.target.value = '';
+});
+
+// --- Public Repositories, Live Tournaments (Lichess API) & Step-by-Step Study Mode ---
+const studyDialog = document.getElementById('study-dialog');
+const studyGamesListEl = document.getElementById('study-games-list');
+const studyListHeading = document.getElementById('study-list-heading');
+const studyStatusBanner = document.getElementById('study-status-banner');
+const studySearchInput = document.getElementById('study-search-input');
+const studyPgnInput = document.getElementById('study-pgn-input');
+
+const studyBar = document.getElementById('study-bar');
+const studyBarTitle = document.getElementById('study-bar-title');
+const studyBarStep = document.getElementById('study-bar-step');
+const btnStudyAuto = document.getElementById('btn-study-auto');
+
+let activeStudy = null; // { title, moves: [...], cursor: 0, savedMode: 'ai-2', autoPlaying: false }
+let studyAutoTimer = null;
+
+function stopStudyAutoPlay() {
+  if (studyAutoTimer) {
+    clearTimeout(studyAutoTimer);
+    studyAutoTimer = null;
+  }
+  if (activeStudy) activeStudy.autoPlaying = false;
+  if (btnStudyAuto) btnStudyAuto.textContent = '⏯️ Auto';
+}
+
+function updateStudyBarUI() {
+  if (!studyBar) return;
+  if (!activeStudy) {
+    studyBar.hidden = true;
+    return;
+  }
+  studyBar.hidden = false;
+  if (studyBarTitle) studyBarTitle.textContent = `🏆 ${activeStudy.title}`;
+  if (studyBarStep) studyBarStep.textContent = `${activeStudy.cursor} / ${activeStudy.moves.length}`;
+}
+
+function jumpToStudyStep(targetCursor) {
+  if (!activeStudy || isAnimating) return;
+  stopStudyAutoPlay();
+  const clamped = Math.max(0, Math.min(activeStudy.moves.length, targetCursor));
+  activeStudy.cursor = clamped;
+
+  chess.reset();
+  capturedByWhite.length = 0;
+  capturedByBlack.length = 0;
+
+  for (let i = 0; i < clamped; i++) {
+    const mv = activeStudy.moves[i];
+    const res = chess.move({ from: mv.from, to: mv.to, promotion: mv.promotion || 'q' });
+    if (res && res.captured) {
+      if (res.color === 'w') capturedByWhite.push(res.captured);
+      else capturedByBlack.push(res.captured);
+    }
+  }
+
+  clearHighlights();
+  selectedSquare = null;
+  legalMovesForSelected = [];
+  rebuildAllPieces();
+  renderCasualties();
+  renderMoveNotation();
+  updateHUD();
+  updateStudyBarUI();
+}
+
+async function stepStudyForwardAnimated() {
+  if (!activeStudy || isAnimating) return false;
+  if (activeStudy.cursor >= activeStudy.moves.length) {
+    stopStudyAutoPlay();
+    return false;
+  }
+  const nextMv = activeStudy.moves[activeStudy.cursor];
+  activeStudy.cursor++;
+  updateStudyBarUI();
+  await performChessMove(nextMv.from, nextMv.to, nextMv.promotion || 'q', true);
+  updateStudyBarUI();
+  return activeStudy.cursor < activeStudy.moves.length;
+}
+
+async function runStudyAutoLoop() {
+  if (!activeStudy || !activeStudy.autoPlaying) return;
+  if (isAnimating) {
+    studyAutoTimer = setTimeout(runStudyAutoLoop, 300);
+    return;
+  }
+  const hasMore = await stepStudyForwardAnimated();
+  if (hasMore && activeStudy?.autoPlaying) {
+    studyAutoTimer = setTimeout(runStudyAutoLoop, 650);
+  } else {
+    stopStudyAutoPlay();
+  }
+}
+
+function startStudySession(gameObj, startAtEnd = false) {
+  if (!gameObj || isAnimating) return;
+  stopStudyAutoPlay();
+
+  const tempChess = new Chess();
+  let loadedOk = false;
+  try {
+    tempChess.loadPgn(gameObj.pgn);
+    loadedOk = tempChess.history().length > 0;
+  } catch {}
+
+  if (!loadedOk) {
+    try {
+      tempChess.load(gameObj.pgn.trim());
+      loadedOk = true;
+    } catch {}
+  }
+
+  if (!loadedOk) {
+    if (studyStatusBanner) {
+      studyStatusBanner.textContent = '⚠️ No se pudo interpretar el formato PGN/FEN de esta partida.';
+    }
+    return;
+  }
+
+  const allMoves = tempChess.history({ verbose: true });
+  const prevMode = gameMode.startsWith('ai') || gameMode === 'online' ? gameMode : 'ai-2';
+  // Switch to 'pvp' during step-by-step study so AI doesn't interrupt the master replay
+  gameMode = 'pvp';
+
+  activeStudy = {
+    title: gameObj.title || 'Partida de Torneo',
+    category: gameObj.category || 'Torneo',
+    description: gameObj.description || '',
+    moves: allMoves,
+    cursor: startAtEnd ? allMoves.length : 0,
+    savedMode: prevMode,
+    autoPlaying: false
+  };
+
+  jumpToStudyStep(activeStudy.cursor);
+  soundFX.playHornFanfare();
+
+  battleLog.innerHTML = '';
+  const li = document.createElement('li');
+  li.className = 'log-entry lore-intro';
+  li.innerHTML = `📚 <strong>${gameObj.category || 'Estudio'}: ${gameObj.title}</strong> — ${gameObj.description || 'Usa ▶️ Sig. o ⏯️ Auto para ver cada jugada y duelo 3D.'}`;
+  battleLog.prepend(li);
+
+  if (studyDialog?.open) studyDialog.close();
+
+  // If user chose "Estudiar desde Jugada 1", automatically play the first move after a brief pause!
+  if (!startAtEnd && allMoves.length > 0) {
+    setTimeout(() => {
+      if (activeStudy && activeStudy.cursor === 0 && !isAnimating) {
+        stepStudyForwardAnimated();
+      }
+    }, 450);
+  }
+}
+
+document.getElementById('btn-study-first')?.addEventListener('click', () => jumpToStudyStep(0));
+document.getElementById('btn-study-prev')?.addEventListener('click', () => {
+  if (activeStudy) jumpToStudyStep(activeStudy.cursor - 1);
+});
+document.getElementById('btn-study-next')?.addEventListener('click', () => {
+  stopStudyAutoPlay();
+  stepStudyForwardAnimated();
+});
+document.getElementById('btn-study-last')?.addEventListener('click', () => {
+  if (activeStudy) jumpToStudyStep(activeStudy.moves.length);
+});
+btnStudyAuto?.addEventListener('click', () => {
+  if (!activeStudy) return;
+  if (activeStudy.autoPlaying) {
+    stopStudyAutoPlay();
+  } else {
+    if (activeStudy.cursor >= activeStudy.moves.length) {
+      jumpToStudyStep(0);
+    }
+    activeStudy.autoPlaying = true;
+    btnStudyAuto.textContent = '⏸️ Pausa';
+    runStudyAutoLoop();
+  }
+});
+
+document.getElementById('btn-study-practice')?.addEventListener('click', () => {
+  stopStudyAutoPlay();
+  const resumeMode = activeStudy?.savedMode || 'ai-2';
+  activeStudy = null;
+  updateStudyBarUI();
+  gameMode = resumeMode;
+  if (gameModeSelect) gameModeSelect.value = gameMode;
+  updateHUD();
+  const li = document.createElement('li');
+  li.className = 'log-entry lore-intro';
+  li.innerHTML = '⚔️ <strong>¡Modo Práctica Activado!</strong> Ahora tienes el mando del tablero desde esta posición.';
+  battleLog.prepend(li);
+  if (gameMode.startsWith('ai') && chess.turn() === 'b' && !chess.isGameOver()) {
+    const aiLevel = parseInt(gameMode.split('-')[1], 10) || 2;
+    const aiMove = chooseBestMove(chess, aiLevel);
+    if (aiMove) performChessMove(aiMove.from, aiMove.to, aiMove.promotion);
+  }
+});
+
+function renderStudyGamesCatalog(gamesArray, headingText = null) {
+  if (!studyGamesListEl) return;
+  if (headingText && studyListHeading) studyListHeading.textContent = headingText;
+  studyGamesListEl.innerHTML = '';
+
+  if (!gamesArray || gamesArray.length === 0) {
+    studyGamesListEl.innerHTML = '<div class="saved-empty">No se encontraron partidas para esta búsqueda.</div>';
+    return;
+  }
+
+  gamesArray.forEach((g) => {
+    const card = document.createElement('div');
+    card.className = 'saved-game-card';
+
+    const info = document.createElement('div');
+    info.className = 'saved-game-info';
+
+    const title = document.createElement('div');
+    title.className = 'saved-game-title';
+    title.textContent = `${g.title} (${g.result || '*'})`;
+
+    const meta = document.createElement('div');
+    meta.className = 'saved-game-meta';
+    meta.textContent = `${g.category} · ${g.description || ''}`;
+
+    info.appendChild(title);
+    info.appendChild(meta);
+
+    const actions = document.createElement('div');
+    actions.className = 'saved-game-actions';
+
+    const btnReplay = document.createElement('button');
+    btnReplay.type = 'button';
+    btnReplay.className = 'btn-save-item';
+    btnReplay.textContent = g.isPuzzle ? '🧩 Resolver' : '🎬 Estudiar 3D';
+    btnReplay.title = 'Cargar para reproducir jugada a jugada con combates 3D';
+    btnReplay.addEventListener('click', () => startStudySession(g, Boolean(g.isPuzzle)));
+    actions.appendChild(btnReplay);
+
+    if (!g.isPuzzle) {
+      const btnEnd = document.createElement('button');
+      btnEnd.type = 'button';
+      btnEnd.className = 'btn-save-item';
+      btnEnd.textContent = '⚔️ Posición';
+      btnEnd.title = 'Cargar posición avanzada lista para practicar';
+      btnEnd.addEventListener('click', () => startStudySession(g, true));
+      actions.appendChild(btnEnd);
+    }
+
+    card.appendChild(info);
+    card.appendChild(actions);
+    studyGamesListEl.appendChild(card);
+  });
+}
+
+function openStudyDialog() {
+  if (!studyDialog) return;
+  renderStudyGamesCatalog(
+    CURATED_TOURNAMENT_GAMES,
+    '2. Grandes Partidas de Torneos Mundiales y Aperturas'
+  );
+  studyDialog.showModal();
+}
+
+document.getElementById('btn-study-header')?.addEventListener('click', openStudyDialog);
+document.getElementById('btn-study-manager')?.addEventListener('click', openStudyDialog);
+document.getElementById('btn-study-reset-catalog')?.addEventListener('click', () => {
+  renderStudyGamesCatalog(
+    CURATED_TOURNAMENT_GAMES,
+    '2. Grandes Partidas de Torneos Mundiales y Aperturas'
+  );
+  if (studyStatusBanner) {
+    studyStatusBanner.textContent = '🏛️ Mostrando el catálogo de grandes partidas de torneos mundiales y aperturas.';
+  }
+});
+
+document.getElementById('btn-fetch-live-tournaments')?.addEventListener('click', async () => {
+  if (studyStatusBanner) studyStatusBanner.textContent = '⏳ Conectando en directo con los torneos oficiales de Lichess.org...';
+  try {
+    const tournaments = await fetchLichessLiveTournaments();
+    if (!studyGamesListEl) return;
+    if (studyListHeading) studyListHeading.textContent = '🏆 Torneos Oficiales en Vivo (Lichess.org)';
+    studyGamesListEl.innerHTML = '';
+
+    tournaments.forEach((t) => {
+      const card = document.createElement('div');
+      card.className = 'saved-game-card autosave-card';
+      const info = document.createElement('div');
+      info.className = 'saved-game-info';
+      const title = document.createElement('div');
+      title.className = 'saved-game-title';
+      title.textContent = `🏆 ${t.name}`;
+      const meta = document.createElement('div');
+      meta.className = 'saved-game-meta';
+      meta.textContent = `Ritmo: ${t.perf} · ${t.nbPlayers} jugadores inscritos · ID: ${t.id}`;
+      info.appendChild(title);
+      info.appendChild(meta);
+
+      const actions = document.createElement('div');
+      actions.className = 'saved-game-actions';
+      const btnFetchGames = document.createElement('button');
+      btnFetchGames.type = 'button';
+      btnFetchGames.className = 'btn-save-item';
+      btnFetchGames.textContent = '📂 Ver Partidas';
+      btnFetchGames.addEventListener('click', async () => {
+        if (studyStatusBanner) studyStatusBanner.textContent = `⏳ Descargando partidas del torneo "${t.name}"...`;
+        try {
+          const games = await fetchLichessTournamentGames(t.id, 8);
+          renderStudyGamesCatalog(games, `🏆 Partidas del Torneo: ${t.name}`);
+          if (studyStatusBanner) studyStatusBanner.textContent = `✅ ${games.length} partidas cargadas del torneo "${t.name}".`;
+        } catch (err) {
+          if (studyStatusBanner) studyStatusBanner.textContent = `⚠️ ${err.message}`;
+        }
+      });
+      actions.appendChild(btnFetchGames);
+      card.appendChild(info);
+      card.appendChild(actions);
+      studyGamesListEl.appendChild(card);
+    });
+
+    if (studyStatusBanner) {
+      studyStatusBanner.textContent = '✅ Selecciona un torneo oficial en vivo para descargar sus partidas al tablero 3D.';
+    }
+  } catch (err) {
+    if (studyStatusBanner) studyStatusBanner.textContent = `⚠️ ${err.message}`;
+  }
+});
+
+document.getElementById('btn-fetch-daily-puzzle')?.addEventListener('click', async () => {
+  if (studyStatusBanner) studyStatusBanner.textContent = '⏳ Descargando el Reto Táctico Diario oficial de Lichess.org...';
+  try {
+    const puzzleGame = await fetchLichessDailyPuzzle();
+    renderStudyGamesCatalog([puzzleGame], '🧩 Reto Táctico Diario Oficial (Lichess.org)');
+    if (studyStatusBanner) {
+      studyStatusBanner.innerHTML = `✅ Reto Diario listo: pulsa <strong>🧩 Resolver</strong> para saltar a la posición crítica o <strong>⚔️ Practicar</strong>.`;
+    }
+  } catch (err) {
+    if (studyStatusBanner) studyStatusBanner.textContent = `⚠️ ${err.message}`;
+  }
+});
+
+async function handleLichessQuery(rawQuery) {
+  const q = String(rawQuery || '').trim();
+  if (!q) return;
+  if (studyStatusBanner) studyStatusBanner.textContent = `⏳ Buscando "${q}" en el repositorio público de Lichess.org...`;
+
+  try {
+    if (/lichess\.org\/tournament\//i.test(q)) {
+      const games = await fetchLichessTournamentGames(q, 8);
+      renderStudyGamesCatalog(games, `🏆 Partidas de Torneo Lichess`);
+      if (studyStatusBanner) studyStatusBanner.textContent = `✅ ${games.length} partidas de torneo encontradas.`;
+      return;
+    }
+    if (/lichess\.org\/[a-zA-Z0-9]{8}/i.test(q) || /^[a-zA-Z0-9]{8}$/.test(q)) {
+      try {
+        const single = await fetchLichessGameById(q);
+        if (single) {
+          renderStudyGamesCatalog([single], `🌐 Partida Pública Encontrada`);
+          if (studyStatusBanner) studyStatusBanner.textContent = `✅ Partida ${single.title} lista para estudiar.`;
+          return;
+        }
+      } catch {}
+    }
+    const userGames = await fetchLichessUserGames(q, 8);
+    renderStudyGamesCatalog(userGames, `🌐 Últimas Partidas Públicas de ${q}`);
+    if (studyStatusBanner) studyStatusBanner.textContent = `✅ ${userGames.length} partidas públicas de "${q}" descargadas.`;
+  } catch (err) {
+    if (studyStatusBanner) studyStatusBanner.textContent = `⚠️ ${err.message}`;
+  }
+}
+
+document.getElementById('btn-study-search')?.addEventListener('click', () => {
+  if (studySearchInput?.value) handleLichessQuery(studySearchInput.value);
+});
+
+document.querySelectorAll('.gm-chip').forEach((chip) => {
+  chip.addEventListener('click', () => {
+    const user = chip.dataset.user;
+    if (user) {
+      if (studySearchInput) studySearchInput.value = user;
+      handleLichessQuery(user);
+    }
+  });
+});
+
+document.getElementById('btn-study-load-pgn')?.addEventListener('click', () => {
+  const raw = studyPgnInput?.value?.trim();
+  if (!raw) return;
+  const parsedList = parseMultiGamePgn(raw, 'Partida PGN Importada');
+  const gameObj = parsedList[0] || {
+    id: `custom-${Date.now()}`,
+    category: '📋 PGN / FEN Personalizado',
+    title: 'Partida de Estudio Importada',
+    description: 'Cargada manualmente desde texto PGN/FEN',
+    pgn: raw
+  };
+  startStudySession(gameObj, false);
 });
 
 // "⚔️ Probar Combate" button: immediately triggers a capture duel (or sets up an instant clash!)
