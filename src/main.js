@@ -9,6 +9,12 @@ import { soundFX } from './soundFX.js';
 import { OnlineRoomManager, PUBLIC_GAME_URL, extractRoomCode } from './onlineMultiplayer.js';
 import {
   CURATED_TOURNAMENT_GAMES,
+  YOUTUBE_FEATURED_GAMES,
+  normalizeSpanishOrEnglishPgn,
+  getGameFingerprint,
+  deduplicateGames,
+  getBuiltInDatabaseFingerprints,
+  importGameFromYouTube,
   parseMultiGamePgn,
   fetchLichessLiveTournaments,
   fetchLichessTournamentGames,
@@ -1278,19 +1284,25 @@ document.getElementById('btn-save-manager')?.addEventListener('click', openSaveD
 
 document.getElementById('btn-save-now')?.addEventListener('click', () => {
   const snap = buildGameSnapshot(saveNameInput?.value || '');
-  const list = getSavedGames();
+  const fp = getGameFingerprint(snap);
+  snap.fingerprint = fp;
+  const list = getSavedGames().filter((existing) => {
+    const existingFp = existing.fingerprint || getGameFingerprint(existing);
+    return !fp || existingFp !== fp;
+  });
   list.unshift(snap);
   setSavedGames(list);
   if (saveNameInput) saveNameInput.value = '';
   renderSavedGamesList();
   soundFX.playSelect();
   if (saveStatusBanner) {
-    saveStatusBanner.innerHTML = `✅ Partida guardada como <strong>${snap.title}</strong>.`;
+    saveStatusBanner.innerHTML = `✅ Partida guardada sin duplicados como <strong>${snap.title}</strong>.`;
   }
 });
 
 document.getElementById('btn-export-json')?.addEventListener('click', () => {
   const snap = buildGameSnapshot(saveNameInput?.value || '');
+  snap.fingerprint = getGameFingerprint(snap);
   const blob = new Blob([JSON.stringify(snap, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -1311,7 +1323,12 @@ document.getElementById('input-import-json')?.addEventListener('change', (e) => 
     try {
       const parsed = JSON.parse(String(reader.result));
       if (parsed && (parsed.fen || parsed.moves || parsed.pgn)) {
-        const list = getSavedGames();
+        const fp = getGameFingerprint(parsed);
+        parsed.fingerprint = fp;
+        const list = getSavedGames().filter((existing) => {
+          const existingFp = existing.fingerprint || getGameFingerprint(existing);
+          return !fp || existingFp !== fp;
+        });
         list.unshift(parsed);
         setSavedGames(list);
         renderSavedGamesList();
@@ -1327,21 +1344,32 @@ document.getElementById('input-import-json')?.addEventListener('change', (e) => 
   e.target.value = '';
 });
 
-// --- Public Repositories, Live Tournaments (Lichess API) & Step-by-Step Study Mode ---
+// --- Public Repositories, YouTube Importer, Live Tournaments (Lichess API) & Step-by-Step Study Mode ---
 const studyDialog = document.getElementById('study-dialog');
 const studyGamesListEl = document.getElementById('study-games-list');
 const studyListHeading = document.getElementById('study-list-heading');
 const studyStatusBanner = document.getElementById('study-status-banner');
 const studySearchInput = document.getElementById('study-search-input');
+const studyYoutubeInput = document.getElementById('study-youtube-input');
 const studyPgnInput = document.getElementById('study-pgn-input');
 
 const studyBar = document.getElementById('study-bar');
 const studyBarTitle = document.getElementById('study-bar-title');
 const studyBarStep = document.getElementById('study-bar-step');
+const studyYtLink = document.getElementById('study-yt-link');
 const btnStudyAuto = document.getElementById('btn-study-auto');
 
-let activeStudy = null; // { title, moves: [...], cursor: 0, savedMode: 'ai-2', autoPlaying: false }
+let activeStudy = null; // { title, moves: [...], cursor: 0, savedMode: 'ai-2', autoPlaying: false, youtubeUrl: null }
 let studyAutoTimer = null;
+
+function getAllDatabaseFingerprints() {
+  const set = getBuiltInDatabaseFingerprints();
+  for (const s of getSavedGames()) {
+    const fp = s.fingerprint || getGameFingerprint(s);
+    if (fp) set.add(fp);
+  }
+  return set;
+}
 
 function stopStudyAutoPlay() {
   if (studyAutoTimer) {
@@ -1361,6 +1389,14 @@ function updateStudyBarUI() {
   studyBar.hidden = false;
   if (studyBarTitle) studyBarTitle.textContent = `🏆 ${activeStudy.title}`;
   if (studyBarStep) studyBarStep.textContent = `${activeStudy.cursor} / ${activeStudy.moves.length}`;
+  if (studyYtLink) {
+    if (activeStudy.youtubeUrl) {
+      studyYtLink.href = activeStudy.youtubeUrl;
+      studyYtLink.hidden = false;
+    } else {
+      studyYtLink.hidden = true;
+    }
+  }
 }
 
 function jumpToStudyStep(targetCursor) {
@@ -1426,14 +1462,24 @@ function startStudySession(gameObj, startAtEnd = false) {
 
   const tempChess = new Chess();
   let loadedOk = false;
+  const rawPgn = String(gameObj.pgn || '').trim();
+  const normalizedPgn = normalizeSpanishOrEnglishPgn(rawPgn);
+
   try {
-    tempChess.loadPgn(gameObj.pgn);
+    tempChess.loadPgn(normalizedPgn || rawPgn);
     loadedOk = tempChess.history().length > 0;
   } catch {}
 
   if (!loadedOk) {
     try {
-      tempChess.load(gameObj.pgn.trim());
+      tempChess.loadPgn(rawPgn);
+      loadedOk = tempChess.history().length > 0;
+    } catch {}
+  }
+
+  if (!loadedOk) {
+    try {
+      tempChess.load(rawPgn);
       loadedOk = true;
     } catch {}
   }
@@ -1454,6 +1500,7 @@ function startStudySession(gameObj, startAtEnd = false) {
     title: gameObj.title || 'Partida de Torneo',
     category: gameObj.category || 'Torneo',
     description: gameObj.description || '',
+    youtubeUrl: gameObj.youtubeUrl || null,
     moves: allMoves,
     cursor: startAtEnd ? allMoves.length : 0,
     savedMode: prevMode,
@@ -1466,7 +1513,10 @@ function startStudySession(gameObj, startAtEnd = false) {
   battleLog.innerHTML = '';
   const li = document.createElement('li');
   li.className = 'log-entry lore-intro';
-  li.innerHTML = `📚 <strong>${gameObj.category || 'Estudio'}: ${gameObj.title}</strong> — ${gameObj.description || 'Usa ▶️ Sig. o ⏯️ Auto para ver cada jugada y duelo 3D.'}`;
+  const ytBadge = gameObj.youtubeUrl
+    ? ` <a href="${gameObj.youtubeUrl}" target="_blank" rel="noopener noreferrer" style="color:#fcd34d;text-decoration:underline;">[📺 Ver Vídeo en YouTube]</a>`
+    : '';
+  li.innerHTML = `📚 <strong>${gameObj.category || 'Estudio'}: ${gameObj.title}</strong> — ${gameObj.description || 'Usa ▶️ Sig. o ⏯️ Auto para ver cada jugada y duelo 3D.'}${ytBadge}`;
   battleLog.prepend(li);
 
   if (studyDialog?.open) studyDialog.close();
@@ -1530,12 +1580,14 @@ function renderStudyGamesCatalog(gamesArray, headingText = null) {
   if (headingText && studyListHeading) studyListHeading.textContent = headingText;
   studyGamesListEl.innerHTML = '';
 
-  if (!gamesArray || gamesArray.length === 0) {
-    studyGamesListEl.innerHTML = '<div class="saved-empty">No se encontraron partidas para esta búsqueda.</div>';
+  const uniqueGames = deduplicateGames(gamesArray);
+
+  if (!uniqueGames || uniqueGames.length === 0) {
+    studyGamesListEl.innerHTML = '<div class="saved-empty">No se encontraron partidas nuevas (o todas ya estaban en la base de datos sin duplicar).</div>';
     return;
   }
 
-  gamesArray.forEach((g) => {
+  uniqueGames.forEach((g) => {
     const card = document.createElement('div');
     card.className = 'saved-game-card';
 
@@ -1555,6 +1607,18 @@ function renderStudyGamesCatalog(gamesArray, headingText = null) {
 
     const actions = document.createElement('div');
     actions.className = 'saved-game-actions';
+
+    if (g.youtubeUrl) {
+      const btnYt = document.createElement('a');
+      btnYt.href = g.youtubeUrl;
+      btnYt.target = '_blank';
+      btnYt.rel = 'noopener noreferrer';
+      btnYt.className = 'btn-save-item';
+      btnYt.style.textDecoration = 'none';
+      btnYt.textContent = '📺 Vídeo';
+      btnYt.title = 'Abrir vídeo en YouTube';
+      actions.appendChild(btnYt);
+    }
 
     const btnReplay = document.createElement('button');
     btnReplay.type = 'button';
@@ -1584,7 +1648,7 @@ function openStudyDialog() {
   if (!studyDialog) return;
   renderStudyGamesCatalog(
     CURATED_TOURNAMENT_GAMES,
-    '2. Grandes Partidas de Torneos Mundiales y Aperturas'
+    '3. 🏆 Grandes Partidas de Torneos Mundiales (Sin Duplicados)'
   );
   studyDialog.showModal();
 }
@@ -1594,10 +1658,61 @@ document.getElementById('btn-study-manager')?.addEventListener('click', openStud
 document.getElementById('btn-study-reset-catalog')?.addEventListener('click', () => {
   renderStudyGamesCatalog(
     CURATED_TOURNAMENT_GAMES,
-    '2. Grandes Partidas de Torneos Mundiales y Aperturas'
+    '3. 🏆 Grandes Partidas de Torneos Mundiales (Sin Duplicados)'
   );
   if (studyStatusBanner) {
-    studyStatusBanner.textContent = '🏛️ Mostrando el catálogo de grandes partidas de torneos mundiales y aperturas.';
+    studyStatusBanner.textContent = `🏛️ Mostrando ${CURATED_TOURNAMENT_GAMES.length} partidas únicas de torneos mundiales.`;
+  }
+});
+
+document.getElementById('btn-study-youtube-catalog')?.addEventListener('click', () => {
+  // Filter against CURATED_TOURNAMENT_GAMES fingerprints so zero games are duplicated between Tournament DB and YouTube DB
+  const tournamentFps = new Set(CURATED_TOURNAMENT_GAMES.map((g) => getGameFingerprint(g)));
+  const uniqueYt = deduplicateGames(YOUTUBE_FEATURED_GAMES, tournamentFps);
+  renderStudyGamesCatalog(
+    uniqueYt,
+    '3. 📺 Partidas Virales Publicadas en YouTube (0 Duplicados con Torneos)'
+  );
+  if (studyStatusBanner) {
+    studyStatusBanner.textContent = `📺 Mostrando ${uniqueYt.length} partidas virales de YouTube verificadas sin duplicar las de la base de datos de torneos.`;
+  }
+});
+
+document.getElementById('btn-study-all-unique')?.addEventListener('click', () => {
+  const combined = deduplicateGames([...CURATED_TOURNAMENT_GAMES, ...YOUTUBE_FEATURED_GAMES, ...getSavedGames()]);
+  renderStudyGamesCatalog(
+    combined,
+    `3. 🗂️ Todas las Bases de Datos Combinadas (${combined.length} Partidas Únicas)`
+  );
+  if (studyStatusBanner) {
+    studyStatusBanner.textContent = `✅ Base de datos unificada: ${combined.length} partidas únicas (0 duplicados).`;
+  }
+});
+
+document.getElementById('btn-study-youtube-load')?.addEventListener('click', async () => {
+  const raw = studyYoutubeInput?.value?.trim();
+  if (!raw) {
+    if (studyStatusBanner) {
+      studyStatusBanner.textContent = '⚠️ Pega un enlace de YouTube (youtube.com/watch?v=...) o el texto de la descripción con las jugadas.';
+    }
+    return;
+  }
+  if (studyStatusBanner) {
+    studyStatusBanner.textContent = '⏳ Analizando vídeo / descripción de YouTube y verificando duplicados en la base de datos...';
+  }
+  try {
+    const dbFingerprints = getAllDatabaseFingerprints();
+    const { game } = await importGameFromYouTube(raw, dbFingerprints);
+    if (studyStatusBanner) {
+      studyStatusBanner.textContent = game.alreadyInDb
+        ? `ℹ️ Esta partida ya figuraba en la base de datos: cargando "${game.title}" sin crear duplicados.`
+        : `✅ Partida de YouTube "${game.title}" importada correctamente.`;
+    }
+    startStudySession(game, false);
+  } catch (err) {
+    if (studyStatusBanner) {
+      studyStatusBanner.textContent = `⚠️ ${err.message}`;
+    }
   }
 });
 
@@ -1630,11 +1745,11 @@ document.getElementById('btn-fetch-live-tournaments')?.addEventListener('click',
       btnFetchGames.className = 'btn-save-item';
       btnFetchGames.textContent = '📂 Ver Partidas';
       btnFetchGames.addEventListener('click', async () => {
-        if (studyStatusBanner) studyStatusBanner.textContent = `⏳ Descargando partidas del torneo "${t.name}"...`;
+        if (studyStatusBanner) studyStatusBanner.textContent = `⏳ Descargando partidas únicas del torneo "${t.name}"...`;
         try {
-          const games = await fetchLichessTournamentGames(t.id, 8);
-          renderStudyGamesCatalog(games, `🏆 Partidas del Torneo: ${t.name}`);
-          if (studyStatusBanner) studyStatusBanner.textContent = `✅ ${games.length} partidas cargadas del torneo "${t.name}".`;
+          const games = await fetchLichessTournamentGames(t.id, 10, getAllDatabaseFingerprints());
+          renderStudyGamesCatalog(games, `🏆 Partidas del Torneo: ${t.name} (Sin Duplicados)`);
+          if (studyStatusBanner) studyStatusBanner.textContent = `✅ ${games.length} partidas únicas cargadas del torneo "${t.name}".`;
         } catch (err) {
           if (studyStatusBanner) studyStatusBanner.textContent = `⚠️ ${err.message}`;
         }
@@ -1646,7 +1761,7 @@ document.getElementById('btn-fetch-live-tournaments')?.addEventListener('click',
     });
 
     if (studyStatusBanner) {
-      studyStatusBanner.textContent = '✅ Selecciona un torneo oficial en vivo para descargar sus partidas al tablero 3D.';
+      studyStatusBanner.textContent = '✅ Selecciona un torneo oficial en vivo para descargar sus partidas únicas al tablero 3D.';
     }
   } catch (err) {
     if (studyStatusBanner) studyStatusBanner.textContent = `⚠️ ${err.message}`;
@@ -1669,28 +1784,43 @@ document.getElementById('btn-fetch-daily-puzzle')?.addEventListener('click', asy
 async function handleLichessQuery(rawQuery) {
   const q = String(rawQuery || '').trim();
   if (!q) return;
-  if (studyStatusBanner) studyStatusBanner.textContent = `⏳ Buscando "${q}" en el repositorio público de Lichess.org...`;
+
+  // If the user pasted a YouTube link into the search box, route it to the YouTube importer!
+  if (/youtube\.com|youtu\.be/i.test(q)) {
+    if (studyYoutubeInput) studyYoutubeInput.value = q;
+    document.getElementById('btn-study-youtube-load')?.click();
+    return;
+  }
+
+  if (studyStatusBanner) studyStatusBanner.textContent = `⏳ Buscando "${q}" en Lichess.org y filtrando duplicados de la base de datos...`;
 
   try {
+    const existingFps = getAllDatabaseFingerprints();
     if (/lichess\.org\/tournament\//i.test(q)) {
-      const games = await fetchLichessTournamentGames(q, 8);
-      renderStudyGamesCatalog(games, `🏆 Partidas de Torneo Lichess`);
-      if (studyStatusBanner) studyStatusBanner.textContent = `✅ ${games.length} partidas de torneo encontradas.`;
+      const games = await fetchLichessTournamentGames(q, 10, existingFps);
+      renderStudyGamesCatalog(games, `🏆 Partidas de Torneo Lichess (Sin Duplicados)`);
+      if (studyStatusBanner) studyStatusBanner.textContent = `✅ ${games.length} partidas únicas de torneo encontradas.`;
       return;
     }
     if (/lichess\.org\/[a-zA-Z0-9]{8}/i.test(q) || /^[a-zA-Z0-9]{8}$/.test(q)) {
       try {
         const single = await fetchLichessGameById(q);
         if (single) {
+          const fp = getGameFingerprint(single);
+          const alreadyInDb = existingFps.has(fp);
           renderStudyGamesCatalog([single], `🌐 Partida Pública Encontrada`);
-          if (studyStatusBanner) studyStatusBanner.textContent = `✅ Partida ${single.title} lista para estudiar.`;
+          if (studyStatusBanner) {
+            studyStatusBanner.textContent = alreadyInDb
+              ? `ℹ️ La partida ${single.title} ya estaba en la base de datos (mostrada sin duplicar).`
+              : `✅ Partida ${single.title} lista para estudiar.`;
+          }
           return;
         }
       } catch {}
     }
-    const userGames = await fetchLichessUserGames(q, 8);
-    renderStudyGamesCatalog(userGames, `🌐 Últimas Partidas Públicas de ${q}`);
-    if (studyStatusBanner) studyStatusBanner.textContent = `✅ ${userGames.length} partidas públicas de "${q}" descargadas.`;
+    const userGames = await fetchLichessUserGames(q, 10, existingFps);
+    renderStudyGamesCatalog(userGames, `🌐 Últimas Partidas Únicas de ${q}`);
+    if (studyStatusBanner) studyStatusBanner.textContent = `✅ ${userGames.length} partidas públicas únicas de "${q}" descargadas (filtradas sin duplicar).`;
   } catch (err) {
     if (studyStatusBanner) studyStatusBanner.textContent = `⚠️ ${err.message}`;
   }
@@ -1713,14 +1843,20 @@ document.querySelectorAll('.gm-chip').forEach((chip) => {
 document.getElementById('btn-study-load-pgn')?.addEventListener('click', () => {
   const raw = studyPgnInput?.value?.trim();
   if (!raw) return;
+  const existingFps = getAllDatabaseFingerprints();
+  const normalized = normalizeSpanishOrEnglishPgn(raw);
   const parsedList = parseMultiGamePgn(raw, 'Partida PGN Importada');
   const gameObj = parsedList[0] || {
     id: `custom-${Date.now()}`,
     category: '📋 PGN / FEN Personalizado',
     title: 'Partida de Estudio Importada',
-    description: 'Cargada manualmente desde texto PGN/FEN',
-    pgn: raw
+    description: 'Cargada desde texto PGN/FEN (Español o Inglés)',
+    pgn: normalized || raw
   };
+  const fp = getGameFingerprint(gameObj);
+  if (fp && existingFps.has(fp) && studyStatusBanner) {
+    studyStatusBanner.textContent = 'ℹ️ Esta partida ya existía en la base de datos; se carga directamente sin duplicarla.';
+  }
   startStudySession(gameObj, false);
 });
 

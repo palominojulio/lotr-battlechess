@@ -31,12 +31,16 @@
         <button id="btn-whatsapp" type="button" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-500 transition cursor-pointer" title="Enviar invitación de partida a un amigo o invitado por WhatsApp">
           💬 Invitar Amigo (WhatsApp)
         </button>
-        <select id="select-tournament-inline" class="px-2 py-1.5 rounded-lg text-xs font-semibold bg-purple-600/25 text-[var(--foreground)] border border-purple-400/50 cursor-pointer" title="Cargar partida de Torneo Mundial o Apertura para estudiar">
-          <option value="">📚 Estudiar Torneo...</option>
-          <option value="opera">🏆 Morphy (Ópera 1858)</option>
-          <option value="kasparov">🏆 Kasparov vs Topalov (1999)</option>
-          <option value="immortal">🏆 Anderssen (La Inmortal 1851)</option>
-          <option value="ruylopez">📘 Apertura Española (Torneo)</option>
+        <select id="select-tournament-inline" class="px-2 py-1.5 rounded-lg text-xs font-semibold bg-purple-600/25 text-[var(--foreground)] border border-purple-400/50 cursor-pointer" title="Cargar partida de YouTube o Torneo Mundial (sin duplicados)">
+          <option value="">📚 Torneos & YouTube...</option>
+          <option value="yt_enigma">📺 YouTube: Rey Enigma vs Karpov</option>
+          <option value="yt_gates">📺 YouTube: Carlsen vs Bill Gates</option>
+          <option value="yt_deepblue">📺 YouTube: Deep Blue vs Kasparov</option>
+          <option value="yt_rosen">📺 YouTube: Gambito Stafford (Rosen)</option>
+          <option value="opera">🏆 Torneo: Morphy (Ópera 1858)</option>
+          <option value="kasparov">🏆 Torneo: Kasparov vs Topalov (1999)</option>
+          <option value="immortal">🏆 Torneo: Anderssen (Inmortal 1851)</option>
+          <option value="ruylopez">📘 Torneo: Apertura Española</option>
         </select>
         <button id="btn-study-step" type="button" class="hidden px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-purple-600 text-white hover:bg-purple-500 transition cursor-pointer" title="Avanzar siguiente jugada del torneo">
           ▶️ Sig. Jugada
@@ -1561,6 +1565,40 @@
     });
 
     const INLINE_TOURNAMENTS = {
+      yt_enigma: {
+        name: '📺 YouTube Viral: Rey Enigma vs. Anatoly Karpov (2021)',
+        moves: [
+          ['e2','e4'],['c7','c6'],['d2','d4'],['d7','d5'],['e4','d5'],['c6','d5'],
+          ['f1','d3'],['b8','c6'],['c2','c3'],['g8','f6'],['c1','f4'],['c8','g4'],
+          ['d1','b3'],['d8','d7'],['b1','d2'],['e7','e6'],['g1','f3'],['g4','f3'],
+          ['d2','f3'],['f8','d6'],['f4','d6'],['d7','d6']
+        ]
+      },
+      yt_gates: {
+        name: '📺 YouTube Viral: Bill Gates vs. Magnus Carlsen (Mate en 9)',
+        moves: [
+          ['e2','e4'],['b8','c6'],['g1','f3'],['d7','d5'],['f1','d3'],['g8','f6'],
+          ['e4','d5'],['d8','d5'],['b1','c3'],['d5','h5'],['e1','g1'],['c8','g4'],
+          ['h2','h3'],['c6','e5'],['h3','g4'],['f6','g4'],['f3','e5'],['h5','h2']
+        ]
+      },
+      yt_deepblue: {
+        name: '📺 YouTube Clásico: Deep Blue vs. Garry Kasparov (1997, P6)',
+        moves: [
+          ['e2','e4'],['c7','c6'],['d2','d4'],['d7','d5'],['b1','c3'],['d5','e4'],
+          ['c3','e4'],['b8','d7'],['e4','g5'],['g8','f6'],['f1','d3'],['e7','e6'],
+          ['g1','f3'],['h7','h6'],['g5','e6'],['d8','e7'],['e1','g1'],['f7','e6'],
+          ['d3','g6'],['e8','d8']
+        ]
+      },
+      yt_rosen: {
+        name: '📺 YouTube Estudio: Gambito Stafford («Oh no, my Queen!»)',
+        moves: [
+          ['e2','e4'],['e7','e5'],['g1','f3'],['g8','f6'],['f3','e5'],['b8','c6'],
+          ['e5','c6'],['d7','c6'],['d2','d3'],['f8','c5'],['c1','g5'],['f6','e4'],
+          ['g5','d8'],['c5','f2'],['e1','e2'],['c8','g4']
+        ]
+      },
       opera: {
         name: 'Morphy vs. Duque de Brunswick (París 1858)',
         moves: [

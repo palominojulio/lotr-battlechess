@@ -1,10 +1,14 @@
+import { Chess } from 'chess.js';
+
 /**
- * Public Chess Repositories, Live Tournament Broadcasts (Lichess API) & Master Tournament Archive
+ * Public Chess Repositories, YouTube Chess Importer, Live Tournament Broadcasts (Lichess API)
+ * & Deduplicated Master Database
  */
 
 export const CURATED_TOURNAMENT_GAMES = [
   {
     id: 'kasparov-topalov-1999',
+    source: 'tournament_db',
     category: '🏆 Torneo Tata Steel (Wijk aan Zee 1999)',
     title: 'Kasparov vs. Topalov («La Inmortal de Kasparov»)',
     white: 'Garry Kasparov (2812)',
@@ -15,6 +19,7 @@ export const CURATED_TOURNAMENT_GAMES = [
   },
   {
     id: 'ding-nepo-2023',
+    source: 'tournament_db',
     category: '🏆 Campeonato Mundial FIDE 2023 (Astaná, P6)',
     title: 'Ding Liren vs. Ian Nepomniachtchi',
     white: 'Ding Liren (2788)',
@@ -25,6 +30,7 @@ export const CURATED_TOURNAMENT_GAMES = [
   },
   {
     id: 'fischer-spassky-1972',
+    source: 'tournament_db',
     category: '🏆 Campeonato Mundial 1972 (Reikiavik, P6)',
     title: 'Bobby Fischer vs. Boris Spassky',
     white: 'Bobby Fischer (2785)',
@@ -35,6 +41,7 @@ export const CURATED_TOURNAMENT_GAMES = [
   },
   {
     id: 'byrne-fischer-1956',
+    source: 'tournament_db',
     category: '🏆 Torneo Rosenwald (Nueva York 1956)',
     title: 'Donald Byrne vs. Bobby Fischer («Partida del Siglo»)',
     white: 'Donald Byrne',
@@ -45,16 +52,18 @@ export const CURATED_TOURNAMENT_GAMES = [
   },
   {
     id: 'karpov-kasparov-1985',
+    source: 'tournament_db',
     category: '🏆 Campeonato Mundial 1985 (Moscú, P16)',
     title: 'Anatoly Karpov vs. Garry Kasparov',
     white: 'Anatoly Karpov (2700)',
     black: 'Garry Kasparov (2710)',
     result: '0-1',
     description: 'Defensa Siciliana con el célebre caballo pulpo en d3 que paralizó a todo el ejército blanco.',
-    pgn: '1. e4 c5 2. Nf3 e6 3. d4 cxd4 4. Nxd4 Nc6 5. Nb5 d6 6. c4 Nf6 7. N1c3 a6 8. Na3 d5 9. cxd5 exd5 10. exd5 Nb4 11. Be2 Bc5 12. O-O O-O 13. Bf3 Bf5 14. Bg5 Re8 15. Qd2 b5 16. Rad1 Nd3 17. Nab1 h6 18. Bh4 b4 19. Na4 Bd6 20. Bg3 Rc8 21. b3 g5 22. Bxd6 Qxd6 23. g3 Nd7 24. Bg2 Qf6 25. a3 a5 26. axb4 axb4 27. Qa2 Bg6 28. d6 g4 29.Qd2 Kg7 30. f3 Qxd6 31. fxg4 Qd4+ 32. Kh1 Nf6 33. Rf4 Ne4 34. Qxd3 Nf2+ 35. Rxf2 Bxd3 36. Rfd2 Qe3 37. Rxd3 Rc1 38. Nb2 Qf2 39. Nd2 Rxd1+ 40. Nxd1 Re1+'
+    pgn: '1. e4 c5 2. Nf3 e6 3. d4 cxd4 4. Nxd4 Nc6 5. Nb5 d6 6. c4 Nf6 7. N1c3 a6 8. Na3 d5 9. cxd5 exd5 10. exd5 Nb4 11. Be2 Bc5 12. O-O O-O 13. Bf3 Bf5 14. Bg5 Re8 15. Qd2 b5 16. Rad1 Nd3 17. Nab1 h6 18. Bh4 b4 19. Na4 Bd6 20. Bg3 Rc8 21. b3 g5 22. Bxd6 Qxd6 23. g3 Nd7 24. Bg2 Qf6 25. a3 a5 26. axb4 axb4 27. Qa2 Bg6 28. d6 g4 29. Qd2 Kg7 30. f3 Qxd6 31. fxg4 Qd4+ 32. Kh1 Nf6 33. Rf4 Ne4 34. Qxd3 Nf2+ 35. Rxf2 Bxd3 36. Rfd2 Qe3 37. Rxd3 Rc1 38. Nb2 Qf2 39. Nd2 Rxd1+ 40. Nxd1 Re1+'
   },
   {
     id: 'morphy-opera-1858',
+    source: 'tournament_db',
     category: '🏛️ Clásico de Estudio (París 1858)',
     title: 'Paul Morphy vs. Duque de Brunswick («La Ópera»)',
     white: 'Paul Morphy',
@@ -65,6 +74,7 @@ export const CURATED_TOURNAMENT_GAMES = [
   },
   {
     id: 'anderssen-immortal-1851',
+    source: 'tournament_db',
     category: '🏛️ Torneo Internacional de Londres 1851',
     title: 'Anderssen vs. Kieseritzky («La Inmortal»)',
     white: 'Adolf Anderssen',
@@ -75,6 +85,7 @@ export const CURATED_TOURNAMENT_GAMES = [
   },
   {
     id: 'opening-ruy-lopez',
+    source: 'tournament_db',
     category: '📘 Práctica de Aperturas de Torneo',
     title: 'Apertura Española (Ruy López · Línea Principal)',
     white: 'Blancas (Estudio)',
@@ -85,6 +96,7 @@ export const CURATED_TOURNAMENT_GAMES = [
   },
   {
     id: 'opening-sicilian-najdorf',
+    source: 'tournament_db',
     category: '📘 Práctica de Aperturas de Torneo',
     title: 'Defensa Siciliana · Variante Najdorf (Ataque Inglés)',
     white: 'Blancas (Estudio)',
@@ -96,9 +108,386 @@ export const CURATED_TOURNAMENT_GAMES = [
 ];
 
 /**
- * Parses a multi-game PGN string into an array of game objects
+ * Curated YouTube Viral & Educational Chess Games (100% distinct from CURATED_TOURNAMENT_GAMES — zero duplicates!)
  */
-export function parseMultiGamePgn(rawPgnText, defaultCategory = '🏆 Torneo / Repositorio Público') {
+export const YOUTUBE_FEATURED_GAMES = [
+  {
+    id: 'yt-rey-enigma-karpov-2021',
+    source: 'youtube',
+    youtubeUrl: 'https://www.youtube.com/watch?v=k6F3G9st_wI',
+    category: '📺 YouTube Viral · Rey Enigma (2021)',
+    title: 'Rey Enigma vs. Anatoly Karpov (Duelo Épico en YouTube)',
+    white: 'Rey Enigma',
+    black: 'GM Anatoly Karpov',
+    result: '1/2-1/2',
+    description: 'El vídeo de ajedrez en español más viral de YouTube: Rey Enigma resiste a la leyenda mundial Karpov.',
+    pgn: '1. e4 c6 2. d4 d5 3. exd5 cxd5 4. Bd3 Nc6 5. c3 Nf6 6. Bf4 Bg4 7. Qb3 Qd7 8. Nd2 e6 9. Ngf3 Bxf3 10. Nxf3 Bd6 11. Bxd6 Qxd6 12. O-O O-O 13. Rae1 Rab8 14. Ne5 b5 15. a3 a5 16. Qd1 b4 17. axb4 axb4 18. Re3 bxc3 19. bxc3 g6 20. Qf3 Kg7 21. Rfe1 Ne7 22. h4 Nf5 23. Bxf5 exf5'
+  },
+  {
+    id: 'yt-carlsen-bill-gates-2014',
+    source: 'youtube',
+    youtubeUrl: 'https://www.youtube.com/watch?v=84NwnSltHFo',
+    category: '📺 YouTube Viral · Skavlan Show (2014)',
+    title: 'Bill Gates vs. Magnus Carlsen (Mate en 9 Jugadas)',
+    white: 'Bill Gates',
+    black: 'GM Magnus Carlsen',
+    result: '0-1',
+    description: 'Una de las partidas más vistas en la historia de YouTube: Carlsen da jaque mate en solo 9 movimientos.',
+    pgn: '1. e4 Nc6 2. Nf3 d5 3. Bd3 Nf6 4. exd5 Qxd5 5. Nc3 Qh5 6. O-O Bg4 7. h3 Ne5 8. hxg4 Nfxg4 9. Nxe5 Qh2#'
+  },
+  {
+    id: 'yt-deep-blue-kasparov-1997',
+    source: 'youtube',
+    youtubeUrl: 'https://www.youtube.com/watch?v=NJarxpYyoFI',
+    category: '📺 YouTube Clásico · Humano vs. Máquina (1997)',
+    title: 'Deep Blue vs. Garry Kasparov (Partida 6 · Sacrificio 7.Nxe6!)',
+    white: 'Deep Blue (IBM)',
+    black: 'GM Garry Kasparov',
+    result: '1-0',
+    description: 'El sacrificio de caballo en la Defensa Caro-Kann más analizado por Agadmator, GothamChess y Partidas Inmortales.',
+    pgn: '1. e4 c6 2. d4 d5 3. Nc3 dxe4 4. Nxe4 Nd7 5. Ng5 Ngf6 6. Bd3 e6 7. N1f3 h6 8. Nxe6 Qe7 9. O-O fxe6 10. Bg6+ Kd8 11. Bf4 b5 12. a4 Bb7 13. Re1 Nd5 14. Bg3 Kc8 15. axb5 cxb5 16. Qd3 Bc6 17. Bf5 exf5 18. Rxe7 Bxe7 19. c4'
+  },
+  {
+    id: 'yt-rosen-stafford-gambit',
+    source: 'youtube',
+    youtubeUrl: 'https://www.youtube.com/watch?v=26L45L2v5aE',
+    category: '📺 YouTube Estudio · IM Eric Rosen («Oh no, my Queen!»)',
+    title: 'Gambito Stafford · Celada de Sacrificio de Dama',
+    white: 'Rival Online',
+    black: 'IM Eric Rosen',
+    result: '0-1',
+    description: 'La celada táctica más famosa de YouTube para estudiar ataques fulminantes sobre f2 y d1.',
+    pgn: '1. e4 e5 2. Nf3 Nf6 3. Nxe5 Nc6 4. Nxc6 dxc6 5. d3 Bc5 6. Bg5 Nxe4 7. Bxd8 Bxf2+ 8. Ke2 Bg4#'
+  },
+  {
+    id: 'yt-rotlewi-rubinstein-1907',
+    source: 'youtube',
+    youtubeUrl: 'https://www.youtube.com/watch?v=X8F7gnvLZk8',
+    category: '📺 YouTube Estudio · Joya Táctica (Lodz 1907)',
+    title: 'Rotlewi vs. Akiba Rubinstein («La Inmortal de Rubinstein»)',
+    white: 'Georg Rotlewi',
+    black: 'Akiba Rubinstein',
+    result: '0-1',
+    description: 'Sacrificio consecutivo de dama y torre (22...Rxc3!! y 23...Qxd2!!) imprescindible en todos los canales de estudio.',
+    pgn: '1. d4 d5 2. Nf3 e6 3. e3 c5 4. c4 Nc6 5. Nc3 Nf6 6. dxc5 Bxc5 7. a3 a6 8. b4 Bd6 9. Bb2 O-O 10. Qd2 Qe7 11. Bd3 dxc4 12. Bxc4 b5 13. Bd3 Rd8 14. Qe2 Bb7 15. O-O Ne5 16. Nxe5 Bxe5 17. f4 Bc7 18. e4 Rac8 19. e5 Bb6+ 20. Kh1 Ng4 21. Be4 Qh4 22. g3 Rxc3 23. gxh4 Rd2 24. Qxd2 Bxe4+ 25. Qg2 Rh3'
+  }
+];
+
+/**
+ * Converts Spanish algebraic notation (C=Knight, A=Bishop, T=Rook, D=Queen, R=King)
+ * and cleans YouTube timestamps/descriptions into standard English SAN PGN.
+ */
+export function normalizeSpanishOrEnglishPgn(rawText) {
+  if (!rawText || typeof rawText !== 'string') return '';
+
+  // 1. Remove PGN header tags, curly comments, parenthetical variations, and YouTube timestamps (e.g. 04:15)
+  let cleaned = rawText
+    .replace(/^\[.*\]\s*$/gm, ' ')
+    .replace(/\{[^}]*\}/g, ' ')
+    .replace(/\([^)]*\)/g, ' ')
+    .replace(/\b\d{1,2}:\d{2}(?::\d{2})?\b/g, ' ')
+    .replace(/https?:\/\/\S+/g, ' ')
+    .replace(/0-0-0/g, 'O-O-O')
+    .replace(/0-0/g, 'O-O');
+
+  // 2. If there is prose before "1.", slice starting from the first move "1."
+  const firstMoveIdx = cleaned.search(/\b1\s*\.\s*[a-hNBRQKCATOR]/);
+  if (firstMoveIdx >= 0) {
+    cleaned = cleaned.slice(firstMoveIdx);
+  }
+
+  // 3. Convert Spanish piece letters (C->N, A->B, T->R, D->Q, R->K) at the start of SAN tokens
+  const mapEsToEn = { C: 'N', A: 'B', T: 'R', D: 'Q', R: 'K' };
+  const tokens = cleaned.split(/\s+/).filter(Boolean);
+  const outTokens = [];
+
+  for (let tok of tokens) {
+    // Handle attached move numbers like "1.Cf3" or "12...Txd4"
+    const numMatch = tok.match(/^(\d+\.+)(.*)$/);
+    let prefix = '';
+    let movePart = tok;
+    if (numMatch) {
+      prefix = numMatch[1];
+      movePart = numMatch[2];
+    }
+
+    if (!movePart) {
+      if (prefix) outTokens.push(prefix);
+      continue;
+    }
+
+    // Check if movePart is a valid chess move token in Spanish or English
+    const sanMatch = movePart.match(/^([CATDRNBRQK])([a-h1-8]?x?[a-h][1-8](?:=[CATDRNBRQK])?[+#!?]*)$/);
+    if (sanMatch) {
+      const pieceChar = sanMatch[1];
+      let rest = sanMatch[2];
+      // Replace Spanish promotion piece if present (e.g. =D -> =Q)
+      rest = rest.replace(/=([CATDR])/, (_, p) => `=${mapEsToEn[p] || p}`);
+      // Note: 'R' exists in both Spanish (Rey = K) and English (Rook = R).
+      // We keep 'R' as Rook if the PGN already uses English 'N'/'B'/'Q', or convert Spanish C/A/T/D.
+      const usesSpanishLetters = /\b(?:\d+\.*)?[CAD][a-h1-8x]/.test(cleaned);
+      let mappedPiece = pieceChar;
+      if (pieceChar === 'C' || pieceChar === 'A' || pieceChar === 'T' || pieceChar === 'D') {
+        mappedPiece = mapEsToEn[pieceChar];
+      } else if (pieceChar === 'R' && usesSpanishLetters) {
+        mappedPiece = 'K';
+      }
+      outTokens.push(`${prefix}${mappedPiece}${rest}`);
+    } else if (/^(?:[a-h](?:x[a-h])?[1-8](?:=[CATDRNBRQK])?|O-O(?:-O)?)[+#!?]*$/.test(movePart)) {
+      const fixedPawn = movePart.replace(/=([CATDR])/, (_, p) => `=${mapEsToEn[p] || p}`);
+      outTokens.push(`${prefix}${fixedPawn}`);
+    } else if (/^\d+\.+$/.test(tok) || /^(?:1-0|0-1|1\/2-1\/2|\*)$/.test(tok)) {
+      outTokens.push(tok);
+    }
+  }
+
+  return outTokens.join(' ').trim();
+}
+
+/**
+ * Computes a unique canonical fingerprint for any chess game based on its exact coordinate moves
+ * (e.g. "e2e4|e7e5|g1f3...") so identical games across Tournament DB, YouTube, Lichess, or Saved Games
+ * are NEVER duplicated!
+ */
+export function getGameFingerprint(gameOrPgn) {
+  try {
+    if (!gameOrPgn) return '';
+    if (typeof gameOrPgn === 'object' && Array.isArray(gameOrPgn.moves) && gameOrPgn.moves.length > 0) {
+      return gameOrPgn.moves.map((m) => `${m.from}${m.to}${m.promotion || ''}`).join('|');
+    }
+    const rawPgn = typeof gameOrPgn === 'string' ? gameOrPgn : (gameOrPgn.pgn || gameOrPgn.fen || '');
+    if (!rawPgn) return '';
+
+    const temp = new Chess();
+    const normalized = normalizeSpanishOrEnglishPgn(rawPgn);
+    try {
+      temp.loadPgn(normalized || rawPgn);
+    } catch {
+      try {
+        temp.loadPgn(rawPgn);
+      } catch {
+        temp.load(rawPgn.trim());
+      }
+    }
+    const hist = temp.history({ verbose: true });
+    if (hist.length > 0) {
+      return hist.map((m) => `${m.from}${m.to}${m.promotion || ''}`).join('|');
+    }
+    return temp.fen();
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * Deduplicates an array of game objects by their canonical move fingerprint,
+ * optionally excluding games whose fingerprints are already in `existingFingerprintsSet`.
+ */
+export function deduplicateGames(gamesArray, existingFingerprintsSet = null) {
+  const seen = new Set(existingFingerprintsSet ? [...existingFingerprintsSet] : []);
+  const unique = [];
+
+  for (const g of gamesArray || []) {
+    const fp = g.fingerprint || getGameFingerprint(g);
+    if (!fp) continue;
+    if (seen.has(fp)) continue;
+    seen.add(fp);
+    unique.push({ ...g, fingerprint: fp });
+  }
+  return unique;
+}
+
+/**
+ * Returns the set of all fingerprints in the built-in Tournament & YouTube databases
+ */
+export function getBuiltInDatabaseFingerprints() {
+  const set = new Set();
+  for (const g of [...CURATED_TOURNAMENT_GAMES, ...YOUTUBE_FEATURED_GAMES]) {
+    const fp = getGameFingerprint(g);
+    if (fp) set.add(fp);
+  }
+  return set;
+}
+
+/**
+ * Extracts a YouTube Video ID (11 chars) from any YouTube URL
+ */
+export function extractYouTubeVideoId(rawUrl) {
+  if (!rawUrl) return null;
+  const m = String(rawUrl).match(
+    /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/
+  );
+  return m ? m[1] : null;
+}
+
+/**
+ * Loads a chess game published on YouTube:
+ * - From a YouTube URL (`https://www.youtube.com/watch?v=...` or `https://youtu.be/...`)
+ * - Or from a YouTube video description / comment pasted by the user (supports Spanish & English notation!)
+ * Ensures it does NOT duplicate existing database games.
+ */
+export async function importGameFromYouTube(rawInput, existingFingerprints = new Set()) {
+  const text = String(rawInput || '').trim();
+  if (!text) throw new Error('Introduce un enlace de YouTube o pega la descripción con las jugadas.');
+
+  const videoId = extractYouTubeVideoId(text);
+  const youtubeUrl = videoId ? `https://www.youtube.com/watch?v=${videoId}` : null;
+
+  // 1. Check if the user pasted additional text alongside or instead of a URL that already contains PGN moves
+  const candidatePgnFromInput = normalizeSpanishOrEnglishPgn(text);
+  if (candidatePgnFromInput.split(/\s+/).length >= 4) {
+    const testChess = new Chess();
+    try {
+      testChess.loadPgn(candidatePgnFromInput);
+      if (testChess.history().length >= 2) {
+        const fp = getGameFingerprint(candidatePgnFromInput);
+        const isDup = existingFingerprints.has(fp);
+        return {
+          game: {
+            id: `yt-custom-${Date.now()}`,
+            source: 'youtube',
+            youtubeUrl,
+            category: '📺 Partida Extraída de YouTube',
+            title: videoId ? `Vídeo YouTube (${videoId})` : 'Partida de YouTube (Notación Extraída)',
+            white: 'Blancas (YouTube)',
+            black: 'Negras (YouTube)',
+            result: '*',
+            description: isDup
+              ? 'ℹ️ Esta partida ya existía en la base de datos (se ha vinculado sin duplicarla).'
+              : 'Jugadas extraídas y convertidas automáticamente desde la descripción de YouTube.',
+            pgn: candidatePgnFromInput,
+            fingerprint: fp,
+            alreadyInDb: isDup
+          }
+        };
+      }
+    } catch {}
+  }
+
+  // 2. If a YouTube URL was provided, check our YouTube featured catalog or fetch video metadata & description
+  if (videoId) {
+    const matchedFeatured = YOUTUBE_FEATURED_GAMES.find((g) => g.youtubeUrl?.includes(videoId));
+    if (matchedFeatured) {
+      return { game: { ...matchedFeatured, alreadyInDb: true } };
+    }
+
+    let videoTitle = `Partida de YouTube (${videoId})`;
+    let authorName = 'Canal de Ajedrez';
+    let fullDescription = '';
+
+    // 2a. Fetch title & author via Noembed (CORS-friendly)
+    try {
+      const oembedRes = await fetch(`https://noembed.com/embed?url=${encodeURIComponent(youtubeUrl)}`);
+      if (oembedRes.ok) {
+        const meta = await oembedRes.json();
+        if (meta.title) videoTitle = meta.title;
+        if (meta.author_name) authorName = meta.author_name;
+      }
+    } catch {}
+
+    // 2b. Try fetching the YouTube page description via public CORS proxy to extract embedded PGN or Lichess link
+    try {
+      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(youtubeUrl)}`;
+      const pageRes = await fetch(proxyUrl);
+      if (pageRes.ok) {
+        const pageData = await pageRes.json();
+        const html = pageData?.contents || '';
+        const descMatch = html.match(/"shortDescription":"((?:\\.|[^"\\])*)"/);
+        if (descMatch && descMatch[1]) {
+          fullDescription = JSON.parse(`"${descMatch[1]}"`);
+        }
+      }
+    } catch {}
+
+    // 2c. If description has a Lichess game URL, fetch its PGN directly!
+    if (fullDescription) {
+      const lichessMatch = fullDescription.match(/lichess\.org\/([a-zA-Z0-9]{8})\b/);
+      if (lichessMatch) {
+        try {
+          const lichessGame = await fetchLichessGameById(lichessMatch[1]);
+          if (lichessGame) {
+            const fp = getGameFingerprint(lichessGame);
+            return {
+              game: {
+                ...lichessGame,
+                source: 'youtube',
+                youtubeUrl,
+                category: `📺 YouTube · ${authorName}`,
+                title: videoTitle,
+                fingerprint: fp,
+                alreadyInDb: existingFingerprints.has(fp)
+              }
+            };
+          }
+        } catch {}
+      }
+
+      // 2d. Extract PGN moves (English or Spanish) from the YouTube video description!
+      const descPgn = normalizeSpanishOrEnglishPgn(fullDescription);
+      if (descPgn.split(/\s+/).length >= 4) {
+        const testChess = new Chess();
+        try {
+          testChess.loadPgn(descPgn);
+          if (testChess.history().length >= 2) {
+            const fp = getGameFingerprint(descPgn);
+            const isDup = existingFingerprints.has(fp);
+            return {
+              game: {
+                id: `yt-${videoId}`,
+                source: 'youtube',
+                youtubeUrl,
+                category: `📺 YouTube · ${authorName}`,
+                title: videoTitle,
+                white: 'Blancas',
+                black: 'Negras',
+                result: '*',
+                description: isDup
+                  ? `ℹ️ Partida detectada en la base de datos (sin duplicar) · Canal: ${authorName}`
+                  : `Extraída automáticamente de la descripción del vídeo de ${authorName}.`,
+                pgn: descPgn,
+                fingerprint: fp,
+                alreadyInDb: isDup
+              }
+            };
+          }
+        } catch {}
+      }
+    }
+
+    // 2e. Match by keywords in the YouTube Video Title against non-duplicate games
+    const lowerTitle = videoTitle.toLowerCase();
+    const allKnown = [...YOUTUBE_FEATURED_GAMES, ...CURATED_TOURNAMENT_GAMES];
+    const keywordMatch = allKnown.find((g) => {
+      const words = g.title.toLowerCase().split(/\s+/).filter((w) => w.length > 4);
+      return words.some((w) => lowerTitle.includes(w));
+    });
+    if (keywordMatch) {
+      const fp = getGameFingerprint(keywordMatch);
+      return {
+        game: {
+          ...keywordMatch,
+          source: 'youtube',
+          youtubeUrl,
+          category: `📺 YouTube · ${authorName}`,
+          title: videoTitle,
+          fingerprint: fp,
+          alreadyInDb: true
+        }
+      };
+    }
+
+    throw new Error(
+      `El vídeo "${videoTitle}" no incluye la lista de jugadas PGN en su descripción pública. Copia las jugadas de la descripción o comentario de YouTube y pégalas aquí mismo.`
+    );
+  }
+
+  throw new Error('No se detectó un enlace válido de YouTube ni jugadas en formato algebraico (ej: 1. e4 e5 2. Cf3 Cc6).');
+}
+
+/**
+ * Parses a multi-game PGN string into an array of deduplicated game objects
+ */
+export function parseMultiGamePgn(rawPgnText, defaultCategory = '🏆 Torneo / Repositorio Público', existingFingerprints = null) {
   if (!rawPgnText || typeof rawPgnText !== 'string') return [];
   const chunks = rawPgnText
     .replace(/\r\n/g, '\n')
@@ -121,14 +510,7 @@ export function parseMultiGamePgn(rawPgnText, defaultCategory = '🏆 Torneo / R
     const blackElo = getHeader('BlackElo');
     const site = getHeader('Site') || '';
 
-    // Extract moves body (strip headers and PGN comments/annotations for clean chess.js loadPgn)
-    const body = chunk
-      .replace(/^\[.*\]\s*$/gm, '')
-      .replace(/\{[^}]*\}/g, ' ')
-      .replace(/\([^)]*\)/g, ' ')
-      .replace(/\$\d+/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
+    const body = normalizeSpanishOrEnglishPgn(chunk);
 
     if (body && body.length > 4) {
       const wLabel = whiteElo ? `${white} (${whiteElo})` : white;
@@ -145,7 +527,7 @@ export function parseMultiGamePgn(rawPgnText, defaultCategory = '🏆 Torneo / R
       });
     }
   }
-  return games;
+  return deduplicateGames(games, existingFingerprints);
 }
 
 /**
@@ -161,21 +543,30 @@ export async function fetchLichessLiveTournaments() {
     ...(data.started || []),
     ...(data.finished || []),
     ...(data.created || [])
-  ].slice(0, 8);
+  ];
 
-  return list.map((t) => ({
-    id: t.id,
-    name: t.fullName || t.name || 'Torneo Lichess',
-    nbPlayers: t.nbPlayers || 0,
-    variant: t.variant?.name || 'Standard',
-    perf: t.perf?.name || 'Blitz/Rapid'
-  }));
+  // Deduplicate tournaments by ID
+  const seenIds = new Set();
+  const uniqueTournaments = [];
+  for (const t of list) {
+    if (!t?.id || seenIds.has(t.id)) continue;
+    seenIds.add(t.id);
+    uniqueTournaments.push({
+      id: t.id,
+      name: t.fullName || t.name || 'Torneo Lichess',
+      nbPlayers: t.nbPlayers || 0,
+      variant: t.variant?.name || 'Standard',
+      perf: t.perf?.name || 'Blitz/Rapid'
+    });
+    if (uniqueTournaments.length >= 8) break;
+  }
+  return uniqueTournaments;
 }
 
 /**
- * Fetches top games from a specific Lichess Tournament ID
+ * Fetches top games from a specific Lichess Tournament ID (deduplicated against built-in DB)
  */
-export async function fetchLichessTournamentGames(tournamentId, max = 8) {
+export async function fetchLichessTournamentGames(tournamentId, max = 10, existingFingerprints = null) {
   const cleanId = String(tournamentId).trim().replace(/^.*\/tournament\//i, '').split(/[/?#]/)[0];
   const url = `https://lichess.org/api/tournament/${encodeURIComponent(cleanId)}/games?max=${max}&clocks=false&evals=false&opening=true`;
   const res = await fetch(url, {
@@ -183,13 +574,13 @@ export async function fetchLichessTournamentGames(tournamentId, max = 8) {
   });
   if (!res.ok) throw new Error(`No se encontraron partidas para el torneo ${cleanId}`);
   const pgnText = await res.text();
-  return parseMultiGamePgn(pgnText, `Torneo Lichess #${cleanId}`);
+  return parseMultiGamePgn(pgnText, `Torneo Lichess #${cleanId}`, existingFingerprints);
 }
 
 /**
- * Fetches recent public games (including tournament games) for any Lichess user / Grandmaster
+ * Fetches recent public games (including tournament games) for any Lichess user / Grandmaster (deduplicated)
  */
-export async function fetchLichessUserGames(username, max = 8) {
+export async function fetchLichessUserGames(username, max = 10, existingFingerprints = null) {
   const cleanUser = String(username).trim().replace(/^.*\/@\//i, '').split(/[/?#]/)[0];
   const url = `https://lichess.org/api/games/user/${encodeURIComponent(cleanUser)}?max=${max}&clocks=false&evals=false&opening=true`;
   const res = await fetch(url, {
@@ -197,7 +588,7 @@ export async function fetchLichessUserGames(username, max = 8) {
   });
   if (!res.ok) throw new Error(`No se encontraron partidas públicas del jugador "${cleanUser}".`);
   const pgnText = await res.text();
-  return parseMultiGamePgn(pgnText, `Partidas de ${cleanUser}`);
+  return parseMultiGamePgn(pgnText, `Partidas de ${cleanUser}`, existingFingerprints);
 }
 
 /**
