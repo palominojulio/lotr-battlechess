@@ -190,8 +190,29 @@
       </div>
     </aside>
 
-    <!-- Right Sidebar: Champion Lore & Camera Presets -->
+    <!-- Right Sidebar: Auto-Loaded Novelties Feed, Champion Lore & Camera Presets -->
     <aside class="hud-panel hud-right">
+      <section class="panel-section novelty-card" id="novelty-panel-card">
+        <div class="panel-header-row" style="margin-bottom: 4px;">
+          <h2 class="panel-title" style="color: #e9d5ff;">✨ Novedades Auto-Cargadas</h2>
+          <span class="novelty-counter-badge" id="novelty-counter-badge">Sincronizando...</span>
+        </div>
+        <div class="novelty-badge-line" id="novelty-source-badge">📺 YouTube & 🏆 Torneos en Vivo</div>
+        <div class="novelty-game-title" id="novelty-game-title">Buscando partidas nuevas...</div>
+        <div class="novelty-game-desc" id="novelty-game-desc">Se cargan automáticamente sin duplicar la base de datos.</div>
+        <div class="novelty-actions-row">
+          <button type="button" class="btn-study-ctrl btn-study-play" id="btn-novelty-play" title="Cargar esta novedad directamente en el tablero 3D">
+            🎬 Ver en Tablero
+          </button>
+          <button type="button" class="btn-study-ctrl" id="btn-novelty-next" title="Ver la siguiente novedad auto-cargada">
+            ⏭️ Otra
+          </button>
+          <button type="button" class="btn-study-ctrl" id="btn-novelty-all" title="Ver todas las novedades auto-cargadas">
+            📋 Todas
+          </button>
+        </div>
+      </section>
+
       <section class="panel-section champion-card" id="champion-card">
         <div class="champion-header">
           <span class="champion-badge" id="champ-faction">Alianza Solar</span>
@@ -461,7 +482,10 @@
         <div class="online-subtitle" id="study-list-heading" style="margin-bottom: 0;">
           3. Base de Datos Seleccionada (Sin Duplicados)
         </div>
-        <div style="display: flex; gap: 5px;">
+        <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+          <button type="button" class="btn-copy-pgn" id="btn-study-novelties-tab" title="Ver todas las novedades descargadas automáticamente hoy">
+            ✨ Novedades Hoy
+          </button>
           <button type="button" class="btn-copy-pgn" id="btn-study-reset-catalog" title="Ver catálogo de torneos mundiales">
             🏆 Torneos Mundiales
           </button>

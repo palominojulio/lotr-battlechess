@@ -20,7 +20,8 @@ import {
   fetchLichessTournamentGames,
   fetchLichessUserGames,
   fetchLichessGameById,
-  fetchLichessDailyPuzzle
+  fetchLichessDailyPuzzle,
+  autoSyncNoveltiesFeed
 } from './publicLibrary.js';
 
 // --- Constants & Board Mapping ---
@@ -1646,15 +1647,28 @@ function renderStudyGamesCatalog(gamesArray, headingText = null) {
 
 function openStudyDialog() {
   if (!studyDialog) return;
-  renderStudyGamesCatalog(
-    CURATED_TOURNAMENT_GAMES,
-    '3. 🏆 Grandes Partidas de Torneos Mundiales (Sin Duplicados)'
-  );
+  const listToShow = autoLoadedNovelties.length > 0 ? autoLoadedNovelties : CURATED_TOURNAMENT_GAMES;
+  const heading =
+    autoLoadedNovelties.length > 0
+      ? `3. ✨ Novedades Auto-Cargadas Hoy (${autoLoadedNovelties.length} Únicas de YouTube & Torneos)`
+      : '3. 🏆 Grandes Partidas de Torneos Mundiales (Sin Duplicados)';
+  renderStudyGamesCatalog(listToShow, heading);
   studyDialog.showModal();
 }
 
 document.getElementById('btn-study-header')?.addEventListener('click', openStudyDialog);
 document.getElementById('btn-study-manager')?.addEventListener('click', openStudyDialog);
+
+document.getElementById('btn-study-novelties-tab')?.addEventListener('click', () => {
+  renderStudyGamesCatalog(
+    autoLoadedNovelties,
+    `3. ✨ Novedades Auto-Cargadas Hoy (${autoLoadedNovelties.length} Únicas de YouTube & Torneos)`
+  );
+  if (studyStatusBanner) {
+    studyStatusBanner.textContent = `✨ Mostrando ${autoLoadedNovelties.length} novedades descargadas automáticamente de YouTube y Torneos en Vivo (0 duplicados).`;
+  }
+});
+
 document.getElementById('btn-study-reset-catalog')?.addEventListener('click', () => {
   renderStudyGamesCatalog(
     CURATED_TOURNAMENT_GAMES,
@@ -1859,6 +1873,97 @@ document.getElementById('btn-study-load-pgn')?.addEventListener('click', () => {
   }
   startStudySession(gameObj, false);
 });
+
+// --- Automatic Background Novelties Feed & On-Board Novelty Offer Widget ---
+const noveltyCounterBadge = document.getElementById('novelty-counter-badge');
+const noveltySourceBadge = document.getElementById('novelty-source-badge');
+const noveltyGameTitle = document.getElementById('novelty-game-title');
+const noveltyGameDesc = document.getElementById('novelty-game-desc');
+const btnNoveltyPlay = document.getElementById('btn-novelty-play');
+const btnNoveltyNext = document.getElementById('btn-novelty-next');
+const btnNoveltyAll = document.getElementById('btn-novelty-all');
+
+let autoLoadedNovelties = [];
+let currentNoveltyIndex = 0;
+
+function renderNoveltyBoardCard() {
+  if (!noveltyGameTitle) return;
+  if (autoLoadedNovelties.length === 0) {
+    if (noveltyCounterBadge) noveltyCounterBadge.textContent = 'Sincronizando...';
+    noveltyGameTitle.textContent = 'Buscando novedades en YouTube y Lichess...';
+    return;
+  }
+  if (currentNoveltyIndex >= autoLoadedNovelties.length) {
+    currentNoveltyIndex = 0;
+  }
+  const item = autoLoadedNovelties[currentNoveltyIndex];
+  if (noveltyCounterBadge) {
+    noveltyCounterBadge.textContent = `✨ ${currentNoveltyIndex + 1} / ${autoLoadedNovelties.length}`;
+  }
+  if (noveltySourceBadge) {
+    noveltySourceBadge.textContent = item.badge || item.category || '✨ NOVEDAD DEL DÍA';
+  }
+  noveltyGameTitle.textContent = item.title || 'Partida Destacada';
+  if (noveltyGameDesc) {
+    noveltyGameDesc.textContent = item.description || `${item.category}`;
+  }
+  if (btnNoveltyHeaderCount) {
+    btnNoveltyHeaderCount.textContent = `📚 Torneos / Novedades (${autoLoadedNovelties.length})`;
+  }
+}
+
+const btnNoveltyHeaderCount = document.getElementById('btn-study-header');
+
+btnNoveltyPlay?.addEventListener('click', () => {
+  if (autoLoadedNovelties.length === 0) return;
+  const item = autoLoadedNovelties[currentNoveltyIndex];
+  if (item) {
+    startStudySession(item, Boolean(item.isPuzzle));
+  }
+});
+
+btnNoveltyNext?.addEventListener('click', () => {
+  if (autoLoadedNovelties.length === 0) return;
+  currentNoveltyIndex = (currentNoveltyIndex + 1) % autoLoadedNovelties.length;
+  renderNoveltyBoardCard();
+  soundFX.playSelect();
+});
+
+btnNoveltyAll?.addEventListener('click', () => {
+  openStudyDialog();
+});
+
+// Automatically rotate the offered novelty on the board every 14 seconds so the user sees fresh games
+setInterval(() => {
+  if (autoLoadedNovelties.length > 1 && !activeStudy && !studyDialog?.open) {
+    currentNoveltyIndex = (currentNoveltyIndex + 1) % autoLoadedNovelties.length;
+    renderNoveltyBoardCard();
+  }
+}, 14000);
+
+// Trigger automatic background discovery of YouTube & Live Tournament novelties on startup!
+function initAutoNoveltiesFeed() {
+  const existingDbFps = getSetOfExistingTournamentAndSavedFps();
+  autoSyncNoveltiesFeed(existingDbFps, (updatedNovelties) => {
+    autoLoadedNovelties = deduplicateGames(updatedNovelties);
+    renderNoveltyBoardCard();
+  });
+}
+
+function getSetOfExistingTournamentAndSavedFps() {
+  const set = new Set();
+  for (const g of CURATED_TOURNAMENT_GAMES) {
+    const fp = getGameFingerprint(g);
+    if (fp) set.add(fp);
+  }
+  for (const s of getSavedGames()) {
+    const fp = s.fingerprint || getGameFingerprint(s);
+    if (fp) set.add(fp);
+  }
+  return set;
+}
+
+initAutoNoveltiesFeed();
 
 // "⚔️ Probar Combate" button: immediately triggers a capture duel (or sets up an instant clash!)
 document.getElementById('btn-demo-battle').addEventListener('click', async () => {

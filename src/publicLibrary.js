@@ -634,6 +634,168 @@ export async function fetchLichessDailyPuzzle() {
     description: `Encuentra la mejor combinación táctica tras la última jugada. Solución: ${solution.join(' → ')}`,
     pgn,
     isPuzzle: true,
+    isNovelty: true,
+    badge: '🧩 RETO DE HOY',
     solution
   };
+}
+
+/**
+ * Automatically fetches fresh chess games from YouTube Chess Channels (via RSS XML descriptions)
+ * + Lichess Daily Puzzle + Live Grandmaster & Tournament games, strictly deduplicated against
+ * the local & tournament databases so zero duplicates ever appear.
+ */
+const YOUTUBE_CHESS_CHANNELS = [
+  { name: 'Agadmator Chess', channelId: 'UCL5YbN5WLFD8dLIegT5QAbA' },
+  { name: 'Partidas Inmortales', channelId: 'UCXz5xX84S2rE5y0bW71iNpw' }
+];
+
+export async function autoFetchYouTubeChannelGames(existingFingerprints = new Set()) {
+  const foundGames = [];
+  for (const ch of YOUTUBE_CHESS_CHANNELS) {
+    try {
+      const rssUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${ch.channelId}`;
+      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(rssUrl)}`;
+      const res = await fetch(proxyUrl);
+      if (!res.ok) continue;
+      const data = await res.json();
+      const xmlText = data?.contents || '';
+      if (!xmlText.includes('<entry>')) continue;
+
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(xmlText, 'text/xml');
+      const entries = Array.from(doc.querySelectorAll('entry')).slice(0, 6);
+
+      for (const entry of entries) {
+        const title = entry.querySelector('title')?.textContent?.trim() || 'Partida de YouTube';
+        const videoId =
+          entry.getElementsByTagName('yt:videoId')[0]?.textContent?.trim() ||
+          entry.querySelector('videoId')?.textContent?.trim() ||
+          '';
+        const desc =
+          entry.getElementsByTagName('media:description')[0]?.textContent ||
+          entry.querySelector('description')?.textContent ||
+          '';
+        if (!desc) continue;
+
+        const cleanPgn = normalizeSpanishOrEnglishPgn(desc);
+        if (cleanPgn.split(/\s+/).length < 6) continue;
+
+        const testChess = new Chess();
+        try {
+          testChess.loadPgn(cleanPgn);
+          if (testChess.history().length >= 4) {
+            const fp = getGameFingerprint(cleanPgn);
+            if (!fp || existingFingerprints.has(fp)) continue;
+            foundGames.push({
+              id: `yt-rss-${videoId || Date.now()}`,
+              source: 'youtube_auto',
+              youtubeUrl: videoId ? `https://www.youtube.com/watch?v=${videoId}` : null,
+              category: `📺 Nuevo en YouTube · ${ch.name}`,
+              title,
+              white: 'Blancas',
+              black: 'Negras',
+              result: '*',
+              description: `Cargada automáticamente del feed de YouTube de ${ch.name}.`,
+              pgn: cleanPgn,
+              fingerprint: fp,
+              isNovelty: true,
+              badge: '📺 NUEVO EN YOUTUBE'
+            });
+          }
+        } catch {}
+      }
+    } catch {}
+  }
+  return deduplicateGames(foundGames, existingFingerprints);
+}
+
+/**
+ * Master Auto-Discovery Feed: runs automatically on startup to gather fresh, non-duplicate games
+ * from YouTube, Live Tournaments, Daily Puzzle, and Grandmasters, offering them directly on the board.
+ */
+export async function autoSyncNoveltiesFeed(existingDatabaseFingerprints = new Set(), onNoveltyBatch = null) {
+  const seen = new Set([...existingDatabaseFingerprints]);
+  const allNovelties = [];
+
+  const pushUniqueNovelties = (candidates) => {
+    const fresh = deduplicateGames(candidates, seen);
+    for (const g of fresh) {
+      seen.add(g.fingerprint);
+      allNovelties.push({ ...g, isNovelty: true });
+    }
+    if (fresh.length > 0 && onNoveltyBatch) {
+      onNoveltyBatch([...allNovelties]);
+    }
+  };
+
+  // 1. Immediately offer curated YouTube viral games (deduplicated against Tournament DB & Saved Games)
+  const tournamentOnlyFps = new Set(CURATED_TOURNAMENT_GAMES.map((g) => getGameFingerprint(g)));
+  for (const fp of existingDatabaseFingerprints) {
+    // Keep track of user saved games too
+    if (!YOUTUBE_FEATURED_GAMES.some((yg) => getGameFingerprint(yg) === fp)) {
+      tournamentOnlyFps.add(fp);
+    }
+  }
+  const initialYt = deduplicateGames(
+    YOUTUBE_FEATURED_GAMES.map((g) => ({
+      ...g,
+      isNovelty: true,
+      badge: '📺 DESTACADO YOUTUBE'
+    })),
+    tournamentOnlyFps
+  );
+  for (const g of initialYt) {
+    seen.add(g.fingerprint);
+    allNovelties.push(g);
+  }
+  if (allNovelties.length > 0 && onNoveltyBatch) {
+    onNoveltyBatch([...allNovelties]);
+  }
+
+  // 2. Auto-fetch Lichess Daily Tactical Puzzle in background
+  fetchLichessDailyPuzzle()
+    .then((puzzle) => {
+      if (puzzle) pushUniqueNovelties([puzzle]);
+    })
+    .catch(() => {});
+
+  // 3. Auto-fetch latest games from a Live Official Tournament on Lichess
+  fetchLichessLiveTournaments()
+    .then(async (tournaments) => {
+      if (tournaments && tournaments.length > 0) {
+        const topTour = tournaments[0];
+        const tGames = await fetchLichessTournamentGames(topTour.id, 4, seen);
+        pushUniqueNovelties(
+          tGames.map((g) => ({
+            ...g,
+            isNovelty: true,
+            badge: `🏆 TORNEO EN VIVO: ${topTour.name.slice(0, 22)}`
+          }))
+        );
+      }
+    })
+    .catch(() => {});
+
+  // 4. Auto-fetch latest games from Grandmasters (Magnus Carlsen / Hikaru)
+  fetchLichessUserGames('DrNykterstein', 3, seen)
+    .then((gmGames) => {
+      pushUniqueNovelties(
+        gmGames.map((g) => ({
+          ...g,
+          isNovelty: true,
+          badge: '👑 NUEVA DE CARLSEN'
+        }))
+      );
+    })
+    .catch(() => {});
+
+  // 5. Auto-fetch latest videos with PGNs from YouTube Chess Channels RSS feeds
+  autoFetchYouTubeChannelGames(seen)
+    .then((ytRssGames) => {
+      if (ytRssGames.length > 0) pushUniqueNovelties(ytRssGames);
+    })
+    .catch(() => {});
+
+  return allNovelties;
 }
