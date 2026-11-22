@@ -21,7 +21,8 @@ import {
   fetchLichessUserGames,
   fetchLichessGameById,
   fetchLichessDailyPuzzle,
-  autoSyncNoveltiesFeed
+  autoSyncNoveltiesFeed,
+  explainChessMove
 } from './publicLibrary.js';
 
 // --- Constants & Board Mapping ---
@@ -591,15 +592,16 @@ function appendBattleLog(moveResult) {
   const prefix = moveResult.color === 'w' ? `${moveNum}.` : `${moveNum}...`;
   const espSan = toSpanishSAN(moveResult.san);
   const coordStr = `${moveResult.from}${moveResult.captured ? '×' : '→'}${moveResult.to}`;
+  const moveLegend = explainChessMove(moveResult, historyLen, activeStudy);
 
   if (moveResult.captured) {
     const defColor = moveResult.color === 'w' ? 'b' : 'w';
     const defLore = getPieceLore(defColor, moveResult.captured);
     li.className = 'log-entry capture-log';
-    li.textContent = `[${prefix} ${espSan} (${coordStr})] ⚔️ ${attLore.shortName} ejecuta a ${defLore.shortName}`;
+    li.textContent = `[${prefix} ${espSan} (${coordStr})] ⚔️ ${attLore.shortName} ejecuta a ${defLore.shortName} — ${moveLegend}`;
   } else {
     li.className = `log-entry ${moveResult.color === 'w' ? 'white-move' : 'black-move'}`;
-    li.textContent = `[${prefix} ${espSan} (${coordStr})] ${attLore.icon} ${attLore.shortName}`;
+    li.textContent = `[${prefix} ${espSan} (${coordStr})] ${attLore.icon} ${attLore.shortName} — ${moveLegend}`;
   }
 
   battleLog.prepend(li);
@@ -1534,25 +1536,27 @@ const btnStudySaveDb = document.getElementById('btn-study-save-db');
 // Floating On-Board Move Stepper Dock elements
 const stepperGameLabel = document.getElementById('stepper-game-label');
 const stepperMoveBadge = document.getElementById('stepper-move-badge');
+const stepperTournamentMeta = document.getElementById('stepper-tournament-meta');
+const stepperMoveCommentary = document.getElementById('stepper-move-commentary');
+const btnDockYt = document.getElementById('btn-dock-yt');
 const btnDockAuto = document.getElementById('btn-dock-auto');
 const btnDockSaveDb = document.getElementById('btn-dock-save-db');
 const btnDockPractice = document.getElementById('btn-dock-practice');
+const studyBarMeta = document.getElementById('study-bar-meta');
+const studyMoveCommentary = document.getElementById('study-move-commentary');
 
-let activeStudy = null; // { title, category, description, pgn, moves: [...], cursor: 0, savedMode: 'ai-2', autoPlaying: false, youtubeUrl: null }
+let activeStudy = null; // { title, championship, year, moveComments, category, description, pgn, moves: [...], cursor: 0, savedMode: 'ai-2', autoPlaying: false, youtubeUrl: null }
 let studyAutoTimer = null;
 let normalRedoStack = []; // Allows ◀️ Retroceder and Avanzar ▶️ during regular games too!
 
 /**
  * Checks if a game (by its canonical move fingerprint) is already stored in
- * the Built-in Tournament Database or the User's Saved Database (localStorage).
+ * the User's Saved Database (localStorage SAVES_STORAGE_KEY).
  */
 function isGameInPersistentDatabase(gameOrSnap) {
   const fp = gameOrSnap?.fingerprint || getGameFingerprint(gameOrSnap);
   if (!fp || fp.length < 4) return false;
 
-  for (const g of CURATED_TOURNAMENT_GAMES) {
-    if (getGameFingerprint(g) === fp) return true;
-  }
   for (const s of getSavedGames()) {
     const sFp = s.fingerprint || getGameFingerprint(s);
     if (sFp === fp) return true;
@@ -1570,7 +1574,7 @@ function saveGameToDatabaseIfUnique(gameObj) {
   if (!fp || fp.length < 4) return false;
 
   if (isGameInPersistentDatabase({ ...gameObj, fingerprint: fp })) {
-    return false; // Already in DB
+    return false; // Already in user DB
   }
 
   const nowStr = new Date().toLocaleString('es-ES', {
@@ -1589,14 +1593,19 @@ function saveGameToDatabaseIfUnique(gameObj) {
     try { temp.loadPgn(rawPgn); } catch {}
   }
   const hist = temp.history({ verbose: true });
+  const champ = gameObj.championship || gameObj.category || 'Torneo / Novedad';
+  const yr = gameObj.year || String(new Date().getFullYear());
 
   const newEntry = {
     id: gameObj.id || `db-${Date.now()}`,
     title: gameObj.title || `Partida Guardada (${nowStr})`,
-    category: gameObj.category || '💾 Base de Datos Local',
-    description: gameObj.description || 'Guardada desde el tablero',
+    championship: champ,
+    year: yr,
+    category: `🏆 ${champ} · 📅 Año ${yr}`,
+    description: gameObj.description || 'Guardada desde Novedades / Tablero',
     youtubeUrl: gameObj.youtubeUrl || null,
-    date: nowStr,
+    moveComments: gameObj.moveComments || null,
+    date: `${champ} (${yr}) · Guardada ${nowStr}`,
     fen: temp.fen(),
     pgn: temp.pgn() || norm || rawPgn,
     moves: hist.map((m) => ({ from: m.from, to: m.to, promotion: m.promotion || null })),
@@ -1609,11 +1618,12 @@ function saveGameToDatabaseIfUnique(gameObj) {
   const list = getSavedGames();
   list.unshift(newEntry);
   setSavedGames(list);
+  renderSavedGamesList();
   soundFX.playSelect();
 
   const li = document.createElement('li');
   li.className = 'log-entry lore-intro';
-  li.innerHTML = `💾 <strong>Guardada en la Base de Datos:</strong> "${newEntry.title}" (verificada sin duplicados).`;
+  li.innerHTML = `💾 <strong>¡Novedad Guardada en tu Base!</strong> "${newEntry.title}" (🏆 ${champ} · 📅 Año ${yr}). Puedes verla en «💾 Guardar / Cargar».`;
   battleLog.prepend(li);
 
   updateStudyBarUI();
@@ -1622,7 +1632,7 @@ function saveGameToDatabaseIfUnique(gameObj) {
   return true;
 }
 
-function updateSaveButtonState(btn, gameCandidate) {
+function updateSaveButtonState(btn, gameCandidate, customSaveLabel = '💾 Guardar en Base') {
   if (!btn) return;
   const hasMoves = Boolean(
     gameCandidate &&
@@ -1630,21 +1640,39 @@ function updateSaveButtonState(btn, gameCandidate) {
         (gameCandidate.pgn && String(gameCandidate.pgn).trim().length > 4))
   );
   if (!hasMoves) {
-    btn.textContent = '💾 Guardar en Base';
+    btn.textContent = customSaveLabel;
     btn.classList.remove('already-in-db');
     btn.disabled = true;
     return;
   }
   const inDb = isGameInPersistentDatabase(gameCandidate);
   if (inDb) {
-    btn.textContent = '✅ Ya en la Base';
+    btn.textContent = '✅ Guardada en mi Base';
     btn.classList.add('already-in-db');
     btn.disabled = true;
   } else {
-    btn.textContent = '💾 Guardar en Base';
+    btn.textContent = customSaveLabel;
     btn.classList.remove('already-in-db');
     btn.disabled = false;
   }
+}
+
+function formatChampionshipYearText(obj) {
+  if (!obj) return '🏆 Campeonato: Partida en Tablero · 📅 Año: 2026';
+  const champ = obj.championship || obj.category || 'Torneo Oficial';
+  const yr = obj.year || '2026';
+  return `🏆 Campeonato: ${champ} · 📅 Año: ${yr}`;
+}
+
+function getGuaranteedYouTubeUrl(obj) {
+  if (obj && typeof obj.youtubeUrl === 'string' && /^https?:\/\/(www\.)?(youtube\.com|youtu\.be)\//i.test(obj.youtubeUrl)) {
+    return obj.youtubeUrl;
+  }
+  if (obj && obj.title) {
+    const cleanTitle = String(obj.title).replace(/[^\w\sáéíóúñÁÉÍÓÚÑ.-]/g, ' ').trim();
+    return `https://www.youtube.com/results?search_query=${encodeURIComponent(cleanTitle + ' chess partida ajedrez')}`;
+  }
+  return 'https://www.youtube.com/watch?v=Pclp2jUfNs0';
 }
 
 function updateBoardStepperDockUI() {
@@ -1653,14 +1681,33 @@ function updateBoardStepperDockUI() {
   if (activeStudy) {
     stepperGameLabel.textContent = `🎬 ${activeStudy.title}`;
     stepperMoveBadge.textContent = `Jugada ${activeStudy.cursor} / ${activeStudy.moves.length}`;
+    if (stepperTournamentMeta) {
+      stepperTournamentMeta.textContent = formatChampionshipYearText(activeStudy);
+    }
+    const currentMoveObj = activeStudy.cursor > 0 ? activeStudy.moves[activeStudy.cursor - 1] : null;
+    const commentary = explainChessMove(currentMoveObj, activeStudy.cursor, activeStudy);
+    if (stepperMoveCommentary) {
+      stepperMoveCommentary.textContent = commentary;
+    }
+    if (studyBarMeta) {
+      studyBarMeta.textContent = formatChampionshipYearText(activeStudy);
+    }
+    if (studyMoveCommentary) {
+      studyMoveCommentary.textContent = commentary;
+    }
+    if (btnDockYt) {
+      btnDockYt.href = getGuaranteedYouTubeUrl(activeStudy);
+      btnDockYt.hidden = false;
+    }
     if (btnDockPractice) btnDockPractice.hidden = false;
     if (btnDockAuto) {
       btnDockAuto.hidden = false;
       btnDockAuto.textContent = activeStudy.autoPlaying ? '⏸️ Pausa' : '⏯️ Auto';
     }
-    updateSaveButtonState(btnDockSaveDb, activeStudy);
+    updateSaveButtonState(btnDockSaveDb, activeStudy, '💾 Guardar en mi Base');
   } else {
-    const histLen = chess.history().length;
+    const hist = chess.history({ verbose: true });
+    const histLen = hist.length;
     const totalLen = histLen + normalRedoStack.length;
     const currentNov =
       typeof autoLoadedNovelties !== 'undefined' && autoLoadedNovelties.length > 0
@@ -1668,14 +1715,35 @@ function updateBoardStepperDockUI() {
         : null;
 
     if (totalLen === 0 && currentNov) {
-      stepperGameLabel.textContent = `✨ Sugerida: ${currentNov.title} (Pulsa «Avanzar ▶️» para iniciarla)`;
-      stepperMoveBadge.textContent = `Lista para avanzar`;
-      updateSaveButtonState(btnDockSaveDb, currentNov);
+      stepperGameLabel.textContent = `✨ Novedad Sugerida: ${currentNov.title}`;
+      stepperMoveBadge.textContent = `Pulsa «Avanzar ▶️»`;
+      if (stepperTournamentMeta) {
+        stepperTournamentMeta.textContent = formatChampionshipYearText(currentNov);
+      }
+      if (stepperMoveCommentary) {
+        stepperMoveCommentary.textContent = `📜 ${currentNov.description || 'Pulsa «Avanzar ▶️» para iniciar esta partida jugada a jugada con su leyenda táctica.'}`;
+      }
+      if (btnDockYt) {
+        btnDockYt.href = getGuaranteedYouTubeUrl(currentNov);
+        btnDockYt.hidden = false;
+      }
+      updateSaveButtonState(btnDockSaveDb, currentNov, '💾 Guardar Novedad');
     } else {
-      stepperGameLabel.textContent = `⚔️ Partida en Curso (Usa ◀️ Retroceder / Avanzar ▶️)`;
+      stepperGameLabel.textContent = `⚔️ Partida en Curso`;
       stepperMoveBadge.textContent = `Mov. ${histLen} / ${totalLen}`;
+      if (stepperTournamentMeta) {
+        stepperTournamentMeta.textContent = `🏆 Campeonato: Duelo Cyber-Medieval · 📅 Año: ${new Date().getFullYear()}`;
+      }
+      const lastMv = histLen > 0 ? hist[histLen - 1] : null;
+      if (stepperMoveCommentary) {
+        stepperMoveCommentary.textContent = explainChessMove(lastMv, histLen, null);
+      }
+      if (btnDockYt) {
+        btnDockYt.href = getGuaranteedYouTubeUrl(currentNov);
+        btnDockYt.hidden = false;
+      }
       const snap = histLen > 0 ? buildGameSnapshot() : null;
-      updateSaveButtonState(btnDockSaveDb, snap);
+      updateSaveButtonState(btnDockSaveDb, snap, '💾 Guardar Partida');
     }
     if (btnDockPractice) btnDockPractice.hidden = true;
   }
@@ -1711,12 +1779,8 @@ function updateStudyBarUI() {
   if (studyBarTitle) studyBarTitle.textContent = `🏆 ${activeStudy.title}`;
   if (studyBarStep) studyBarStep.textContent = `${activeStudy.cursor} / ${activeStudy.moves.length}`;
   if (studyYtLink) {
-    if (activeStudy.youtubeUrl) {
-      studyYtLink.href = activeStudy.youtubeUrl;
-      studyYtLink.hidden = false;
-    } else {
-      studyYtLink.hidden = true;
-    }
+    studyYtLink.href = getGuaranteedYouTubeUrl(activeStudy);
+    studyYtLink.hidden = false;
   }
   updateSaveButtonState(btnStudySaveDb, activeStudy);
 }
@@ -1821,6 +1885,9 @@ function startStudySession(gameObj, startAtEnd = false) {
   activeStudy = {
     id: gameObj.id || `study-${Date.now()}`,
     title: gameObj.title || 'Partida de Torneo',
+    championship: gameObj.championship || gameObj.category || 'Torneo Oficial',
+    year: gameObj.year || '2026',
+    moveComments: gameObj.moveComments || null,
     category: gameObj.category || 'Torneo',
     description: gameObj.description || '',
     youtubeUrl: gameObj.youtubeUrl || null,
@@ -2039,7 +2106,9 @@ function renderStudyGamesCatalog(gamesArray, headingText = null) {
 
     const meta = document.createElement('div');
     meta.className = 'saved-game-meta';
-    meta.textContent = `${g.category} · ${g.description || ''}`;
+    const champTxt = g.championship || g.category || 'Torneo Oficial';
+    const yrTxt = g.year ? ` · 📅 Año ${g.year}` : '';
+    meta.textContent = `🏆 ${champTxt}${yrTxt} · ${g.description || ''}`;
 
     info.appendChild(title);
     info.appendChild(meta);
@@ -2047,17 +2116,18 @@ function renderStudyGamesCatalog(gamesArray, headingText = null) {
     const actions = document.createElement('div');
     actions.className = 'saved-game-actions';
 
-    if (g.youtubeUrl) {
-      const btnYt = document.createElement('a');
-      btnYt.href = g.youtubeUrl;
-      btnYt.target = '_blank';
-      btnYt.rel = 'noopener noreferrer';
-      btnYt.className = 'btn-save-item';
-      btnYt.style.textDecoration = 'none';
-      btnYt.textContent = '📺 Vídeo';
-      btnYt.title = 'Abrir vídeo en YouTube';
-      actions.appendChild(btnYt);
-    }
+    const btnYt = document.createElement('a');
+    btnYt.href = getGuaranteedYouTubeUrl(g);
+    btnYt.target = '_blank';
+    btnYt.rel = 'noopener noreferrer';
+    btnYt.className = 'btn-save-item';
+    btnYt.style.textDecoration = 'none';
+    btnYt.style.background = 'rgba(225, 29, 72, 0.25)';
+    btnYt.style.borderColor = 'rgba(251, 113, 133, 0.6)';
+    btnYt.style.color = '#ffe4e6';
+    btnYt.textContent = '📺 YouTube';
+    btnYt.title = 'Abrir vídeo en YouTube';
+    actions.appendChild(btnYt);
 
     const btnReplay = document.createElement('button');
     btnReplay.type = 'button';
@@ -2334,7 +2404,9 @@ document.getElementById('btn-study-load-pgn')?.addEventListener('click', () => {
 const noveltyCounterBadge = document.getElementById('novelty-counter-badge');
 const noveltySourceBadge = document.getElementById('novelty-source-badge');
 const noveltyGameTitle = document.getElementById('novelty-game-title');
+const noveltyChampionshipMeta = document.getElementById('novelty-championship-meta');
 const noveltyGameDesc = document.getElementById('novelty-game-desc');
+const noveltyYtLink = document.getElementById('novelty-yt-link');
 const btnNoveltyPlay = document.getElementById('btn-novelty-play');
 const btnNoveltyPrev = document.getElementById('btn-novelty-prev');
 const btnNoveltyNext = document.getElementById('btn-novelty-next');
@@ -2365,13 +2437,20 @@ function renderNoveltyBoardCard() {
     noveltySourceBadge.textContent = item.badge || item.category || '✨ NOVEDAD DEL DÍA';
   }
   noveltyGameTitle.textContent = item.title || 'Partida Destacada';
+  if (noveltyChampionshipMeta) {
+    noveltyChampionshipMeta.textContent = formatChampionshipYearText(item);
+  }
   if (noveltyGameDesc) {
     noveltyGameDesc.textContent = item.description || `${item.category}`;
+  }
+  if (noveltyYtLink) {
+    noveltyYtLink.href = getGuaranteedYouTubeUrl(item);
+    noveltyYtLink.hidden = false;
   }
   if (btnNoveltyHeaderCount) {
     btnNoveltyHeaderCount.textContent = `📚 Torneos / Novedades (${autoLoadedNovelties.length})`;
   }
-  updateSaveButtonState(btnNoveltySaveDb, item);
+  updateSaveButtonState(btnNoveltySaveDb, item, '💾 Guardar esta Novedad en mi Base');
   updateBoardStepperDockUI();
 }
 

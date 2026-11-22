@@ -60,28 +60,41 @@
       </div>
     </div>
 
-    <!-- Auto-Loaded Novelty & Move Stepper Dock on the Board -->
-    <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5 px-3 py-1.5 rounded-lg bg-purple-500/15 border border-purple-400/40 text-xs">
-      <div class="flex items-center gap-1.5 min-w-0">
-        <button id="btn-inline-novelty-prev" type="button" class="px-1.5 py-0.5 rounded bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)] hover:opacity-90 cursor-pointer" title="Novedad anterior">◀️</button>
-        <span class="px-1.5 py-0.5 rounded bg-purple-600 text-white font-bold text-[10px] shrink-0" id="inline-novelty-badge">✨ NOVEDAD (1/8)</span>
-        <button id="btn-inline-novelty-next" type="button" class="px-1.5 py-0.5 rounded bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)] hover:opacity-90 cursor-pointer" title="Siguiente novedad">▶️</button>
-        <span class="font-semibold text-[var(--foreground)] truncate ml-1" id="inline-novelty-title">📺 YouTube Viral: Rey Enigma vs. Anatoly Karpov (2021)</span>
+    <!-- Auto-Loaded Novelty, Championship/Year, Move Stepper & Tactical Move Legend Dock -->
+    <div class="mb-2.5 px-3 py-2 rounded-lg bg-purple-500/15 border border-purple-400/40 text-xs space-y-1.5">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-1.5 min-w-0">
+          <button id="btn-inline-novelty-prev" type="button" class="px-1.5 py-0.5 rounded bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)] hover:opacity-90 cursor-pointer" title="Novedad anterior">◀️</button>
+          <span class="px-1.5 py-0.5 rounded bg-purple-600 text-white font-bold text-[10px] shrink-0" id="inline-novelty-badge">✨ NOVEDAD (1/8)</span>
+          <button id="btn-inline-novelty-next" type="button" class="px-1.5 py-0.5 rounded bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)] hover:opacity-90 cursor-pointer" title="Siguiente novedad">▶️</button>
+          <span class="font-semibold text-[var(--foreground)] truncate ml-1" id="inline-novelty-title">📺 YouTube Viral: Rey Enigma vs. Anatoly Karpov (2021)</span>
+        </div>
+        <div class="flex flex-wrap items-center gap-1.5 shrink-0">
+          <a id="inline-yt-link" href="https://www.youtube.com/watch?v=Pclp2jUfNs0" target="_blank" rel="noopener noreferrer" class="px-2 py-1 rounded text-[11px] font-semibold bg-rose-600 text-white hover:bg-rose-500 transition cursor-pointer" title="Abrir vídeo oficial verificado en YouTube">
+            📺 Ver Vídeo YouTube
+          </a>
+          <button id="btn-inline-novelty-play" type="button" class="px-2 py-1 rounded text-[11px] font-semibold bg-purple-600 text-white hover:bg-purple-500 transition cursor-pointer" title="Cargar esta partida en el tablero">
+            🎬 Cargar
+          </button>
+          <button id="btn-inline-move-prev" type="button" class="px-2 py-1 rounded text-[11px] font-semibold bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)] hover:opacity-90 transition cursor-pointer" title="Retroceder jugada en el tablero">
+            ◀️ Retroceder
+          </button>
+          <span class="px-1.5 py-0.5 rounded bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)] font-mono text-[10px]" id="inline-step-counter">0 / 0</span>
+          <button id="btn-inline-move-next" type="button" class="px-2 py-1 rounded text-[11px] font-semibold bg-sky-600 text-white hover:bg-sky-500 transition cursor-pointer" title="Avanzar jugada en el tablero">
+            Avanzar ▶️
+          </button>
+          <button id="btn-inline-save-db" type="button" class="px-2 py-1 rounded text-[11px] font-semibold bg-emerald-600 text-white hover:bg-emerald-500 transition cursor-pointer" title="Guardar esta novedad en tu base de partidas guardadas">
+            💾 Guardar Novedad
+          </button>
+        </div>
       </div>
-      <div class="flex flex-wrap items-center gap-1.5 shrink-0">
-        <button id="btn-inline-novelty-play" type="button" class="px-2 py-1 rounded text-[11px] font-semibold bg-purple-600 text-white hover:bg-purple-500 transition cursor-pointer" title="Cargar esta partida en el tablero">
-          🎬 Cargar
-        </button>
-        <button id="btn-inline-move-prev" type="button" class="px-2 py-1 rounded text-[11px] font-semibold bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)] hover:opacity-90 transition cursor-pointer" title="Retroceder jugada en el tablero">
-          ◀️ Retroceder
-        </button>
-        <span class="px-1.5 py-0.5 rounded bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)] font-mono text-[10px]" id="inline-step-counter">0 / 0</span>
-        <button id="btn-inline-move-next" type="button" class="px-2 py-1 rounded text-[11px] font-semibold bg-sky-600 text-white hover:bg-sky-500 transition cursor-pointer" title="Avanzar jugada en el tablero">
-          Avanzar ▶️
-        </button>
-        <button id="btn-inline-save-db" type="button" class="px-2 py-1 rounded text-[11px] font-semibold bg-emerald-600 text-white hover:bg-emerald-500 transition cursor-pointer" title="Guardar partida en la base de datos si no está ya cargada">
-          💾 Guardar en Base
-        </button>
+      <div class="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-purple-400/25 text-[11px]">
+        <span id="inline-championship-meta" class="font-semibold text-amber-300">
+          🏆 Campeonato: Exhibición TV «Got Talent España» (Madrid) · 📅 Año: 2021
+        </span>
+        <span id="inline-move-commentary" class="text-[var(--foreground)] bg-[var(--card)]/80 border border-[var(--border)] px-2 py-0.5 rounded truncate max-w-full">
+          📜 Leyenda: Pulsa «🎬 Cargar» o «Avanzar ▶️» para ver la explicación táctica de cada jugada.
+        </span>
       </div>
     </div>
 
@@ -1740,6 +1753,16 @@
     const INLINE_TOURNAMENTS = {
       yt_enigma: {
         name: '📺 YouTube Viral: Rey Enigma vs. Anatoly Karpov (2021)',
+        championship: 'Exhibición TV «Got Talent España» (Madrid)',
+        year: 2021,
+        youtubeUrl: 'https://www.youtube.com/watch?v=Pclp2jUfNs0',
+        summary: 'El misterioso ajedrecista enmascarado Rey Enigma se enfrenta al 12.º Campeón Mundial Anatoly Karpov con una sólida Defensa Caro-Kann.',
+        moveComments: {
+          1: '1. e4: Rey Enigma abre con el peón de rey reclamando el centro.',
+          2: '1... c6: Anatoly Karpov plantea su legendaria Defensa Caro-Kann.',
+          11: '6. Af4: Desarrollo clásico controlando la gran diagonal h2-b8.',
+          22: '11... Dxd6: Karpov iguala el centro tras el cambio de alfiles.'
+        },
         moves: [
           ['e2','e4'],['c7','c6'],['d2','d4'],['d7','d5'],['e4','d5'],['c6','d5'],
           ['f1','d3'],['b8','c6'],['c2','c3'],['g8','f6'],['c1','f4'],['c8','g4'],
@@ -1749,6 +1772,15 @@
       },
       yt_gates: {
         name: '📺 YouTube Viral: Bill Gates vs. Magnus Carlsen (Mate en 9)',
+        championship: 'Exhibición TV «Skavlan» (Londres / Oslo)',
+        year: 2014,
+        youtubeUrl: 'https://www.youtube.com/watch?v=KFi48q7X3ac',
+        summary: 'Magnus Carlsen (con sólo 12 segundos en el reloj frente a 2 minutos de Bill Gates) ejecuta un ataque fulminante con mate en 9 jugadas.',
+        moveComments: {
+          8: '4... Dxd5: Carlsen centraliza su Reina temprano para acelerar el ataque.',
+          14: '7... Ce5!: Sacrificio táctico de caballo de Carlsen para abrir la columna h.',
+          18: '9... Dh2#: ¡Jaque mate de Magnus Carlsen en solo 9 jugadas!'
+        },
         moves: [
           ['e2','e4'],['b8','c6'],['g1','f3'],['d7','d5'],['f1','d3'],['g8','f6'],
           ['e4','d5'],['d8','d5'],['b1','c3'],['d5','h5'],['e1','g1'],['c8','g4'],
@@ -1757,6 +1789,15 @@
       },
       yt_deepblue: {
         name: '📺 YouTube Clásico: Deep Blue vs. Garry Kasparov (1997, P6)',
+        championship: 'Match Revancha Hombre vs. Máquina (Nueva York)',
+        year: 1997,
+        youtubeUrl: 'https://www.youtube.com/watch?v=UrsvWd36A_Q',
+        summary: 'La histórica 6.ª partida donde la supercomputadora Deep Blue derrotó a Garry Kasparov con el célebre sacrificio 7...h6?! 8.Cxe6!',
+        moveComments: {
+          14: '7... h6?!: La jugada dudosa de Kasparov que permite el sacrificio en e6.',
+          15: '8. Cxe6!: ¡Sacrificio demoledor de caballo que destruye el escudo del rey negro!',
+          19: '10. Ag6+: Jaque que obliga al rey de Kasparov a perder el enroque.'
+        },
         moves: [
           ['e2','e4'],['c7','c6'],['d2','d4'],['d7','d5'],['b1','c3'],['d5','e4'],
           ['c3','e4'],['b8','d7'],['e4','g5'],['g8','f6'],['f1','d3'],['e7','e6'],
@@ -1766,6 +1807,15 @@
       },
       yt_rosen: {
         name: '📺 YouTube Estudio: Gambito Stafford («Oh no, my Queen!»)',
+        championship: 'Estudio Táctico de Aperturas YouTube (IM Eric Rosen)',
+        year: 2020,
+        youtubeUrl: 'https://www.youtube.com/watch?v=CbSUtDBoDpg',
+        summary: 'La trampa más famosa de YouTube popularizada por el MI Eric Rosen: las negras entregan su dama en d8 para dar mate legal.',
+        moveComments: {
+          12: '6... Cxe4!: «Oh no, my Queen!» — Eric Rosen ofrece su Reina en d8.',
+          14: '7... Axf2+: Jaque mortal que saca al rey blanco al centro.',
+          16: '8... Ag4#: ¡Jaque mate puro con dos alfiles y un caballo!'
+        },
         moves: [
           ['e2','e4'],['e7','e5'],['g1','f3'],['g8','f6'],['f3','e5'],['b8','c6'],
           ['e5','c6'],['d7','c6'],['d2','d3'],['f8','c5'],['c1','g5'],['f6','e4'],
@@ -1774,6 +1824,14 @@
       },
       opera: {
         name: 'Morphy vs. Duque de Brunswick (París 1858)',
+        championship: 'Exhibición en la Ópera de París (Francia)',
+        year: 1858,
+        youtubeUrl: 'https://www.youtube.com/watch?v=KKYs-WM2ZLc',
+        summary: 'La obra maestra de Paul Morphy sobre desarrollo rápido, sacrificio de caballo en b5 y sacrificio final de dama.',
+        moveComments: {
+          19: '10. Cxb5!: Paul Morphy sacrifica su caballo para abrir líneas contra el rey negro.',
+          21: '11. Axb5+: El alfil blanco clava y domina todo el flanco de dama.'
+        },
         moves: [
           ['e2','e4'],['e7','e5'],['g1','f3'],['d7','d6'],['d2','d4'],['c8','g4'],
           ['d4','e5'],['g4','f3'],['d1','f3'],['d6','e5'],['f1','c4'],['g8','f6'],
@@ -1783,6 +1841,14 @@
       },
       kasparov: {
         name: 'Kasparov vs. Topalov (Torneo Wijk aan Zee 1999)',
+        championship: 'Supertorneo Hoogovens Wijk aan Zee (Países Bajos)',
+        year: 1999,
+        youtubeUrl: 'https://www.youtube.com/watch?v=vnf-ktmpjjw',
+        summary: 'La «Inmortal de Kasparov», famosa por su combinación de sacrificio de torre para cazar al rey negro hasta la primera fila.',
+        moveComments: {
+          15: '8. Ah6: Kasparov elimina el alfil defensor del fianchetto negro.',
+          17: '9. Dxh6: La Reina blanca se instala en el corazón del enroque enemigo.'
+        },
         moves: [
           ['e2','e4'],['d7','d6'],['d2','d4'],['g8','f6'],['b1','c3'],['g7','g6'],
           ['c1','e3'],['f8','g7'],['d1','d2'],['c7','c6'],['f2','f3'],['b7','b5'],
@@ -1791,6 +1857,14 @@
       },
       immortal: {
         name: 'Anderssen vs. Kieseritzky (Torneo de Londres 1851)',
+        championship: 'Torneo Internacional de Londres (Gran Bretaña)',
+        year: 1851,
+        youtubeUrl: 'https://www.youtube.com/watch?v=DY54GhcGFyA',
+        summary: 'La Partida Inmortal del romanticismo ajedrecístico, donde Adolf Anderssen sacrifica alfil, dos torres y la dama.',
+        moveComments: {
+          3: '2. f4: Anderssen plantea el audaz Gambito de Rey.',
+          8: '4... b5?!: El Gambito Bryan para desviar al alfil blanco de c4.'
+        },
         moves: [
           ['e2','e4'],['e7','e5'],['f2','f4'],['e5','f4'],['f1','c4'],['d8','h4'],
           ['e1','f1'],['b7','b5'],['c4','b5'],['g8','f6'],['g1','f3'],['h4','h6']
@@ -1798,6 +1872,14 @@
       },
       ruylopez: {
         name: 'Apertura Española · Ruy López (Línea de Torneo)',
+        championship: 'Enciclopedia Mundial de Aperturas (ECO C65)',
+        year: 1561,
+        youtubeUrl: 'https://www.youtube.com/watch?v=cXp-f9hi0Gw',
+        summary: 'Una de las aperturas más empleadas en campeonatos del mundo desde Ruy López de Segura (1561) hasta la actualidad.',
+        moveComments: {
+          5: '3. Ab5: El movimiento característico de la Apertura Española (Ruy López).',
+          6: '3... a6: La Defensa Morphy interrogando inmediatamente al alfil blanco.'
+        },
         moves: [
           ['e2','e4'],['e7','e5'],['g1','f3'],['b8','c6'],['f1','b5'],['a7','a6'],
           ['b5','a4'],['g8','f6'],['d2','d3'],['f8','c5']
@@ -1808,10 +1890,40 @@
     let inlineStudyMoves = [];
     let inlineStudyCursor = 0;
     let inlineActiveKey = '';
-    const savedInlineDbKeys = new Set(['opera', 'kasparov', 'immortal', 'ruylopez']); // Built-in Tournament DB keys
+    const savedInlineDbKeys = new Set(); // Tracks novelties explicitly saved by the user into their personal database
 
     function sqToRC(sq) {
       return { r: 8 - parseInt(sq[1], 10), c: sq.charCodeAt(0) - 97 };
+    }
+
+    function explainInlineMove(halfMoveIdx, tourKey) {
+      const tour = INLINE_TOURNAMENTS[tourKey];
+      if (halfMoveIdx <= 0) {
+        return tour
+          ? `📜 Leyenda: ${tour.summary} Pulsa «Avanzar ▶️» para reproducir jugada a jugada.`
+          : '📜 Leyenda: Posición inicial lista. Selecciona o carga una novedad para ver su comentario táctico.';
+      }
+      if (tour?.moveComments?.[halfMoveIdx]) {
+        return `📜 Jugada ${Math.ceil(halfMoveIdx / 2)}: ${tour.moveComments[halfMoveIdx]}`;
+      }
+      const last = moveHistory[moveHistory.length - 1];
+      if (!last) return '📜 Leyenda: Movimiento táctico en el tablero.';
+      const moveNum = Math.ceil(halfMoveIdx / 2);
+      const sideName = last.color === 'w' ? 'Alianza Solar (Blancas)' : 'Legión de Antracita (Negras)';
+      const pieceNames = { p: 'Peón', n: 'Caballo', b: 'Alfil', r: 'Torre', q: 'Reina', k: 'Rey' };
+      const pName = pieceNames[last.piece] || 'Pieza';
+      const centerSqs = new Set(['d4', 'd5', 'e4', 'e5']);
+      let tacticalReason = 'mejora la coordinación de sus piezas';
+      if (last.capture) {
+        tacticalReason = `captura material enemigo en ${last.to} abriendo líneas de ataque`;
+      } else if (centerSqs.has(last.to)) {
+        tacticalReason = `ocupa la casilla central clave ${last.to} para dominar el centro`;
+      } else if (halfMoveIdx <= 12 && (last.piece === 'n' || last.piece === 'b')) {
+        tacticalReason = `desarrolla su ${pName.toLowerCase()} hacia una casilla activa de apertura`;
+      } else if (last.piece === 'q') {
+        tacticalReason = `moviliza la Reina hacia ${last.to} aumentando la presión ofensiva`;
+      }
+      return `📜 Jugada ${moveNum} (${last.san}): ${sideName} mueve ${pName} (${last.from}→${last.to}) y ${tacticalReason}.`;
     }
 
     function updateInlineStepperUI() {
@@ -1822,14 +1934,29 @@
             ? `${inlineStudyCursor} / ${inlineStudyMoves.length}`
             : `${moveHistory.length} mov.`;
       }
+      const keyToCheck = inlineActiveKey || INLINE_NOVELTY_KEYS[inlineNoveltyIdx];
+      const tour = INLINE_TOURNAMENTS[keyToCheck];
+      const metaEl = document.getElementById('inline-championship-meta');
+      if (metaEl && tour) {
+        metaEl.textContent = `🏆 Campeonato: ${tour.championship} · 📅 Año: ${tour.year}`;
+      }
+      const ytEl = document.getElementById('inline-yt-link');
+      if (ytEl && tour?.youtubeUrl) {
+        ytEl.href = tour.youtubeUrl;
+      }
+      const commEl = document.getElementById('inline-move-commentary');
+      if (commEl) {
+        const stepIdx = inlineStudyMoves.length > 0 ? inlineStudyCursor : moveHistory.length;
+        commEl.textContent = explainInlineMove(stepIdx, keyToCheck);
+        commEl.title = commEl.textContent;
+      }
       const saveBtn = document.getElementById('btn-inline-save-db');
       if (saveBtn) {
-        const keyToCheck = inlineActiveKey || INLINE_NOVELTY_KEYS[inlineNoveltyIdx];
         if (savedInlineDbKeys.has(keyToCheck)) {
-          saveBtn.textContent = '✅ Ya en la Base';
+          saveBtn.textContent = '✅ Guardada en mi Base';
           saveBtn.className = 'px-2 py-1 rounded text-[11px] font-semibold bg-slate-600/50 text-slate-300 border border-slate-500/40 cursor-default';
         } else {
-          saveBtn.textContent = '💾 Guardar en Base';
+          saveBtn.textContent = '💾 Guardar Novedad';
           saveBtn.className = 'px-2 py-1 rounded text-[11px] font-semibold bg-emerald-600 text-white hover:bg-emerald-500 transition cursor-pointer';
         }
       }
@@ -1889,7 +2016,7 @@
       inlineStudyMoves = [...tour.moves];
       inlineStudyCursor = 0;
       updateInlineStepperUI();
-      logEvent(`🎬 Cargada: ${tour.name}. Usa «◀️ Retroceder» y «Avanzar ▶️».`);
+      logEvent(`🎬 Cargada: ${tour.name} (${tour.championship}, ${tour.year}).`);
       stepInlineTournament();
     });
 
@@ -1907,13 +2034,26 @@
     document.getElementById('btn-inline-save-db').addEventListener('click', () => {
       const keyToSave = inlineActiveKey || INLINE_NOVELTY_KEYS[inlineNoveltyIdx];
       if (savedInlineDbKeys.has(keyToSave)) {
-        logEvent('ℹ️ Esta partida ya está en la Base de Datos (no se duplica).');
+        logEvent('ℹ️ Esta novedad ya está guardada en tu Base de Partidas (no se duplica).');
         return;
       }
       savedInlineDbKeys.add(keyToSave);
-      playSound('r2d2');
       const tour = INLINE_TOURNAMENTS[keyToSave];
-      logEvent(`💾 Guardada en la Base de Datos: "${tour?.name || keyToSave}".`);
+      const snapshot = {
+        board: JSON.parse(JSON.stringify(board)),
+        turn,
+        moveHistory: JSON.parse(JSON.stringify(moveHistory)),
+        title: tour?.name || keyToSave,
+        championship: tour?.championship || 'Torneo Internacional',
+        year: tour?.year || 2024,
+        date: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+      };
+      memorySavedGame = snapshot;
+      try {
+        localStorage.setItem(INLINE_SAVE_KEY, JSON.stringify(snapshot));
+      } catch {}
+      playSound('r2d2');
+      logEvent(`💾 Novedad guardada en tu Base: "${tour?.name || keyToSave}" (${tour?.championship}, ${tour?.year}).`);
       updateInlineStepperUI();
     });
 

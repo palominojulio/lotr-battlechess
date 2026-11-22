@@ -306,6 +306,38 @@ html, body {
   flex-shrink: 0;
 }
 
+.stepper-meta-row,
+.study-meta-line,
+.novelty-meta-pills {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #fcd34d;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stepper-commentary-box,
+.study-commentary-box {
+  font-size: 0.71rem;
+  line-height: 1.35;
+  color: #f8fafc;
+  background: rgba(30, 41, 59, 0.75);
+  border-left: 3px solid #facc15;
+  border-radius: 6px;
+  padding: 5px 8px;
+  word-break: break-word;
+}
+
+.novelty-save-full-btn {
+  width: 100%;
+  margin-top: 4px;
+  padding: 6px 8px !important;
+  font-size: 0.72rem !important;
+  font-weight: 800 !important;
+}
+
 .stepper-btn-row {
   display: flex;
   flex-wrap: wrap;

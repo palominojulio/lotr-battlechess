@@ -141,8 +141,12 @@
         <div class="study-bar" id="study-bar" hidden>
           <div class="study-bar-header">
             <span class="study-bar-title" id="study-bar-title">🏆 Modo Estudio de Torneo</span>
-            <a id="study-yt-link" href="#" target="_blank" rel="noopener noreferrer" class="btn-copy-pgn" hidden title="Abrir el vídeo original en YouTube">📺 Vídeo</a>
+            <a id="study-yt-link" href="https://www.youtube.com/watch?v=Pclp2jUfNs0" target="_blank" rel="noopener noreferrer" class="btn-copy-pgn" style="background: rgba(225, 29, 72, 0.28); border-color: rgba(251, 113, 133, 0.65); color: #ffe4e6; text-decoration: none;" title="Abrir el vídeo en YouTube">📺 Ver en YouTube</a>
             <span class="study-bar-step" id="study-bar-step">0 / 0</span>
+          </div>
+          <div class="study-meta-line" id="study-bar-meta">🏆 Campeonato · 📅 Año</div>
+          <div class="study-commentary-box" id="study-move-commentary">
+            📜 Pulsa «Avanzar ▶️» para ver la leyenda y explicación táctica de cada jugada.
           </div>
           <div class="study-bar-controls">
             <button type="button" class="btn-study-ctrl" id="btn-study-first" title="Ir al inicio">⏮️</button>
@@ -192,10 +196,19 @@
     </aside>
 
     <!-- On-Board Floating Move Stepper Dock (Always accessible at top-center of the 3D board!) -->
-    <div class="board-stepper-dock" id="board-stepper-dock" aria-label="Controles de avance y retroceso de jugadas en el tablero">
+    <div class="board-stepper-dock" id="board-stepper-dock" aria-label="Controles de avance, campeonato, año y leyenda táctica de la jugada">
       <div class="stepper-top-row">
-        <span class="stepper-game-label" id="stepper-game-label">⚔️ Partida en Tablero (Usa ◀️ y ▶️ o flechas del teclado)</span>
-        <span class="stepper-move-badge" id="stepper-move-badge">Jugada 0 / 0</span>
+        <span class="stepper-game-label" id="stepper-game-label">⚔️ Partida en Tablero</span>
+        <div style="display: flex; align-items: center; gap: 5px; flex-shrink: 0;">
+          <a id="btn-dock-yt" href="https://www.youtube.com/watch?v=Pclp2jUfNs0" target="_blank" rel="noopener noreferrer" class="btn-copy-pgn" style="background: rgba(225, 29, 72, 0.28); border-color: rgba(251, 113, 133, 0.65); color: #ffe4e6; text-decoration: none;" title="Abrir vídeo oficial en YouTube">📺 Vídeo YouTube</a>
+          <span class="stepper-move-badge" id="stepper-move-badge">Jugada 0 / 0</span>
+        </div>
+      </div>
+      <div class="stepper-meta-row" id="stepper-tournament-meta">
+        🏆 Campeonato: Partida Libre · 📅 Año: 2026
+      </div>
+      <div class="stepper-commentary-box" id="stepper-move-commentary" aria-live="polite">
+        📜 <strong>Leyenda de la Jugada:</strong> Pulsa «Avanzar ▶️» (o mueve una pieza) para ver la explicación táctica y el comentario de cada jugada.
       </div>
       <div class="stepper-btn-row">
         <button type="button" class="btn-stepper" id="btn-dock-first" title="Ir al inicio de la partida">⏮️</button>
@@ -203,8 +216,8 @@
         <button type="button" class="btn-stepper btn-stepper-nav btn-stepper-primary" id="btn-dock-next" title="Avanzar una jugada con combate 3D (Flecha Derecha)">Avanzar ▶️</button>
         <button type="button" class="btn-stepper" id="btn-dock-last" title="Ir al final de la partida">⏭️</button>
         <button type="button" class="btn-stepper" id="btn-dock-auto" title="Reproducir automáticamente jugada a jugada">⏯️ Auto</button>
-        <button type="button" class="btn-stepper btn-stepper-save" id="btn-dock-save-db" title="Guardar partida en la base de datos (si no está ya cargada)">💾 Guardar en Base</button>
-        <button type="button" class="btn-stepper btn-stepper-play" id="btn-dock-practice" hidden title="Tomar el mando y jugar desde esta jugada">⚔️ Jugar desde aquí</button>
+        <button type="button" class="btn-stepper btn-stepper-save" id="btn-dock-save-db" title="Guardar esta novedad o partida en tu base de datos">💾 Guardar en Base</button>
+        <button type="button" class="btn-stepper btn-stepper-play" id="btn-dock-practice" hidden title="Tomar el mando y jugar desde esta jugada">⚔️ Jugar Aquí</button>
       </div>
     </div>
 
@@ -263,18 +276,24 @@
         </div>
         <div class="novelty-badge-line" id="novelty-source-badge">📺 YouTube & 🏆 Torneos en Vivo</div>
         <div class="novelty-game-title" id="novelty-game-title">Buscando partidas nuevas...</div>
+        <div class="novelty-meta-pills" id="novelty-championship-meta">
+          🏆 Campeonato: — · 📅 Año: —
+        </div>
         <div class="novelty-game-desc" id="novelty-game-desc">Se cargan automáticamente sin duplicar la base de datos.</div>
         <div class="novelty-actions-row">
           <button type="button" class="btn-study-ctrl btn-study-play" id="btn-novelty-play" title="Cargar esta novedad en el tablero 3D para avanzar jugada a jugada">
             🎬 Cargar al Tablero
           </button>
-          <button type="button" class="btn-study-ctrl btn-study-save" id="btn-novelty-save-db" title="Guardar esta novedad en tu base de datos local (si no está ya)">
-            💾 Guardar en Base
-          </button>
+          <a id="novelty-yt-link" href="https://www.youtube.com/watch?v=Pclp2jUfNs0" target="_blank" rel="noopener noreferrer" class="btn-study-ctrl" style="text-align:center;text-decoration:none;background:rgba(225,29,72,0.28);border-color:rgba(251,113,133,0.65);color:#ffe4e6;" title="Abrir vídeo oficial en YouTube">
+            📺 Ver Vídeo YouTube
+          </a>
           <button type="button" class="btn-study-ctrl" id="btn-novelty-all" title="Ver catálogo completo de novedades y torneos">
             📋 Todas
           </button>
         </div>
+        <button type="button" class="btn-study-ctrl btn-study-save novelty-save-full-btn" id="btn-novelty-save-db" title="Guardar esta novedad en tu base de datos de partidas guardadas">
+          💾 Guardar esta Novedad en mi Base
+        </button>
       </section>
 
       <section class="panel-section champion-card" id="champion-card">
