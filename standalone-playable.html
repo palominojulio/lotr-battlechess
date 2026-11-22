@@ -60,18 +60,27 @@
       </div>
     </div>
 
-    <!-- Auto-Loaded Novelty Offer Bar on the Board -->
+    <!-- Auto-Loaded Novelty & Move Stepper Dock on the Board -->
     <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5 px-3 py-1.5 rounded-lg bg-purple-500/15 border border-purple-400/40 text-xs">
-      <div class="flex items-center gap-2 min-w-0">
-        <span class="px-1.5 py-0.5 rounded bg-purple-600 text-white font-bold text-[10px] shrink-0" id="inline-novelty-badge">✨ NOVEDAD AUTO-CARGADA (1/8)</span>
-        <span class="font-semibold text-[var(--foreground)] truncate" id="inline-novelty-title">📺 YouTube Viral: Rey Enigma vs. Anatoly Karpov (2021)</span>
+      <div class="flex items-center gap-1.5 min-w-0">
+        <button id="btn-inline-novelty-prev" type="button" class="px-1.5 py-0.5 rounded bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)] hover:opacity-90 cursor-pointer" title="Novedad anterior">◀️</button>
+        <span class="px-1.5 py-0.5 rounded bg-purple-600 text-white font-bold text-[10px] shrink-0" id="inline-novelty-badge">✨ NOVEDAD (1/8)</span>
+        <button id="btn-inline-novelty-next" type="button" class="px-1.5 py-0.5 rounded bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)] hover:opacity-90 cursor-pointer" title="Siguiente novedad">▶️</button>
+        <span class="font-semibold text-[var(--foreground)] truncate ml-1" id="inline-novelty-title">📺 YouTube Viral: Rey Enigma vs. Anatoly Karpov (2021)</span>
       </div>
-      <div class="flex items-center gap-1.5 shrink-0">
-        <button id="btn-inline-novelty-play" type="button" class="px-2.5 py-1 rounded text-[11px] font-semibold bg-purple-600 text-white hover:bg-purple-500 transition cursor-pointer">
-          🎬 Ver en Tablero
+      <div class="flex flex-wrap items-center gap-1.5 shrink-0">
+        <button id="btn-inline-novelty-play" type="button" class="px-2 py-1 rounded text-[11px] font-semibold bg-purple-600 text-white hover:bg-purple-500 transition cursor-pointer" title="Cargar esta partida en el tablero">
+          🎬 Cargar
         </button>
-        <button id="btn-inline-novelty-next" type="button" class="px-2 py-1 rounded text-[11px] font-medium bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)] hover:opacity-90 transition cursor-pointer" title="Siguiente novedad auto-cargada">
-          ⏭️ Otra
+        <button id="btn-inline-move-prev" type="button" class="px-2 py-1 rounded text-[11px] font-semibold bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)] hover:opacity-90 transition cursor-pointer" title="Retroceder jugada en el tablero">
+          ◀️ Retroceder
+        </button>
+        <span class="px-1.5 py-0.5 rounded bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)] font-mono text-[10px]" id="inline-step-counter">0 / 0</span>
+        <button id="btn-inline-move-next" type="button" class="px-2 py-1 rounded text-[11px] font-semibold bg-sky-600 text-white hover:bg-sky-500 transition cursor-pointer" title="Avanzar jugada en el tablero">
+          Avanzar ▶️
+        </button>
+        <button id="btn-inline-save-db" type="button" class="px-2 py-1 rounded text-[11px] font-semibold bg-emerald-600 text-white hover:bg-emerald-500 transition cursor-pointer" title="Guardar partida en la base de datos si no está ya cargada">
+          💾 Guardar en Base
         </button>
       </div>
     </div>
@@ -1719,10 +1728,13 @@
     });
 
     document.getElementById('btn-reset').addEventListener('click', () => {
-      inlineStudyQueue = [];
+      inlineStudyMoves = [];
+      inlineStudyCursor = 0;
+      inlineActiveKey = '';
       document.getElementById('btn-study-step').classList.add('hidden');
       document.getElementById('select-tournament-inline').value = '';
       initBoard();
+      updateInlineStepperUI();
     });
 
     const INLINE_TOURNAMENTS = {
@@ -1793,44 +1805,117 @@
       }
     };
 
-    let inlineStudyQueue = [];
+    let inlineStudyMoves = [];
+    let inlineStudyCursor = 0;
+    let inlineActiveKey = '';
+    const savedInlineDbKeys = new Set(['opera', 'kasparov', 'immortal', 'ruylopez']); // Built-in Tournament DB keys
 
     function sqToRC(sq) {
       return { r: 8 - parseInt(sq[1], 10), c: sq.charCodeAt(0) - 97 };
     }
 
+    function updateInlineStepperUI() {
+      const counterEl = document.getElementById('inline-step-counter');
+      if (counterEl) {
+        counterEl.textContent =
+          inlineStudyMoves.length > 0
+            ? `${inlineStudyCursor} / ${inlineStudyMoves.length}`
+            : `${moveHistory.length} mov.`;
+      }
+      const saveBtn = document.getElementById('btn-inline-save-db');
+      if (saveBtn) {
+        const keyToCheck = inlineActiveKey || INLINE_NOVELTY_KEYS[inlineNoveltyIdx];
+        if (savedInlineDbKeys.has(keyToCheck)) {
+          saveBtn.textContent = '✅ Ya en la Base';
+          saveBtn.className = 'px-2 py-1 rounded text-[11px] font-semibold bg-slate-600/50 text-slate-300 border border-slate-500/40 cursor-default';
+        } else {
+          saveBtn.textContent = '💾 Guardar en Base';
+          saveBtn.className = 'px-2 py-1 rounded text-[11px] font-semibold bg-emerald-600 text-white hover:bg-emerald-500 transition cursor-pointer';
+        }
+      }
+    }
+
+    function jumpInlineToStep(targetStep) {
+      if (activeCombat || inlineStudyMoves.length === 0) return;
+      const clamped = Math.max(0, Math.min(inlineStudyMoves.length, targetStep));
+      initBoard();
+      inlineStudyCursor = clamped;
+      for (let i = 0; i < clamped; i++) {
+        const [fromSq, toSq] = inlineStudyMoves[i];
+        const f = sqToRC(fromSq);
+        const t = sqToRC(toSq);
+        const att = board[f.r]?.[f.c];
+        const def = board[t.r]?.[t.c];
+        if (att) {
+          recordNotation(att, f.r, f.c, t.r, t.c, Boolean(def), false);
+          board[t.r][t.c] = att;
+          board[f.r][f.c] = null;
+          turn = turn === 'w' ? 'b' : 'w';
+        }
+      }
+      updateInlineStepperUI();
+    }
+
     function stepInlineTournament() {
-      if (activeCombat || inlineStudyQueue.length === 0) return;
-      const [fromSq, toSq] = inlineStudyQueue.shift();
+      if (activeCombat) return;
+      if (inlineStudyMoves.length === 0) {
+        // Auto-load currently highlighted novelty if user clicks "Avanzar ▶️" right away!
+        const key = INLINE_NOVELTY_KEYS[inlineNoveltyIdx];
+        const sel = document.getElementById('select-tournament-inline');
+        sel.value = key;
+        sel.dispatchEvent(new Event('change'));
+        return;
+      }
+      if (inlineStudyCursor >= inlineStudyMoves.length) return;
+      const [fromSq, toSq] = inlineStudyMoves[inlineStudyCursor];
+      inlineStudyCursor++;
+      updateInlineStepperUI();
       const f = sqToRC(fromSq);
       const t = sqToRC(toSq);
-      const btnStep = document.getElementById('btn-study-step');
-      if (inlineStudyQueue.length === 0) {
-        btnStep.textContent = '✅ Fin Estudio';
-        setTimeout(() => btnStep.classList.add('hidden'), 1200);
-      } else {
-        btnStep.textContent = `▶️ Sig. (${inlineStudyQueue.length})`;
-      }
       if (board[f.r] && board[f.r][f.c]) {
         inspectPiece(board[f.r][f.c].color, board[f.r][f.c].type);
-        executeMove(f.r, f.c, t.r, t.c, () => {});
+        executeMove(f.r, f.c, t.r, t.c, () => {
+          updateInlineStepperUI();
+        });
       }
     }
 
     document.getElementById('select-tournament-inline').addEventListener('change', (e) => {
       const key = e.target.value;
       if (!key || !INLINE_TOURNAMENTS[key]) return;
+      inlineActiveKey = key;
       initBoard();
       const tour = INLINE_TOURNAMENTS[key];
-      inlineStudyQueue = [...tour.moves];
-      const btnStep = document.getElementById('btn-study-step');
-      btnStep.classList.remove('hidden');
-      btnStep.textContent = `▶️ Sig. (${inlineStudyQueue.length})`;
-      logEvent(`🏆 Cargado: ${tour.name}. Pulsa «▶️ Sig.» para estudiar cada jugada.`);
+      inlineStudyMoves = [...tour.moves];
+      inlineStudyCursor = 0;
+      updateInlineStepperUI();
+      logEvent(`🎬 Cargada: ${tour.name}. Usa «◀️ Retroceder» y «Avanzar ▶️».`);
       stepInlineTournament();
     });
 
     document.getElementById('btn-study-step').addEventListener('click', stepInlineTournament);
+    document.getElementById('btn-inline-move-next').addEventListener('click', stepInlineTournament);
+    document.getElementById('btn-inline-move-prev').addEventListener('click', () => {
+      if (activeCombat) return;
+      if (inlineStudyMoves.length > 0 && inlineStudyCursor > 0) {
+        jumpInlineToStep(inlineStudyCursor - 1);
+        playSound('r2d2');
+        logEvent(`◀️ Retrocedido a la jugada ${inlineStudyCursor} / ${inlineStudyMoves.length}.`);
+      }
+    });
+
+    document.getElementById('btn-inline-save-db').addEventListener('click', () => {
+      const keyToSave = inlineActiveKey || INLINE_NOVELTY_KEYS[inlineNoveltyIdx];
+      if (savedInlineDbKeys.has(keyToSave)) {
+        logEvent('ℹ️ Esta partida ya está en la Base de Datos (no se duplica).');
+        return;
+      }
+      savedInlineDbKeys.add(keyToSave);
+      playSound('r2d2');
+      const tour = INLINE_TOURNAMENTS[keyToSave];
+      logEvent(`💾 Guardada en la Base de Datos: "${tour?.name || keyToSave}".`);
+      updateInlineStepperUI();
+    });
 
     // Automatic Novelty Carousel on the Board (Deduplicated keys)
     const INLINE_NOVELTY_KEYS = Object.keys(INLINE_TOURNAMENTS);
@@ -1839,8 +1924,9 @@
     function renderInlineNoveltyBar() {
       const key = INLINE_NOVELTY_KEYS[inlineNoveltyIdx];
       const item = INLINE_TOURNAMENTS[key];
-      document.getElementById('inline-novelty-badge').textContent = `✨ NOVEDAD AUTO-CARGADA (${inlineNoveltyIdx + 1}/${INLINE_NOVELTY_KEYS.length})`;
+      document.getElementById('inline-novelty-badge').textContent = `✨ NOVEDAD (${inlineNoveltyIdx + 1}/${INLINE_NOVELTY_KEYS.length})`;
       document.getElementById('inline-novelty-title').textContent = item.name;
+      updateInlineStepperUI();
     }
 
     document.getElementById('btn-inline-novelty-play').addEventListener('click', () => {
@@ -1850,13 +1936,18 @@
       sel.dispatchEvent(new Event('change'));
     });
 
+    document.getElementById('btn-inline-novelty-prev').addEventListener('click', () => {
+      inlineNoveltyIdx = (inlineNoveltyIdx - 1 + INLINE_NOVELTY_KEYS.length) % INLINE_NOVELTY_KEYS.length;
+      renderInlineNoveltyBar();
+    });
+
     document.getElementById('btn-inline-novelty-next').addEventListener('click', () => {
       inlineNoveltyIdx = (inlineNoveltyIdx + 1) % INLINE_NOVELTY_KEYS.length;
       renderInlineNoveltyBar();
     });
 
     setInterval(() => {
-      if (inlineStudyQueue.length === 0 && !activeCombat) {
+      if (inlineStudyMoves.length === 0 && !activeCombat) {
         inlineNoveltyIdx = (inlineNoveltyIdx + 1) % INLINE_NOVELTY_KEYS.length;
         renderInlineNoveltyBar();
       }

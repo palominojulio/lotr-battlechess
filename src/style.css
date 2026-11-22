@@ -255,6 +255,125 @@ html, body {
   grid-row: 2;
 }
 
+/* On-Board Floating Move Stepper Dock (Top-Center of 3D Board) */
+.board-stepper-dock {
+  grid-column: 2;
+  grid-row: 2;
+  justify-self: center;
+  align-self: start;
+  position: relative;
+  z-index: 14;
+  pointer-events: auto;
+  width: min(560px, calc(100% - 76px));
+  margin-right: 68px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 7px 12px;
+  background: rgba(13, 16, 25, 0.92);
+  backdrop-filter: blur(12px);
+  border: 1.5px solid rgba(192, 132, 252, 0.65);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.75), 0 0 16px rgba(168, 85, 247, 0.25);
+}
+
+.stepper-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.72rem;
+}
+
+.stepper-game-label {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: #f3e8ff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stepper-move-badge {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--gold-bright);
+  background: rgba(230, 194, 89, 0.16);
+  border: 1px solid rgba(230, 194, 89, 0.45);
+  padding: 1px 7px;
+  border-radius: 99px;
+  flex-shrink: 0;
+}
+
+.stepper-btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.btn-stepper {
+  padding: 5px 9px;
+  border-radius: 7px;
+  border: 1px solid rgba(230, 194, 89, 0.38);
+  background: rgba(20, 24, 36, 0.9);
+  color: var(--text-main);
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.16s ease;
+  white-space: nowrap;
+}
+
+.btn-stepper:hover:not(:disabled) {
+  background: rgba(230, 194, 89, 0.25);
+  border-color: var(--gold);
+}
+
+.btn-stepper:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.btn-stepper.btn-stepper-primary {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.35), rgba(37, 99, 235, 0.45));
+  border-color: #38bdf8;
+  color: #e0f2fe;
+}
+
+.btn-stepper.btn-stepper-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.55), rgba(37, 99, 235, 0.65));
+}
+
+.btn-stepper.btn-stepper-save,
+.btn-study-ctrl.btn-study-save {
+  background: rgba(16, 185, 129, 0.22);
+  border-color: #10b981;
+  color: #a7f3d0;
+}
+
+.btn-stepper.btn-stepper-save:hover:not(:disabled),
+.btn-study-ctrl.btn-study-save:hover:not(:disabled) {
+  background: rgba(16, 185, 129, 0.38);
+}
+
+.btn-stepper.already-in-db,
+.btn-study-ctrl.already-in-db,
+.btn-save-item.already-in-db {
+  background: rgba(100, 116, 139, 0.22);
+  border-color: rgba(148, 163, 184, 0.45);
+  color: #cbd5e1;
+  cursor: default;
+}
+
+.btn-stepper.btn-stepper-play {
+  background: rgba(234, 179, 8, 0.24);
+  border-color: #facc15;
+  color: #fef08a;
+}
+
 /* Right-of-Board Vertical Attack-Line Advance & Evaluation Column (Chessercise / YouTube style) */
 .attack-advance-column {
   grid-column: 2;

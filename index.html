@@ -146,11 +146,12 @@
           </div>
           <div class="study-bar-controls">
             <button type="button" class="btn-study-ctrl" id="btn-study-first" title="Ir al inicio">⏮️</button>
-            <button type="button" class="btn-study-ctrl" id="btn-study-prev" title="Movimiento anterior">◀️</button>
-            <button type="button" class="btn-study-ctrl btn-study-play" id="btn-study-next" title="Siguiente movimiento (con animación 3D)">▶️ Sig.</button>
+            <button type="button" class="btn-study-ctrl" id="btn-study-prev" title="Retroceder jugada">◀️ Atrás</button>
+            <button type="button" class="btn-study-ctrl btn-study-play" id="btn-study-next" title="Avanzar siguiente jugada (con animación 3D)">Avanzar ▶️</button>
             <button type="button" class="btn-study-ctrl" id="btn-study-auto" title="Auto-reproducir partida jugada a jugada">⏯️ Auto</button>
             <button type="button" class="btn-study-ctrl" id="btn-study-last" title="Ir al final">⏭️</button>
-            <button type="button" class="btn-study-ctrl btn-study-practice" id="btn-study-practice" title="Jugar y practicar libremente desde esta posición">⚔️ Practicar</button>
+            <button type="button" class="btn-study-ctrl btn-study-save" id="btn-study-save-db" title="Guardar esta partida en tu base de datos si no está ya guardada">💾 Guardar en Base</button>
+            <button type="button" class="btn-study-ctrl btn-study-practice" id="btn-study-practice" title="Jugar y practicar libremente desde esta posición">⚔️ Jugar Aquí</button>
           </div>
         </div>
 
@@ -189,6 +190,23 @@
         </button>
       </div>
     </aside>
+
+    <!-- On-Board Floating Move Stepper Dock (Always accessible at top-center of the 3D board!) -->
+    <div class="board-stepper-dock" id="board-stepper-dock" aria-label="Controles de avance y retroceso de jugadas en el tablero">
+      <div class="stepper-top-row">
+        <span class="stepper-game-label" id="stepper-game-label">⚔️ Partida en Tablero (Usa ◀️ y ▶️ o flechas del teclado)</span>
+        <span class="stepper-move-badge" id="stepper-move-badge">Jugada 0 / 0</span>
+      </div>
+      <div class="stepper-btn-row">
+        <button type="button" class="btn-stepper" id="btn-dock-first" title="Ir al inicio de la partida">⏮️</button>
+        <button type="button" class="btn-stepper btn-stepper-nav" id="btn-dock-prev" title="Retroceder una jugada (Flecha Izquierda)">◀️ Retroceder</button>
+        <button type="button" class="btn-stepper btn-stepper-nav btn-stepper-primary" id="btn-dock-next" title="Avanzar una jugada con combate 3D (Flecha Derecha)">Avanzar ▶️</button>
+        <button type="button" class="btn-stepper" id="btn-dock-last" title="Ir al final de la partida">⏭️</button>
+        <button type="button" class="btn-stepper" id="btn-dock-auto" title="Reproducir automáticamente jugada a jugada">⏯️ Auto</button>
+        <button type="button" class="btn-stepper btn-stepper-save" id="btn-dock-save-db" title="Guardar partida en la base de datos (si no está ya cargada)">💾 Guardar en Base</button>
+        <button type="button" class="btn-stepper btn-stepper-play" id="btn-dock-practice" hidden title="Tomar el mando y jugar desde esta jugada">⚔️ Jugar desde aquí</button>
+      </div>
+    </div>
 
     <!-- Right-of-Board Vertical Attack-Line Advance, Risk & Win-Probability Column -->
     <div class="attack-advance-column" id="attack-advance-column" aria-label="Columna de dominio, riesgo y probabilidad de victoria por jugador">
@@ -237,19 +255,23 @@
       <section class="panel-section novelty-card" id="novelty-panel-card">
         <div class="panel-header-row" style="margin-bottom: 4px;">
           <h2 class="panel-title" style="color: #e9d5ff;">✨ Novedades Auto-Cargadas</h2>
-          <span class="novelty-counter-badge" id="novelty-counter-badge">Sincronizando...</span>
+          <div style="display: flex; align-items: center; gap: 3px;">
+            <button type="button" class="btn-copy-pgn" id="btn-novelty-prev" title="Novedad anterior">◀️</button>
+            <span class="novelty-counter-badge" id="novelty-counter-badge">1 / 8</span>
+            <button type="button" class="btn-copy-pgn" id="btn-novelty-next" title="Siguiente novedad">▶️</button>
+          </div>
         </div>
         <div class="novelty-badge-line" id="novelty-source-badge">📺 YouTube & 🏆 Torneos en Vivo</div>
         <div class="novelty-game-title" id="novelty-game-title">Buscando partidas nuevas...</div>
         <div class="novelty-game-desc" id="novelty-game-desc">Se cargan automáticamente sin duplicar la base de datos.</div>
         <div class="novelty-actions-row">
-          <button type="button" class="btn-study-ctrl btn-study-play" id="btn-novelty-play" title="Cargar esta novedad directamente en el tablero 3D">
-            🎬 Ver en Tablero
+          <button type="button" class="btn-study-ctrl btn-study-play" id="btn-novelty-play" title="Cargar esta novedad en el tablero 3D para avanzar jugada a jugada">
+            🎬 Cargar al Tablero
           </button>
-          <button type="button" class="btn-study-ctrl" id="btn-novelty-next" title="Ver la siguiente novedad auto-cargada">
-            ⏭️ Otra
+          <button type="button" class="btn-study-ctrl btn-study-save" id="btn-novelty-save-db" title="Guardar esta novedad en tu base de datos local (si no está ya)">
+            💾 Guardar en Base
           </button>
-          <button type="button" class="btn-study-ctrl" id="btn-novelty-all" title="Ver todas las novedades auto-cargadas">
+          <button type="button" class="btn-study-ctrl" id="btn-novelty-all" title="Ver catálogo completo de novedades y torneos">
             📋 Todas
           </button>
         </div>

@@ -450,6 +450,9 @@ function updateHUD() {
 
   moveCounterEl.textContent = `Jugada ${chess.moveNumber()}`;
   updateAttackAdvanceColumn();
+  if (typeof updateBoardStepperDockUI === 'function') {
+    updateBoardStepperDockUI();
+  }
 }
 
 function updateAttackAdvanceColumn() {
@@ -1526,9 +1529,157 @@ const studyBarTitle = document.getElementById('study-bar-title');
 const studyBarStep = document.getElementById('study-bar-step');
 const studyYtLink = document.getElementById('study-yt-link');
 const btnStudyAuto = document.getElementById('btn-study-auto');
+const btnStudySaveDb = document.getElementById('btn-study-save-db');
 
-let activeStudy = null; // { title, moves: [...], cursor: 0, savedMode: 'ai-2', autoPlaying: false, youtubeUrl: null }
+// Floating On-Board Move Stepper Dock elements
+const stepperGameLabel = document.getElementById('stepper-game-label');
+const stepperMoveBadge = document.getElementById('stepper-move-badge');
+const btnDockAuto = document.getElementById('btn-dock-auto');
+const btnDockSaveDb = document.getElementById('btn-dock-save-db');
+const btnDockPractice = document.getElementById('btn-dock-practice');
+
+let activeStudy = null; // { title, category, description, pgn, moves: [...], cursor: 0, savedMode: 'ai-2', autoPlaying: false, youtubeUrl: null }
 let studyAutoTimer = null;
+let normalRedoStack = []; // Allows ◀️ Retroceder and Avanzar ▶️ during regular games too!
+
+/**
+ * Checks if a game (by its canonical move fingerprint) is already stored in
+ * the Built-in Tournament Database or the User's Saved Database (localStorage).
+ */
+function isGameInPersistentDatabase(gameOrSnap) {
+  const fp = gameOrSnap?.fingerprint || getGameFingerprint(gameOrSnap);
+  if (!fp || fp.length < 4) return false;
+
+  for (const g of CURATED_TOURNAMENT_GAMES) {
+    if (getGameFingerprint(g) === fp) return true;
+  }
+  for (const s of getSavedGames()) {
+    const sFp = s.fingerprint || getGameFingerprint(s);
+    if (sFp === fp) return true;
+  }
+  return false;
+}
+
+/**
+ * Saves a game object (from Novelties, YouTube, Lichess, or the active board) into the
+ * local database ONLY if it is not already stored there.
+ */
+function saveGameToDatabaseIfUnique(gameObj) {
+  if (!gameObj) return false;
+  const fp = gameObj.fingerprint || getGameFingerprint(gameObj);
+  if (!fp || fp.length < 4) return false;
+
+  if (isGameInPersistentDatabase({ ...gameObj, fingerprint: fp })) {
+    return false; // Already in DB
+  }
+
+  const nowStr = new Date().toLocaleString('es-ES', {
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  const temp = new Chess();
+  const rawPgn = String(gameObj.pgn || '').trim();
+  const norm = normalizeSpanishOrEnglishPgn(rawPgn);
+  try {
+    temp.loadPgn(norm || rawPgn);
+  } catch {
+    try { temp.loadPgn(rawPgn); } catch {}
+  }
+  const hist = temp.history({ verbose: true });
+
+  const newEntry = {
+    id: gameObj.id || `db-${Date.now()}`,
+    title: gameObj.title || `Partida Guardada (${nowStr})`,
+    category: gameObj.category || '💾 Base de Datos Local',
+    description: gameObj.description || 'Guardada desde el tablero',
+    youtubeUrl: gameObj.youtubeUrl || null,
+    date: nowStr,
+    fen: temp.fen(),
+    pgn: temp.pgn() || norm || rawPgn,
+    moves: hist.map((m) => ({ from: m.from, to: m.to, promotion: m.promotion || null })),
+    halfMoves: hist.length,
+    turn: temp.turn(),
+    turnLabel: temp.turn() === 'w' ? 'Blancas (Alianza)' : 'Negras (Legión)',
+    fingerprint: fp
+  };
+
+  const list = getSavedGames();
+  list.unshift(newEntry);
+  setSavedGames(list);
+  soundFX.playSelect();
+
+  const li = document.createElement('li');
+  li.className = 'log-entry lore-intro';
+  li.innerHTML = `💾 <strong>Guardada en la Base de Datos:</strong> "${newEntry.title}" (verificada sin duplicados).`;
+  battleLog.prepend(li);
+
+  updateStudyBarUI();
+  updateBoardStepperDockUI();
+  if (typeof renderNoveltyBoardCard === 'function') renderNoveltyBoardCard();
+  return true;
+}
+
+function updateSaveButtonState(btn, gameCandidate) {
+  if (!btn) return;
+  const hasMoves = Boolean(
+    gameCandidate &&
+      ((Array.isArray(gameCandidate.moves) && gameCandidate.moves.length > 0) ||
+        (gameCandidate.pgn && String(gameCandidate.pgn).trim().length > 4))
+  );
+  if (!hasMoves) {
+    btn.textContent = '💾 Guardar en Base';
+    btn.classList.remove('already-in-db');
+    btn.disabled = true;
+    return;
+  }
+  const inDb = isGameInPersistentDatabase(gameCandidate);
+  if (inDb) {
+    btn.textContent = '✅ Ya en la Base';
+    btn.classList.add('already-in-db');
+    btn.disabled = true;
+  } else {
+    btn.textContent = '💾 Guardar en Base';
+    btn.classList.remove('already-in-db');
+    btn.disabled = false;
+  }
+}
+
+function updateBoardStepperDockUI() {
+  if (!stepperGameLabel || !stepperMoveBadge) return;
+
+  if (activeStudy) {
+    stepperGameLabel.textContent = `🎬 ${activeStudy.title}`;
+    stepperMoveBadge.textContent = `Jugada ${activeStudy.cursor} / ${activeStudy.moves.length}`;
+    if (btnDockPractice) btnDockPractice.hidden = false;
+    if (btnDockAuto) {
+      btnDockAuto.hidden = false;
+      btnDockAuto.textContent = activeStudy.autoPlaying ? '⏸️ Pausa' : '⏯️ Auto';
+    }
+    updateSaveButtonState(btnDockSaveDb, activeStudy);
+  } else {
+    const histLen = chess.history().length;
+    const totalLen = histLen + normalRedoStack.length;
+    const currentNov =
+      typeof autoLoadedNovelties !== 'undefined' && autoLoadedNovelties.length > 0
+        ? autoLoadedNovelties[currentNoveltyIndex]
+        : null;
+
+    if (totalLen === 0 && currentNov) {
+      stepperGameLabel.textContent = `✨ Sugerida: ${currentNov.title} (Pulsa «Avanzar ▶️» para iniciarla)`;
+      stepperMoveBadge.textContent = `Lista para avanzar`;
+      updateSaveButtonState(btnDockSaveDb, currentNov);
+    } else {
+      stepperGameLabel.textContent = `⚔️ Partida en Curso (Usa ◀️ Retroceder / Avanzar ▶️)`;
+      stepperMoveBadge.textContent = `Mov. ${histLen} / ${totalLen}`;
+      const snap = histLen > 0 ? buildGameSnapshot() : null;
+      updateSaveButtonState(btnDockSaveDb, snap);
+    }
+    if (btnDockPractice) btnDockPractice.hidden = true;
+  }
+}
 
 function getAllDatabaseFingerprints() {
   const set = getBuiltInDatabaseFingerprints();
@@ -1546,9 +1697,11 @@ function stopStudyAutoPlay() {
   }
   if (activeStudy) activeStudy.autoPlaying = false;
   if (btnStudyAuto) btnStudyAuto.textContent = '⏯️ Auto';
+  if (btnDockAuto) btnDockAuto.textContent = '⏯️ Auto';
 }
 
 function updateStudyBarUI() {
+  updateBoardStepperDockUI();
   if (!studyBar) return;
   if (!activeStudy) {
     studyBar.hidden = true;
@@ -1565,6 +1718,7 @@ function updateStudyBarUI() {
       studyYtLink.hidden = true;
     }
   }
+  updateSaveButtonState(btnStudySaveDb, activeStudy);
 }
 
 function jumpToStudyStep(targetCursor) {
@@ -1665,10 +1819,13 @@ function startStudySession(gameObj, startAtEnd = false) {
   gameMode = 'pvp';
 
   activeStudy = {
+    id: gameObj.id || `study-${Date.now()}`,
     title: gameObj.title || 'Partida de Torneo',
     category: gameObj.category || 'Torneo',
     description: gameObj.description || '',
     youtubeUrl: gameObj.youtubeUrl || null,
+    pgn: normalizedPgn || rawPgn,
+    fingerprint: gameObj.fingerprint || getGameFingerprint(normalizedPgn || rawPgn),
     moves: allMoves,
     cursor: startAtEnd ? allMoves.length : 0,
     savedMode: prevMode,
@@ -1699,18 +1856,91 @@ function startStudySession(gameObj, startAtEnd = false) {
   }
 }
 
-document.getElementById('btn-study-first')?.addEventListener('click', () => jumpToStudyStep(0));
-document.getElementById('btn-study-prev')?.addEventListener('click', () => {
-  if (activeStudy) jumpToStudyStep(activeStudy.cursor - 1);
-});
-document.getElementById('btn-study-next')?.addEventListener('click', () => {
+function handleStepFirst() {
+  if (isAnimating) return;
+  if (activeStudy) {
+    jumpToStudyStep(0);
+  } else {
+    while (chess.history().length > 0) {
+      const undone = chess.undo();
+      if (undone) normalRedoStack.push(undone);
+    }
+    rebuildAllPieces();
+    renderCasualties();
+    renderMoveNotation();
+    updateHUD();
+  }
+}
+
+function handleStepPrev() {
+  if (isAnimating) return;
+  if (activeStudy) {
+    jumpToStudyStep(activeStudy.cursor - 1);
+  } else if (chess.history().length > 0) {
+    const undone = chess.undo();
+    if (undone) {
+      normalRedoStack.push(undone);
+      if (undone.captured) {
+        if (undone.color === 'w') capturedByWhite.pop();
+        else capturedByBlack.pop();
+      }
+    }
+    rebuildAllPieces();
+    renderCasualties();
+    renderMoveNotation();
+    updateHUD();
+  }
+}
+
+async function handleStepNext() {
+  if (isAnimating) return;
   stopStudyAutoPlay();
-  stepStudyForwardAnimated();
-});
-document.getElementById('btn-study-last')?.addEventListener('click', () => {
-  if (activeStudy) jumpToStudyStep(activeStudy.moves.length);
-});
-btnStudyAuto?.addEventListener('click', () => {
+  if (activeStudy) {
+    await stepStudyForwardAnimated();
+  } else if (normalRedoStack.length > 0) {
+    const nextMv = normalRedoStack.pop();
+    await performChessMove(nextMv.from, nextMv.to, nextMv.promotion || 'q', true);
+    updateBoardStepperDockUI();
+  } else if (chess.history().length === 0 && autoLoadedNovelties.length > 0) {
+    // If board is at initial position and user clicks "Avanzar ▶️", automatically load & advance the current Novelty!
+    const nov = autoLoadedNovelties[currentNoveltyIndex];
+    if (nov) startStudySession(nov, false);
+  }
+}
+
+function handleStepLast() {
+  if (isAnimating) return;
+  if (activeStudy) {
+    jumpToStudyStep(activeStudy.moves.length);
+  } else if (normalRedoStack.length > 0) {
+    while (normalRedoStack.length > 0) {
+      const mv = normalRedoStack.pop();
+      const res = chess.move({ from: mv.from, to: mv.to, promotion: mv.promotion || 'q' });
+      if (res && res.captured) {
+        if (res.color === 'w') capturedByWhite.push(res.captured);
+        else capturedByBlack.push(res.captured);
+      }
+    }
+    rebuildAllPieces();
+    renderCasualties();
+    renderMoveNotation();
+    updateHUD();
+  }
+}
+
+function handleToggleAutoPlay() {
+  if (!activeStudy && chess.history().length === 0 && autoLoadedNovelties.length > 0) {
+    startStudySession(autoLoadedNovelties[currentNoveltyIndex], false);
+    setTimeout(() => {
+      if (activeStudy) {
+        activeStudy.autoPlaying = true;
+        if (btnStudyAuto) btnStudyAuto.textContent = '⏸️ Pausa';
+        if (btnDockAuto) btnDockAuto.textContent = '⏸️ Pausa';
+        runStudyAutoLoop();
+      }
+    }, 600);
+    return;
+  }
   if (!activeStudy) return;
   if (activeStudy.autoPlaying) {
     stopStudyAutoPlay();
@@ -1719,12 +1949,50 @@ btnStudyAuto?.addEventListener('click', () => {
       jumpToStudyStep(0);
     }
     activeStudy.autoPlaying = true;
-    btnStudyAuto.textContent = '⏸️ Pausa';
+    if (btnStudyAuto) btnStudyAuto.textContent = '⏸️ Pausa';
+    if (btnDockAuto) btnDockAuto.textContent = '⏸️ Pausa';
     runStudyAutoLoop();
+  }
+}
+
+function handleSaveActiveToDb() {
+  if (activeStudy) {
+    saveGameToDatabaseIfUnique(activeStudy);
+  } else if (chess.history().length > 0) {
+    saveGameToDatabaseIfUnique(buildGameSnapshot());
+  } else if (autoLoadedNovelties.length > 0) {
+    saveGameToDatabaseIfUnique(autoLoadedNovelties[currentNoveltyIndex]);
+  }
+}
+
+document.getElementById('btn-study-first')?.addEventListener('click', handleStepFirst);
+document.getElementById('btn-study-prev')?.addEventListener('click', handleStepPrev);
+document.getElementById('btn-study-next')?.addEventListener('click', handleStepNext);
+document.getElementById('btn-study-last')?.addEventListener('click', handleStepLast);
+btnStudyAuto?.addEventListener('click', handleToggleAutoPlay);
+btnStudySaveDb?.addEventListener('click', handleSaveActiveToDb);
+
+document.getElementById('btn-dock-first')?.addEventListener('click', handleStepFirst);
+document.getElementById('btn-dock-prev')?.addEventListener('click', handleStepPrev);
+document.getElementById('btn-dock-next')?.addEventListener('click', handleStepNext);
+document.getElementById('btn-dock-last')?.addEventListener('click', handleStepLast);
+btnDockAuto?.addEventListener('click', handleToggleAutoPlay);
+btnDockSaveDb?.addEventListener('click', handleSaveActiveToDb);
+
+// Keyboard Left/Right Arrow support to advance & rewind moves on the board!
+window.addEventListener('keydown', (e) => {
+  const tag = document.activeElement?.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+  if (e.key === 'ArrowRight') {
+    e.preventDefault();
+    handleStepNext();
+  } else if (e.key === 'ArrowLeft') {
+    e.preventDefault();
+    handleStepPrev();
   }
 });
 
-document.getElementById('btn-study-practice')?.addEventListener('click', () => {
+function handlePracticeFromHere() {
   stopStudyAutoPlay();
   const resumeMode = activeStudy?.savedMode || 'ai-2';
   activeStudy = null;
@@ -1741,7 +2009,10 @@ document.getElementById('btn-study-practice')?.addEventListener('click', () => {
     const aiMove = chooseBestMove(chess, aiLevel);
     if (aiMove) performChessMove(aiMove.from, aiMove.to, aiMove.promotion);
   }
-});
+}
+
+document.getElementById('btn-study-practice')?.addEventListener('click', handlePracticeFromHere);
+btnDockPractice?.addEventListener('click', handlePracticeFromHere);
 
 function renderStudyGamesCatalog(gamesArray, headingText = null) {
   if (!studyGamesListEl) return;
@@ -1805,6 +2076,24 @@ function renderStudyGamesCatalog(gamesArray, headingText = null) {
       btnEnd.addEventListener('click', () => startStudySession(g, true));
       actions.appendChild(btnEnd);
     }
+
+    const btnSaveToDb = document.createElement('button');
+    btnSaveToDb.type = 'button';
+    const alreadyInDb = isGameInPersistentDatabase(g);
+    btnSaveToDb.className = `btn-save-item ${alreadyInDb ? 'already-in-db' : ''}`;
+    btnSaveToDb.textContent = alreadyInDb ? '✅ En Base' : '💾 Guardar Base';
+    btnSaveToDb.disabled = alreadyInDb;
+    btnSaveToDb.title = alreadyInDb
+      ? 'Esta partida ya está en tu base de datos (sin duplicar)'
+      : 'Guardar esta partida en tu base de datos local';
+    btnSaveToDb.addEventListener('click', () => {
+      if (saveGameToDatabaseIfUnique(g)) {
+        btnSaveToDb.textContent = '✅ En Base';
+        btnSaveToDb.classList.add('already-in-db');
+        btnSaveToDb.disabled = true;
+      }
+    });
+    actions.appendChild(btnSaveToDb);
 
     card.appendChild(info);
     card.appendChild(actions);
@@ -2047,7 +2336,9 @@ const noveltySourceBadge = document.getElementById('novelty-source-badge');
 const noveltyGameTitle = document.getElementById('novelty-game-title');
 const noveltyGameDesc = document.getElementById('novelty-game-desc');
 const btnNoveltyPlay = document.getElementById('btn-novelty-play');
+const btnNoveltyPrev = document.getElementById('btn-novelty-prev');
 const btnNoveltyNext = document.getElementById('btn-novelty-next');
+const btnNoveltySaveDb = document.getElementById('btn-novelty-save-db');
 const btnNoveltyAll = document.getElementById('btn-novelty-all');
 
 let autoLoadedNovelties = [];
@@ -2063,9 +2354,12 @@ function renderNoveltyBoardCard() {
   if (currentNoveltyIndex >= autoLoadedNovelties.length) {
     currentNoveltyIndex = 0;
   }
+  if (currentNoveltyIndex < 0) {
+    currentNoveltyIndex = autoLoadedNovelties.length - 1;
+  }
   const item = autoLoadedNovelties[currentNoveltyIndex];
   if (noveltyCounterBadge) {
-    noveltyCounterBadge.textContent = `✨ ${currentNoveltyIndex + 1} / ${autoLoadedNovelties.length}`;
+    noveltyCounterBadge.textContent = `${currentNoveltyIndex + 1} / ${autoLoadedNovelties.length}`;
   }
   if (noveltySourceBadge) {
     noveltySourceBadge.textContent = item.badge || item.category || '✨ NOVEDAD DEL DÍA';
@@ -2077,6 +2371,8 @@ function renderNoveltyBoardCard() {
   if (btnNoveltyHeaderCount) {
     btnNoveltyHeaderCount.textContent = `📚 Torneos / Novedades (${autoLoadedNovelties.length})`;
   }
+  updateSaveButtonState(btnNoveltySaveDb, item);
+  updateBoardStepperDockUI();
 }
 
 const btnNoveltyHeaderCount = document.getElementById('btn-study-header');
@@ -2089,11 +2385,26 @@ btnNoveltyPlay?.addEventListener('click', () => {
   }
 });
 
+btnNoveltyPrev?.addEventListener('click', () => {
+  if (autoLoadedNovelties.length === 0) return;
+  currentNoveltyIndex = (currentNoveltyIndex - 1 + autoLoadedNovelties.length) % autoLoadedNovelties.length;
+  renderNoveltyBoardCard();
+  soundFX.playSelect();
+});
+
 btnNoveltyNext?.addEventListener('click', () => {
   if (autoLoadedNovelties.length === 0) return;
   currentNoveltyIndex = (currentNoveltyIndex + 1) % autoLoadedNovelties.length;
   renderNoveltyBoardCard();
   soundFX.playSelect();
+});
+
+btnNoveltySaveDb?.addEventListener('click', () => {
+  if (autoLoadedNovelties.length === 0) return;
+  const item = autoLoadedNovelties[currentNoveltyIndex];
+  if (item) {
+    saveGameToDatabaseIfUnique(item);
+  }
 });
 
 btnNoveltyAll?.addEventListener('click', () => {
