@@ -190,6 +190,45 @@
       </div>
     </aside>
 
+    <!-- Right-of-Board Vertical Attack-Line Advance & Evaluation Column (YouTube / Chessercise style) -->
+    <div class="attack-advance-column" id="attack-advance-column" aria-label="Columna de avance de la línea de ataque y evaluación">
+      <div class="attack-col-header" title="Evaluación y ventaja de la línea de ataque">
+        <span class="attack-col-title">ATAQUE</span>
+        <strong class="attack-eval-score" id="attack-eval-score">0.0</strong>
+      </div>
+
+      <div class="attack-bar-outer" id="attack-bar-outer">
+        <!-- Black (Top) & White (Bottom) dynamic fill -->
+        <div class="attack-bar-black-bg"></div>
+        <div class="attack-bar-white-fill" id="attack-bar-white-fill" style="height: 50%;"></div>
+
+        <!-- Center equilibrium line (Fila 4/5) -->
+        <div class="attack-bar-midline"></div>
+
+        <!-- Dynamic Frontline Attack Marker -->
+        <div class="attack-frontline-marker" id="attack-frontline-marker" style="bottom: 50%;">
+          <span class="frontline-tag" id="attack-frontline-tag">⚔️ F4</span>
+        </div>
+
+        <!-- 8 Rank numbers along the vertical column (8 down to 1) -->
+        <div class="attack-rank-ticks" aria-hidden="true">
+          <span>8</span>
+          <span>7</span>
+          <span>6</span>
+          <span>5</span>
+          <span>4</span>
+          <span>3</span>
+          <span>2</span>
+          <span>1</span>
+        </div>
+      </div>
+
+      <div class="attack-col-footer">
+        <span class="attack-line-rank" id="attack-line-white-rank" title="Fila alcanzada por la línea de ataque blanca">☀️ F2</span>
+        <span class="attack-line-rank black" id="attack-line-black-rank" title="Fila alcanzada por la línea de ataque negra">👁️ F7</span>
+      </div>
+    </div>
+
     <!-- Right Sidebar: Auto-Loaded Novelties Feed, Champion Lore & Camera Presets -->
     <aside class="hud-panel hud-right">
       <section class="panel-section novelty-card" id="novelty-panel-card">

@@ -4,7 +4,7 @@ import { Chess } from 'chess.js';
 import { getPieceLore } from './lotrLore.js';
 import { createLOTRPieceMesh } from './pieceBuilder.js';
 import { animateWalk, executeCinematicCombat, spawnParticleBurst } from './combatSystem.js';
-import { chooseBestMove } from './aiEngine.js';
+import { chooseBestMove, computeAttackAdvanceMetrics } from './aiEngine.js';
 import { soundFX } from './soundFX.js';
 import { OnlineRoomManager, PUBLIC_GAME_URL, extractRoomCode } from './onlineMultiplayer.js';
 import {
@@ -117,9 +117,46 @@ scene.add(mordorFill);
 const boardGroup = new THREE.Group();
 scene.add(boardGroup);
 
+let attackBar3D = null; // { whiteBar, blackBar, marker, totalLen, startZ }
+
+function createBoardCoordinatePlate(text) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 128;
+  canvas.height = 128;
+  const ctx = canvas.getContext('2d');
+
+  // Obsidian plate with golden rim
+  ctx.fillStyle = 'rgba(14, 18, 28, 0.92)';
+  ctx.beginPath();
+  ctx.arc(64, 64, 52, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = '#e6c259';
+  ctx.lineWidth = 5;
+  ctx.stroke();
+
+  ctx.fillStyle = '#ffd970';
+  ctx.font = 'bold 68px Cinzel, Georgia, serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.shadowColor = '#000000';
+  ctx.shadowBlur = 6;
+  ctx.fillText(String(text), 64, 67);
+
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.anisotropy = 4;
+  const mat = new THREE.MeshBasicMaterial({
+    map: tex,
+    transparent: true
+  });
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(0.56, 0.56), mat);
+  mesh.rotation.x = -Math.PI / 2;
+  return mesh;
+}
+
 function buildBoardArena() {
-  // Outer Citadel Frame
-  const frameSize = TILE_SIZE * 8 + 1.3;
+  // Outer Citadel Frame (widened slightly so coordinate numbers 1-8 and letters A-H sit clearly on the 4 borders)
+  const frameSize = TILE_SIZE * 8 + 1.55;
   const frameGeo = new THREE.BoxGeometry(frameSize, 0.45, frameSize);
   const frameMat = new THREE.MeshStandardMaterial({
     color: 0x161922,
@@ -138,7 +175,7 @@ function buildBoardArena() {
   borderLines.position.y = -0.24;
   boardGroup.add(borderLines);
 
-  // 64 Squares (High-contrast Gondor Marble & Slate Bluestone so both White and Black pieces pop)
+  // 64 Squares (High-contrast Marble & Slate Bluestone so both White and Black pieces pop)
   const lightTileMat = new THREE.MeshStandardMaterial({
     color: 0xe2dfd7,
     metalness: 0.2,
@@ -166,6 +203,65 @@ function buildBoardArena() {
     }
   }
 
+  // --- 3D Coordinate Letters (A-H) and Numbers (1-8) on all 4 lateral edges of the board ---
+  const edgeDist = TILE_SIZE * 4 + 0.42;
+  for (let i = 0; i < 8; i++) {
+    // File Letters A..H along Bottom (+Z, White side) and Top (-Z, Black side)
+    const letter = FILES[i].toUpperCase();
+    const xPos = (i - 3.5) * TILE_SIZE;
+
+    const bottomPlate = createBoardCoordinatePlate(letter);
+    bottomPlate.position.set(xPos, 0.01, edgeDist);
+    boardGroup.add(bottomPlate);
+
+    const topPlate = createBoardCoordinatePlate(letter);
+    topPlate.position.set(xPos, 0.01, -edgeDist);
+    boardGroup.add(topPlate);
+
+    // Rank Numbers 1..8 along Left (-X, File A side) and Right (+X, File H side)
+    const rankNum = i + 1;
+    const zPos = (3.5 - i) * TILE_SIZE;
+
+    const leftPlate = createBoardCoordinatePlate(rankNum);
+    leftPlate.position.set(-edgeDist, 0.01, zPos);
+    boardGroup.add(leftPlate);
+
+    const rightPlate = createBoardCoordinatePlate(rankNum);
+    rightPlate.position.set(edgeDist, 0.01, zPos);
+    boardGroup.add(rightPlate);
+  }
+
+  // --- 3D Attack-Line Advance Column right alongside the Right (+X) edge of the board ---
+  const totalLen = TILE_SIZE * 8;
+  const colX = edgeDist + 0.56;
+  const baseTrack = new THREE.Mesh(
+    new THREE.BoxGeometry(0.32, 0.14, totalLen + 0.2),
+    new THREE.MeshStandardMaterial({ color: 0x111520, metalness: 0.8, roughness: 0.3 })
+  );
+  baseTrack.position.set(colX, -0.04, 0);
+  boardGroup.add(baseTrack);
+
+  // White Attack Advance Bar (grows from +Z [Rank 1] toward -Z [Rank 8])
+  const whiteBarGeo = new THREE.BoxGeometry(0.24, 0.22, 1);
+  const whiteBarMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+  const whiteBar = new THREE.Mesh(whiteBarGeo, whiteBarMat);
+  boardGroup.add(whiteBar);
+
+  // Black Attack Advance Bar (grows from -Z [Rank 8] toward +Z [Rank 1])
+  const blackBarGeo = new THREE.BoxGeometry(0.24, 0.22, 1);
+  const blackBarMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
+  const blackBar = new THREE.Mesh(blackBarGeo, blackBarMat);
+  boardGroup.add(blackBar);
+
+  // Glowing Frontline Marker where White and Black attack lines meet
+  const marker = new THREE.Mesh(
+    new THREE.BoxGeometry(0.46, 0.32, 0.14),
+    new THREE.MeshBasicMaterial({ color: 0xfacc15 })
+  );
+  boardGroup.add(marker);
+
+  attackBar3D = { whiteBar, blackBar, marker, totalLen, colX };
+
   // 4 Corner Cyber-Medieval Watchtowers (Gondor Blue on +Z, Mordor Red on -Z)
   const corners = [
     [-1, 1, 0x00e5ff],
@@ -173,7 +269,7 @@ function buildBoardArena() {
     [-1, -1, 0xff1133],
     [1, -1, 0xff1133]
   ];
-  const offset = (TILE_SIZE * 4) + 0.85;
+  const offset = (TILE_SIZE * 4) + 1.32;
   corners.forEach(([cx, cz, crystalColor]) => {
     const pillarGroup = new THREE.Group();
     pillarGroup.position.set(cx * offset, 0, cz * offset);
@@ -353,6 +449,62 @@ function updateHUD() {
   }
 
   moveCounterEl.textContent = `Jugada ${chess.moveNumber()}`;
+  updateAttackAdvanceColumn();
+}
+
+function updateAttackAdvanceColumn() {
+  const metrics = computeAttackAdvanceMetrics(chess);
+
+  // 1. Update HTML Right-of-Board Vertical Attack-Line Advance Column
+  const scoreEl = document.getElementById('attack-eval-score');
+  const whiteFillEl = document.getElementById('attack-bar-white-fill');
+  const markerEl = document.getElementById('attack-frontline-marker');
+  const tagEl = document.getElementById('attack-frontline-tag');
+  const whiteRankEl = document.getElementById('attack-line-white-rank');
+  const blackRankEl = document.getElementById('attack-line-black-rank');
+
+  if (scoreEl) {
+    scoreEl.textContent = metrics.evalText;
+    scoreEl.className = `attack-eval-score ${
+      metrics.evalPawns > 0.25 ? 'white-adv' : metrics.evalPawns < -0.25 ? 'black-adv' : ''
+    }`;
+  }
+  if (whiteFillEl) {
+    whiteFillEl.style.height = `${metrics.whiteBarPct}%`;
+  }
+  if (markerEl) {
+    markerEl.style.bottom = `${metrics.whiteBarPct}%`;
+  }
+  if (tagEl) {
+    tagEl.textContent = `⚔️ F${metrics.frontlineRank}`;
+  }
+  if (whiteRankEl) {
+    whiteRankEl.textContent = `☀️ F${metrics.whiteAttackRank}`;
+  }
+  if (blackRankEl) {
+    blackRankEl.textContent = `👁️ F${metrics.blackAttackRank}`;
+  }
+
+  // 2. Update 3D Attack-Line Advance Column on the Right (+X) edge of the 3D board
+  if (attackBar3D) {
+    const { whiteBar, blackBar, marker, totalLen, colX } = attackBar3D;
+    const pct = metrics.whiteBarPct / 100;
+    const whiteLen = Math.max(0.15, totalLen * pct);
+    const blackLen = Math.max(0.15, totalLen * (1 - pct));
+    const halfTotal = totalLen / 2;
+
+    // White starts at +halfTotal (Rank 1) and grows toward -halfTotal (Rank 8)
+    whiteBar.scale.z = whiteLen;
+    whiteBar.position.set(colX, 0.08, halfTotal - whiteLen / 2);
+
+    // Black starts at -halfTotal (Rank 8) and grows toward +halfTotal (Rank 1)
+    blackBar.scale.z = blackLen;
+    blackBar.position.set(colX, 0.08, -halfTotal + blackLen / 2);
+
+    // Frontline meeting point
+    const meetZ = halfTotal - whiteLen;
+    marker.position.set(colX, 0.14, meetZ);
+  }
 }
 
 function renderCasualties() {

@@ -22,7 +22,7 @@ const PST_CENTER = [
   [-30,-20,-20,-20,-20,-20,-20,-30]
 ];
 
-function evaluateBoard(chess) {
+export function evaluateBoard(chess) {
   if (chess.isCheckmate()) {
     return chess.turn() === 'w' ? -99999 : 99999;
   }
@@ -51,6 +51,84 @@ function evaluateBoard(chess) {
   }
 
   return score;
+}
+
+/**
+ * Computes the Attack-Line Advance & Evaluation Bar metrics for the right-side vertical column:
+ * - evalPawns: signed score in pawns (e.g. +1.45, -0.80)
+ * - evalText: formatted label ("+1.5", "-0.8", "0.0", "M")
+ * - whiteBarPct: 0..100 vertical fill percentage for White (from bottom up)
+ * - whiteAttackRank: 1..8 rank of White's forward attack line
+ * - blackAttackRank: 1..8 rank of Black's forward attack line
+ * - frontlineRank: 1..8 rank where the active line of attack stands
+ */
+export function computeAttackAdvanceMetrics(chess) {
+  const rawScore = evaluateBoard(chess);
+  const board = chess.board();
+
+  let maxWhiteRank = 2; // 1..8
+  let minBlackRank = 7; // 1..8
+  let whiteAdvSum = 0;
+  let whiteCount = 0;
+  let blackAdvSum = 0;
+  let blackCount = 0;
+
+  for (let r = 0; r < 8; r++) {
+    const rankNum = 8 - r; // r=0 is rank 8, r=7 is rank 1
+    for (let c = 0; c < 8; c++) {
+      const p = board[r][c];
+      if (!p) continue;
+      if (p.color === 'w') {
+        if (rankNum > maxWhiteRank) maxWhiteRank = rankNum;
+        if (p.type !== 'k') {
+          whiteAdvSum += rankNum;
+          whiteCount++;
+        }
+      } else {
+        if (rankNum < minBlackRank) minBlackRank = rankNum;
+        if (p.type !== 'k') {
+          blackAdvSum += rankNum;
+          blackCount++;
+        }
+      }
+    }
+  }
+
+  const avgWhiteRank = whiteCount > 0 ? whiteAdvSum / whiteCount : 2;
+  const avgBlackRank = blackCount > 0 ? blackAdvSum / blackCount : 7;
+
+  // Combine material/positional score with attack-line territorial advance
+  const territoryBonus = ((avgWhiteRank - 2) - (7 - avgBlackRank)) * 35;
+  const combinedCp = Math.abs(rawScore) > 50000 ? rawScore : rawScore + territoryBonus;
+  const evalPawns = combinedCp / 100;
+
+  let evalText = '0.0';
+  let whiteBarPct = 50;
+
+  if (Math.abs(rawScore) > 50000) {
+    const whiteWins = rawScore > 0;
+    evalText = whiteWins ? '1-0' : '0-1';
+    whiteBarPct = whiteWins ? 98 : 2;
+  } else {
+    const sign = evalPawns > 0.05 ? '+' : '';
+    evalText = `${sign}${evalPawns.toFixed(1)}`;
+    // Smooth sigmoid-like mapping so +4 pawns is ~85% and -4 pawns is ~15%
+    const clamped = Math.max(-10, Math.min(10, evalPawns));
+    whiteBarPct = Math.round(50 + (clamped / 10) * 46);
+    whiteBarPct = Math.max(4, Math.min(96, whiteBarPct));
+  }
+
+  // Frontline rank (1..8) mapped from whiteBarPct & forward pieces
+  const frontlineRank = Math.max(1, Math.min(8, Math.round((whiteBarPct / 100) * 7 + 1)));
+
+  return {
+    evalPawns,
+    evalText,
+    whiteBarPct,
+    whiteAttackRank: maxWhiteRank,
+    blackAttackRank: minBlackRank,
+    frontlineRank
+  };
 }
 
 function minimax(chess, depth, alpha, beta, isMaximizing) {

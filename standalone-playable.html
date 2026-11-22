@@ -1329,6 +1329,133 @@
         }
       }
 
+      // Draw Lateral Rank Numbers (1-8) and File Letters (A-H) around the board edges
+      ctx.save();
+      ctx.font = 'bold 11px ui-monospace, SFMono-Regular, Menlo, monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      for (let i = 0; i < 8; i++) {
+        const rankLabel = String(8 - i);
+        const fileLabel = String.fromCharCode(65 + i);
+
+        // Left & Right Rank Numbers (1..8)
+        const leftPos = boardToScreen(i, 0);
+        const rightPos = boardToScreen(i, 7);
+        const lx = isIso ? leftPos.x - 32 : leftPos.x - 26;
+        const ly = isIso ? leftPos.y + 8 : leftPos.y;
+        const rx = isIso ? rightPos.x + 32 : rightPos.x + 26;
+        const ry = isIso ? rightPos.y - 8 : rightPos.y;
+
+        ctx.fillStyle = '#ffd970';
+        ctx.fillText(rankLabel, lx, ly);
+        ctx.fillText(rankLabel, rx, ry);
+
+        // Bottom & Top File Letters (A..H)
+        const botPos = boardToScreen(7, i);
+        const topPos = boardToScreen(0, i);
+        const bx = isIso ? botPos.x + 16 : botPos.x;
+        const by = isIso ? botPos.y + 18 : botPos.y + 26;
+        const tx = isIso ? topPos.x - 16 : topPos.x;
+        const ty = isIso ? topPos.y - 18 : topPos.y - 26;
+
+        ctx.fillStyle = '#bae6fd';
+        ctx.fillText(fileLabel, bx, by);
+        ctx.fillText(fileLabel, tx, ty);
+      }
+      ctx.restore();
+
+      // Draw Right-Side Vertical Attack-Line Advance & Evaluation Column (Chessercise / YouTube style)
+      {
+        const VALS = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
+        let wScore = 0, bScore = 0, wMaxRank = 2, bMinRank = 7;
+        for (let r = 0; r < 8; r++) {
+          const rankNum = 8 - r;
+          for (let c = 0; c < 8; c++) {
+            const p = board[r][c];
+            if (!p) continue;
+            if (p.color === 'w') {
+              wScore += VALS[p.type] + (rankNum - 2) * 0.12;
+              if (rankNum > wMaxRank) wMaxRank = rankNum;
+            } else {
+              bScore += VALS[p.type] + (7 - rankNum) * 0.12;
+              if (rankNum < bMinRank) bMinRank = rankNum;
+            }
+          }
+        }
+        const diff = wScore - bScore;
+        const clamped = Math.max(-8, Math.min(8, diff));
+        const whitePct = Math.max(0.06, Math.min(0.94, 0.5 + (clamped / 8) * 0.44));
+        const frontlineRank = Math.max(1, Math.min(8, Math.round(whitePct * 7 + 1)));
+
+        const barX = canvas.width - 36;
+        const barY = 38;
+        const barW = 20;
+        const barH = canvas.height - 76;
+
+        ctx.save();
+        // Header score badge
+        ctx.fillStyle = '#ffd970';
+        ctx.font = 'bold 9px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('ATAQUE', barX + barW / 2, 14);
+
+        const sign = diff > 0.05 ? '+' : '';
+        ctx.fillStyle = diff > 0.2 ? '#38bdf8' : diff < -0.2 ? '#f87171' : '#e2e8f0';
+        ctx.font = 'bold 10px ui-monospace, monospace';
+        ctx.fillText(`${sign}${diff.toFixed(1)}`, barX + barW / 2, 27);
+
+        // Outer Track (Black top, White bottom)
+        ctx.fillStyle = '#261c24';
+        ctx.strokeStyle = '#e6c259';
+        ctx.lineWidth = 1.5;
+        ctx.fillRect(barX, barY, barW, barH);
+
+        const wFillH = barH * whitePct;
+        const grad = ctx.createLinearGradient(0, barY + barH - wFillH, 0, barY + barH);
+        grad.addColorStop(0, '#38bdf8');
+        grad.addColorStop(0.35, '#f8fafc');
+        grad.addColorStop(1, '#cbd5e1');
+        ctx.fillStyle = grad;
+        ctx.fillRect(barX, barY + barH - wFillH, barW, wFillH);
+        ctx.strokeRect(barX, barY, barW, barH);
+
+        // Center equilibrium line
+        ctx.strokeStyle = '#facc15';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(barX - 3, barY + barH / 2);
+        ctx.lineTo(barX + barW + 3, barY + barH / 2);
+        ctx.stroke();
+
+        // Rank Ticks 8..1 inside the column
+        ctx.font = 'bold 8.5px ui-monospace, monospace';
+        ctx.textAlign = 'center';
+        for (let rk = 8; rk >= 1; rk--) {
+          const ty = barY + ((8 - rk + 0.5) / 8) * barH;
+          ctx.fillStyle = '#facc15';
+          ctx.fillText(String(rk), barX + barW / 2, ty + 3);
+        }
+
+        // Frontline Indicator Tag ("⚔️ F4")
+        const markerY = barY + barH - wFillH;
+        ctx.fillStyle = '#0f172a';
+        ctx.strokeStyle = '#facc15';
+        ctx.lineWidth = 1.2;
+        ctx.fillRect(barX - 12, markerY - 7, barW + 18, 14);
+        ctx.strokeRect(barX - 12, markerY - 7, barW + 18, 14);
+        ctx.fillStyle = '#facc15';
+        ctx.font = 'bold 8.5px ui-monospace, monospace';
+        ctx.fillText(`⚔️F${frontlineRank}`, barX + barW / 2 - 3, markerY + 3);
+
+        // Footer frontline rank summary
+        ctx.fillStyle = '#7dd3fc';
+        ctx.font = 'bold 9px ui-monospace, monospace';
+        ctx.fillText(`☀️F${wMaxRank}`, barX + barW / 2, barY + barH + 13);
+        ctx.fillStyle = '#fdba74';
+        ctx.fillText(`👁️F${bMinRank}`, barX + barW / 2, barY + barH + 24);
+        ctx.restore();
+      }
+
       // Draw Pieces
       for (let r = 0; r < 8; r++) {
         for (let c = 0; c < 8; c++) {
