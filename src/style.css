@@ -264,70 +264,68 @@ html, body {
   position: relative;
   z-index: 12;
   pointer-events: auto;
-  width: 56px;
-  height: min(460px, 72vh);
+  width: 66px;
+  height: min(475px, 74vh);
   margin-right: 4px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
-  padding: 8px 6px;
-  background: rgba(14, 17, 25, 0.9);
+  gap: 5px;
+  padding: 7px 5px;
+  background: rgba(12, 15, 22, 0.92);
   backdrop-filter: blur(10px);
   border: 1.5px solid rgba(230, 194, 89, 0.55);
   border-radius: 12px;
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.7), 0 0 16px rgba(56, 189, 248, 0.18);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.75);
 }
 
-.attack-col-header {
+.attack-col-header,
+.attack-col-footer {
   display: flex;
   flex-direction: column;
   align-items: center;
   line-height: 1.15;
   width: 100%;
+  gap: 2px;
 }
 
 .attack-col-title {
   font-family: var(--font-display);
-  font-size: 0.56rem;
+  font-size: 0.54rem;
   font-weight: 800;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
   color: var(--gold);
+  white-space: nowrap;
 }
 
-.attack-eval-score {
+.attack-prob-badge {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.78rem;
   font-weight: 800;
   color: #ffffff;
-  background: rgba(255, 255, 255, 0.1);
-  padding: 2px 5px;
+  background: rgba(16, 185, 129, 0.25);
+  padding: 1px 6px;
   border-radius: 5px;
-  margin-top: 2px;
-  border: 1px solid rgba(230, 194, 89, 0.35);
+  border: 1px solid #10b981;
+  transition: all 0.3s ease;
 }
 
-.attack-eval-score.white-adv {
-  background: rgba(56, 189, 248, 0.25);
-  border-color: #38bdf8;
-  color: #e0f2fe;
-}
-
-.attack-eval-score.black-adv {
-  background: rgba(239, 68, 68, 0.28);
-  border-color: #ef4444;
-  color: #fecaca;
+.attack-risk-label {
+  font-size: 0.56rem;
+  font-weight: 700;
+  color: #e2e8f0;
+  white-space: nowrap;
 }
 
 .attack-bar-outer {
   position: relative;
   flex: 1;
-  width: 26px;
+  width: 28px;
   border-radius: 7px;
   overflow: visible;
-  border: 1.5px solid rgba(230, 194, 89, 0.6);
-  background: #1c2029;
+  border: 1.5px solid rgba(230, 194, 89, 0.65);
+  background: #141822;
   box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8);
 }
 
@@ -335,7 +333,8 @@ html, body {
   position: absolute;
   inset: 0;
   border-radius: 5px;
-  background: linear-gradient(180deg, #1f2430 0%, #372028 100%);
+  background: linear-gradient(180deg, #059669 0%, #10b981 50%, #34d399 100%);
+  transition: background 0.35s ease;
 }
 
 .attack-bar-white-fill {
@@ -344,9 +343,10 @@ html, body {
   right: 0;
   bottom: 0;
   border-radius: 0 0 5px 5px;
-  background: linear-gradient(180deg, #38bdf8 0%, #f8fafc 30%, #e2e8f0 100%);
-  box-shadow: 0 -2px 12px rgba(56, 189, 248, 0.65);
-  transition: height 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  background: linear-gradient(180deg, #059669 0%, #10b981 50%, #34d399 100%);
+  border-top: 2px solid #ffffff;
+  box-shadow: 0 -2px 12px rgba(16, 185, 129, 0.65);
+  transition: height 0.4s cubic-bezier(0.22, 1, 0.36, 1), background 0.35s ease, box-shadow 0.35s ease;
 }
 
 .attack-bar-midline {

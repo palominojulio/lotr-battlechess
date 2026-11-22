@@ -455,37 +455,53 @@ function updateHUD() {
 function updateAttackAdvanceColumn() {
   const metrics = computeAttackAdvanceMetrics(chess);
 
-  // 1. Update HTML Right-of-Board Vertical Attack-Line Advance Column
-  const scoreEl = document.getElementById('attack-eval-score');
+  // 1. Update HTML Right-of-Board Vertical Risk, Dominance & Win-Probability Column
   const whiteFillEl = document.getElementById('attack-bar-white-fill');
+  const blackBgEl = document.getElementById('attack-bar-black-bg');
   const markerEl = document.getElementById('attack-frontline-marker');
   const tagEl = document.getElementById('attack-frontline-tag');
-  const whiteRankEl = document.getElementById('attack-line-white-rank');
-  const blackRankEl = document.getElementById('attack-line-black-rank');
 
-  if (scoreEl) {
-    scoreEl.textContent = metrics.evalText;
-    scoreEl.className = `attack-eval-score ${
-      metrics.evalPawns > 0.25 ? 'white-adv' : metrics.evalPawns < -0.25 ? 'black-adv' : ''
-    }`;
-  }
+  const whiteProbEl = document.getElementById('attack-white-prob');
+  const whiteStatusEl = document.getElementById('attack-white-status');
+  const blackProbEl = document.getElementById('attack-black-prob');
+  const blackStatusEl = document.getElementById('attack-black-status');
+
   if (whiteFillEl) {
     whiteFillEl.style.height = `${metrics.whiteBarPct}%`;
+    whiteFillEl.style.background = metrics.whiteColor.bgGradient;
+    whiteFillEl.style.boxShadow = `0 -2px 12px ${metrics.whiteColor.glow}`;
+  }
+  if (blackBgEl) {
+    blackBgEl.style.background = metrics.blackColor.bgGradient;
   }
   if (markerEl) {
     markerEl.style.bottom = `${metrics.whiteBarPct}%`;
   }
   if (tagEl) {
-    tagEl.textContent = `⚔️ F${metrics.frontlineRank}`;
-  }
-  if (whiteRankEl) {
-    whiteRankEl.textContent = `☀️ F${metrics.whiteAttackRank}`;
-  }
-  if (blackRankEl) {
-    blackRankEl.textContent = `👁️ F${metrics.blackAttackRank}`;
+    tagEl.textContent = `⚔️F${metrics.frontlineRank}·${metrics.evalText}`;
   }
 
-  // 2. Update 3D Attack-Line Advance Column on the Right (+X) edge of the 3D board
+  if (whiteProbEl) {
+    whiteProbEl.textContent = `${metrics.whiteWinProb}%`;
+    whiteProbEl.style.borderColor = metrics.whiteColor.hex;
+    whiteProbEl.style.background = `${metrics.whiteColor.hex}33`;
+  }
+  if (whiteStatusEl) {
+    whiteStatusEl.textContent = `${metrics.whiteColor.statusLabel} (F${metrics.whiteAttackRank})`;
+    whiteStatusEl.style.color = metrics.whiteColor.hex;
+  }
+
+  if (blackProbEl) {
+    blackProbEl.textContent = `${metrics.blackWinProb}%`;
+    blackProbEl.style.borderColor = metrics.blackColor.hex;
+    blackProbEl.style.background = `${metrics.blackColor.hex}33`;
+  }
+  if (blackStatusEl) {
+    blackStatusEl.textContent = `${metrics.blackColor.statusLabel} (F${metrics.blackAttackRank})`;
+    blackStatusEl.style.color = metrics.blackColor.hex;
+  }
+
+  // 2. Update 3D Attack-Line Advance Column on the Right (+X) edge of the 3D board with Green/Orange/Red Risk colors!
   if (attackBar3D) {
     const { whiteBar, blackBar, marker, totalLen, colX } = attackBar3D;
     const pct = metrics.whiteBarPct / 100;
@@ -493,15 +509,14 @@ function updateAttackAdvanceColumn() {
     const blackLen = Math.max(0.15, totalLen * (1 - pct));
     const halfTotal = totalLen / 2;
 
-    // White starts at +halfTotal (Rank 1) and grows toward -halfTotal (Rank 8)
+    whiteBar.material.color.setHex(metrics.whiteColor.hex3D);
     whiteBar.scale.z = whiteLen;
     whiteBar.position.set(colX, 0.08, halfTotal - whiteLen / 2);
 
-    // Black starts at -halfTotal (Rank 8) and grows toward +halfTotal (Rank 1)
+    blackBar.material.color.setHex(metrics.blackColor.hex3D);
     blackBar.scale.z = blackLen;
     blackBar.position.set(colX, 0.08, -halfTotal + blackLen / 2);
 
-    // Frontline meeting point
     const meetZ = halfTotal - whiteLen;
     marker.position.set(colX, 0.14, meetZ);
   }

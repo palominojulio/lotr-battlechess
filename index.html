@@ -190,24 +190,26 @@
       </div>
     </aside>
 
-    <!-- Right-of-Board Vertical Attack-Line Advance & Evaluation Column (YouTube / Chessercise style) -->
-    <div class="attack-advance-column" id="attack-advance-column" aria-label="Columna de avance de la línea de ataque y evaluación">
-      <div class="attack-col-header" title="Evaluación y ventaja de la línea de ataque">
-        <span class="attack-col-title">ATAQUE</span>
-        <strong class="attack-eval-score" id="attack-eval-score">0.0</strong>
+    <!-- Right-of-Board Vertical Attack-Line Advance, Risk & Win-Probability Column -->
+    <div class="attack-advance-column" id="attack-advance-column" aria-label="Columna de dominio, riesgo y probabilidad de victoria por jugador">
+      <div class="attack-col-header" title="Opciones, riesgo y probabilidad de victoria de Negras (Legión)">
+        <span class="attack-col-title">👁️ NEGRAS</span>
+        <strong class="attack-prob-badge" id="attack-black-prob">50%</strong>
+        <span class="attack-risk-label" id="attack-black-status">🟢 Estable</span>
       </div>
 
       <div class="attack-bar-outer" id="attack-bar-outer">
-        <!-- Black (Top) & White (Bottom) dynamic fill -->
-        <div class="attack-bar-black-bg"></div>
+        <!-- Top section: Black's dominance/risk bar (Green if winning, Orange if at risk, Red if losing) -->
+        <div class="attack-bar-black-bg" id="attack-bar-black-bg"></div>
+        <!-- Bottom section: White's dominance/risk bar (Green if winning, Orange if at risk, Red if losing) -->
         <div class="attack-bar-white-fill" id="attack-bar-white-fill" style="height: 50%;"></div>
 
-        <!-- Center equilibrium line (Fila 4/5) -->
+        <!-- Center equilibrium line (50% / Fila 4-5) -->
         <div class="attack-bar-midline"></div>
 
-        <!-- Dynamic Frontline Attack Marker -->
+        <!-- Dynamic Frontline Attack & Eval Marker -->
         <div class="attack-frontline-marker" id="attack-frontline-marker" style="bottom: 50%;">
-          <span class="frontline-tag" id="attack-frontline-tag">⚔️ F4</span>
+          <span class="frontline-tag" id="attack-frontline-tag">⚔️ F4 · 0.0</span>
         </div>
 
         <!-- 8 Rank numbers along the vertical column (8 down to 1) -->
@@ -223,9 +225,10 @@
         </div>
       </div>
 
-      <div class="attack-col-footer">
-        <span class="attack-line-rank" id="attack-line-white-rank" title="Fila alcanzada por la línea de ataque blanca">☀️ F2</span>
-        <span class="attack-line-rank black" id="attack-line-black-rank" title="Fila alcanzada por la línea de ataque negra">👁️ F7</span>
+      <div class="attack-col-footer" title="Opciones, riesgo y probabilidad de victoria de Blancas (Alianza)">
+        <span class="attack-risk-label" id="attack-white-status">🟢 Estable</span>
+        <strong class="attack-prob-badge" id="attack-white-prob">50%</strong>
+        <span class="attack-col-title">☀️ BLANCAS</span>
       </div>
     </div>
 

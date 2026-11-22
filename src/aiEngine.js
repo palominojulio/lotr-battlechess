@@ -54,13 +54,57 @@ export function evaluateBoard(chess) {
 }
 
 /**
- * Computes the Attack-Line Advance & Evaluation Bar metrics for the right-side vertical column:
- * - evalPawns: signed score in pawns (e.g. +1.45, -0.80)
- * - evalText: formatted label ("+1.5", "-0.8", "0.0", "M")
- * - whiteBarPct: 0..100 vertical fill percentage for White (from bottom up)
- * - whiteAttackRank: 1..8 rank of White's forward attack line
- * - blackAttackRank: 1..8 rank of Black's forward attack line
- * - frontlineRank: 1..8 rank where the active line of attack stands
+ * Maps a player's win probability (0..100), signed advantage (pawns), and check risk
+ * to a dynamic traffic-light color tier:
+ * - Green (#22c55e / #10b981): Winning / Dominating / Good position
+ * - Orange (#f97316): At risk / Losing ground / Trailing
+ * - Red (#ef4444): High risk / Losing badly / In Check
+ */
+function getPlayerRiskColorTier(myAdvantagePawns, myWinProb, amInCheck) {
+  if (amInCheck || myWinProb <= 34 || myAdvantagePawns <= -1.8) {
+    return {
+      tier: 'danger',
+      hex: '#ef4444',
+      hex3D: 0xef4444,
+      bgGradient: 'linear-gradient(180deg, #dc2626 0%, #ef4444 50%, #991b1b 100%)',
+      glow: 'rgba(239, 68, 68, 0.75)',
+      statusLabel: amInCheck ? '🔴 ¡EN JAQUE!' : '🔴 Perdiendo'
+    };
+  }
+  if (myWinProb < 49 || myAdvantagePawns < -0.12) {
+    return {
+      tier: 'risk',
+      hex: '#f97316',
+      hex3D: 0xf97316,
+      bgGradient: 'linear-gradient(180deg, #ea580c 0%, #f97316 50%, #fb923c 100%)',
+      glow: 'rgba(249, 115, 22, 0.7)',
+      statusLabel: '🟠 En Riesgo'
+    };
+  }
+  if (myWinProb >= 62 || myAdvantagePawns >= 1.2) {
+    return {
+      tier: 'winning',
+      hex: '#22c55e',
+      hex3D: 0x22c55e,
+      bgGradient: 'linear-gradient(180deg, #16a34a 0%, #22c55e 50%, #4ade80 100%)',
+      glow: 'rgba(34, 197, 94, 0.8)',
+      statusLabel: '🟢 Dominando'
+    };
+  }
+  // Balanced or slight advantage (>= 49%) -> Green ("va bien")
+  return {
+    tier: 'good',
+    hex: '#10b981',
+    hex3D: 0x10b981,
+    bgGradient: 'linear-gradient(180deg, #059669 0%, #10b981 50%, #34d399 100%)',
+    glow: 'rgba(16, 185, 129, 0.65)',
+    statusLabel: myAdvantagePawns > 0.12 ? '🟢 Ventaja' : '🟢 Estable'
+  };
+}
+
+/**
+ * Computes the Attack-Line Advance, Win Probability, and Dynamic Risk Colors (Green / Orange / Red)
+ * for BOTH players on the right-side vertical column.
  */
 export function computeAttackAdvanceMetrics(chess) {
   const rawScore = evaluateBoard(chess);
@@ -98,7 +142,7 @@ export function computeAttackAdvanceMetrics(chess) {
   const avgBlackRank = blackCount > 0 ? blackAdvSum / blackCount : 7;
 
   // Combine material/positional score with attack-line territorial advance
-  const territoryBonus = ((avgWhiteRank - 2) - (7 - avgBlackRank)) * 35;
+  const territoryBonus = ((avgWhiteRank - 2) - (7 - avgBlackRank)) * 38;
   const combinedCp = Math.abs(rawScore) > 50000 ? rawScore : rawScore + territoryBonus;
   const evalPawns = combinedCp / 100;
 
@@ -112,11 +156,21 @@ export function computeAttackAdvanceMetrics(chess) {
   } else {
     const sign = evalPawns > 0.05 ? '+' : '';
     evalText = `${sign}${evalPawns.toFixed(1)}`;
-    // Smooth sigmoid-like mapping so +4 pawns is ~85% and -4 pawns is ~15%
-    const clamped = Math.max(-10, Math.min(10, evalPawns));
-    whiteBarPct = Math.round(50 + (clamped / 10) * 46);
+    // Logistic win probability curve (1 / (1 + 10^(-evalPawns / 3.5)))
+    const winLogistic = 1 / (1 + Math.pow(10, -evalPawns / 3.5));
+    whiteBarPct = Math.round(winLogistic * 100);
     whiteBarPct = Math.max(4, Math.min(96, whiteBarPct));
   }
+
+  const whiteWinProb = whiteBarPct;
+  const blackWinProb = 100 - whiteBarPct;
+
+  const inCheck = chess.inCheck();
+  const whiteInCheck = inCheck && chess.turn() === 'w';
+  const blackInCheck = inCheck && chess.turn() === 'b';
+
+  const whiteColor = getPlayerRiskColorTier(evalPawns, whiteWinProb, whiteInCheck);
+  const blackColor = getPlayerRiskColorTier(-evalPawns, blackWinProb, blackInCheck);
 
   // Frontline rank (1..8) mapped from whiteBarPct & forward pieces
   const frontlineRank = Math.max(1, Math.min(8, Math.round((whiteBarPct / 100) * 7 + 1)));
@@ -125,6 +179,10 @@ export function computeAttackAdvanceMetrics(chess) {
     evalPawns,
     evalText,
     whiteBarPct,
+    whiteWinProb,
+    blackWinProb,
+    whiteColor,
+    blackColor,
     whiteAttackRank: maxWhiteRank,
     blackAttackRank: minBlackRank,
     frontlineRank
