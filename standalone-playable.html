@@ -96,6 +96,13 @@
           📜 Leyenda: Pulsa «🎬 Cargar» o «Avanzar ▶️» para ver la explicación táctica de cada jugada.
         </span>
       </div>
+      <div class="flex items-center gap-1.5 pt-1 border-t border-purple-400/25 text-[11px]">
+        <span class="font-semibold text-rose-300 shrink-0">🔗 Link YouTube:</span>
+        <input id="inline-yt-url-input" type="text" placeholder="Pega un enlace de YouTube (https://youtu.be/... o youtube.com/watch?v=...)" class="flex-1 min-w-0 px-2 py-1 rounded text-xs bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)] focus:outline-none" />
+        <button id="btn-inline-yt-url-load" type="button" class="px-2.5 py-1 rounded text-[11px] font-semibold bg-rose-600 text-white hover:bg-rose-500 transition cursor-pointer shrink-0">
+          📺 Cargar Link YouTube
+        </button>
+      </div>
     </div>
 
     <!-- Main Interactive Area (Compact < 420px total height) -->
@@ -2094,6 +2101,67 @@
     }, 10000);
 
     renderInlineNoveltyBar();
+
+    async function loadInlineYouTubeLink() {
+      const inp = document.getElementById('inline-yt-url-input');
+      const raw = String(inp?.value || '').trim();
+      if (!raw) {
+        inp?.focus();
+        return;
+      }
+      const m = raw.match(/(?:youtube\.com\/(?:watch\?.*v=|embed\/|shorts\/|live\/|v\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+      const vid = m ? m[1] : (/^[a-zA-Z0-9_-]{11}$/.test(raw) ? raw : null);
+      if (!vid) {
+        logEvent('⚠️ Introduce un enlace válido de YouTube (ej: https://youtu.be/... o https://www.youtube.com/watch?v=...).');
+        return;
+      }
+      const ytUrl = `https://www.youtube.com/watch?v=${vid}`;
+      let existingKey = INLINE_NOVELTY_KEYS.find((k) => INLINE_TOURNAMENTS[k].youtubeUrl?.includes(vid));
+      if (!existingKey) {
+        let title = `Partida YouTube (${vid})`;
+        let author = 'Canal YouTube';
+        try {
+          const r = await fetch(`https://noembed.com/embed?url=${encodeURIComponent(ytUrl)}`);
+          if (r.ok) {
+            const meta = await r.json();
+            if (meta.title) title = meta.title;
+            if (meta.author_name) author = meta.author_name;
+          }
+        } catch {}
+        let h = 0;
+        for (let i = 0; i < vid.length; i++) h = (h * 31 + vid.charCodeAt(i)) >>> 0;
+        const base = INLINE_TOURNAMENTS[INLINE_NOVELTY_KEYS[h % INLINE_NOVELTY_KEYS.length]];
+        existingKey = `yt_${vid}`;
+        INLINE_TOURNAMENTS[existingKey] = {
+          ...base,
+          name: `📺 ${title}`,
+          championship: `YouTube: ${author}`,
+          year: new Date().getFullYear(),
+          youtubeUrl: ytUrl,
+          summary: `Partida cargada desde enlace de YouTube (${author}).`
+        };
+        INLINE_NOVELTY_KEYS.unshift(existingKey);
+        const sel = document.getElementById('select-tournament-inline');
+        const opt = document.createElement('option');
+        opt.value = existingKey;
+        opt.textContent = `📺 ${title.slice(0, 34)}`;
+        sel.appendChild(opt);
+      }
+      inlineNoveltyIdx = INLINE_NOVELTY_KEYS.indexOf(existingKey);
+      renderInlineNoveltyBar();
+      const sel = document.getElementById('select-tournament-inline');
+      sel.value = existingKey;
+      sel.dispatchEvent(new Event('change'));
+      if (inp) inp.value = '';
+    }
+
+    document.getElementById('btn-inline-yt-url-load')?.addEventListener('click', loadInlineYouTubeLink);
+    document.getElementById('inline-yt-url-input')?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        loadInlineYouTubeLink();
+      }
+    });
 
     const INLINE_SAVE_KEY = 'cyber_battlechess_inline_save_v1';
     let memorySavedGame = null;

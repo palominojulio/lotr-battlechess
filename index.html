@@ -200,6 +200,7 @@
       <div class="stepper-top-row">
         <span class="stepper-game-label" id="stepper-game-label">⚔️ Partida en Tablero</span>
         <div style="display: flex; align-items: center; gap: 5px; flex-shrink: 0;">
+          <button type="button" class="btn-copy-pgn" id="btn-dock-load-yt" style="background: rgba(225, 29, 72, 0.22); border-color: rgba(251, 113, 133, 0.55); color: #ffe4e6;" title="Pegar y cargar una partida desde un link de YouTube">🔗 Cargar Link YouTube</button>
           <a id="btn-dock-yt" href="https://www.youtube.com/watch?v=Pclp2jUfNs0" target="_blank" rel="noopener noreferrer" class="btn-copy-pgn" style="background: rgba(225, 29, 72, 0.28); border-color: rgba(251, 113, 133, 0.65); color: #ffe4e6; text-decoration: none;" title="Abrir vídeo oficial en YouTube">📺 Vídeo YouTube</a>
           <span class="stepper-move-badge" id="stepper-move-badge">Jugada 0 / 0</span>
         </div>
@@ -294,6 +295,30 @@
         <button type="button" class="btn-study-ctrl btn-study-save novelty-save-full-btn" id="btn-novelty-save-db" title="Guardar esta novedad en tu base de datos de partidas guardadas">
           💾 Guardar esta Novedad en mi Base
         </button>
+        <div class="novelty-yt-direct-box" style="margin-top: 7px; padding-top: 7px; border-top: 1px solid rgba(192, 132, 252, 0.28);">
+          <label for="novelty-yt-url-input" style="display: block; font-size: 0.68rem; font-weight: 700; color: #fda4af; margin-bottom: 4px;">
+            🔗 Cargar Partida con Link de YouTube:
+          </label>
+          <div style="display: flex; gap: 4px;">
+            <input
+              type="text"
+              id="novelty-yt-url-input"
+              class="chat-input"
+              style="font-size: 0.72rem; padding: 4px 7px;"
+              placeholder="Pega link (https://youtu.be/...) o jugadas"
+              aria-label="Pegar link de YouTube para cargar partida"
+            />
+            <button
+              type="button"
+              class="btn-study-ctrl"
+              id="btn-novelty-yt-url-load"
+              style="flex: 0 0 auto; background: rgba(225, 29, 72, 0.35); border-color: rgba(251, 113, 133, 0.75); color: #ffe4e6; font-weight: 700;"
+              title="Cargar la partida del enlace de YouTube directamente en el tablero"
+            >
+              📺 Cargar Link
+            </button>
+          </div>
+        </div>
       </section>
 
       <section class="panel-section champion-card" id="champion-card">

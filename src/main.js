@@ -2490,6 +2490,76 @@ btnNoveltyAll?.addEventListener('click', () => {
   openStudyDialog();
 });
 
+// Direct YouTube Link Loader from the Main Screen (Right Sidebar & Floating Stepper Dock)
+const noveltyYtUrlInput = document.getElementById('novelty-yt-url-input');
+const btnNoveltyYtUrlLoad = document.getElementById('btn-novelty-yt-url-load');
+const btnDockLoadYt = document.getElementById('btn-dock-load-yt');
+
+async function loadYouTubeGameFromDirectUrl(rawUrlText) {
+  const cleanUrl = String(rawUrlText || '').trim();
+  if (!cleanUrl) {
+    noveltyYtUrlInput?.focus();
+    return;
+  }
+  if (btnNoveltyYtUrlLoad) {
+    btnNoveltyYtUrlLoad.textContent = '⏳ Cargando...';
+    btnNoveltyYtUrlLoad.disabled = true;
+  }
+  try {
+    const dbFingerprints = getAllDatabaseFingerprints();
+    const { game } = await importGameFromYouTube(cleanUrl, dbFingerprints);
+    // Add to autoLoadedNovelties if not already present so the user sees it in the novelty card too
+    const existingIdx = autoLoadedNovelties.findIndex(
+      (g) => g.youtubeUrl && game.youtubeUrl && g.youtubeUrl === game.youtubeUrl
+    );
+    if (existingIdx >= 0) {
+      currentNoveltyIndex = existingIdx;
+    } else {
+      autoLoadedNovelties.unshift(game);
+      currentNoveltyIndex = 0;
+    }
+    renderNoveltyBoardCard();
+    startStudySession(game, false);
+    if (noveltyYtUrlInput) noveltyYtUrlInput.value = '';
+    const li = document.createElement('li');
+    li.className = 'log-entry lore-intro';
+    li.innerHTML = `📺 <strong>¡Partida de YouTube Cargada por Link!</strong> "${game.title}" (${formatChampionshipYearText(game)}). Usa <strong>Avanzar ▶️</strong> para ver cada jugada o <strong>💾 Guardar en Base</strong>.`;
+    battleLog.prepend(li);
+  } catch (err) {
+    const li = document.createElement('li');
+    li.className = 'log-entry check';
+    li.textContent = `⚠️ ${err.message}`;
+    battleLog.prepend(li);
+  } finally {
+    if (btnNoveltyYtUrlLoad) {
+      btnNoveltyYtUrlLoad.textContent = '📺 Cargar Link';
+      btnNoveltyYtUrlLoad.disabled = false;
+    }
+  }
+}
+
+btnNoveltyYtUrlLoad?.addEventListener('click', () => {
+  loadYouTubeGameFromDirectUrl(noveltyYtUrlInput?.value || '');
+});
+
+noveltyYtUrlInput?.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    loadYouTubeGameFromDirectUrl(noveltyYtUrlInput.value);
+  }
+});
+
+btnDockLoadYt?.addEventListener('click', () => {
+  if (noveltyYtUrlInput && noveltyYtUrlInput.value.trim()) {
+    loadYouTubeGameFromDirectUrl(noveltyYtUrlInput.value);
+    return;
+  }
+  if (noveltyYtUrlInput) {
+    noveltyYtUrlInput.focus();
+    noveltyYtUrlInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+});
+
 // Automatically rotate the offered novelty on the board every 14 seconds so the user sees fresh games
 setInterval(() => {
   if (autoLoadedNovelties.length > 1 && !activeStudy && !studyDialog?.open) {
