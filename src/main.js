@@ -1676,77 +1676,7 @@ function getGuaranteedYouTubeUrl(obj) {
 }
 
 function updateBoardStepperDockUI() {
-  if (!stepperGameLabel || !stepperMoveBadge) return;
-
-  if (activeStudy) {
-    stepperGameLabel.textContent = `🎬 ${activeStudy.title}`;
-    stepperMoveBadge.textContent = `Jugada ${activeStudy.cursor} / ${activeStudy.moves.length}`;
-    if (stepperTournamentMeta) {
-      stepperTournamentMeta.textContent = formatChampionshipYearText(activeStudy);
-    }
-    const currentMoveObj = activeStudy.cursor > 0 ? activeStudy.moves[activeStudy.cursor - 1] : null;
-    const commentary = explainChessMove(currentMoveObj, activeStudy.cursor, activeStudy);
-    if (stepperMoveCommentary) {
-      stepperMoveCommentary.textContent = commentary;
-    }
-    if (studyBarMeta) {
-      studyBarMeta.textContent = formatChampionshipYearText(activeStudy);
-    }
-    if (studyMoveCommentary) {
-      studyMoveCommentary.textContent = commentary;
-    }
-    if (btnDockYt) {
-      btnDockYt.href = getGuaranteedYouTubeUrl(activeStudy);
-      btnDockYt.hidden = false;
-    }
-    if (btnDockPractice) btnDockPractice.hidden = false;
-    if (btnDockAuto) {
-      btnDockAuto.hidden = false;
-      btnDockAuto.textContent = activeStudy.autoPlaying ? '⏸️ Pausa' : '⏯️ Auto';
-    }
-    updateSaveButtonState(btnDockSaveDb, activeStudy, '💾 Guardar en mi Base');
-  } else {
-    const hist = chess.history({ verbose: true });
-    const histLen = hist.length;
-    const totalLen = histLen + normalRedoStack.length;
-    const currentNov =
-      typeof autoLoadedNovelties !== 'undefined' && autoLoadedNovelties.length > 0
-        ? autoLoadedNovelties[currentNoveltyIndex]
-        : null;
-
-    if (totalLen === 0 && currentNov) {
-      stepperGameLabel.textContent = `✨ Novedad Sugerida: ${currentNov.title}`;
-      stepperMoveBadge.textContent = `Pulsa «Avanzar ▶️»`;
-      if (stepperTournamentMeta) {
-        stepperTournamentMeta.textContent = formatChampionshipYearText(currentNov);
-      }
-      if (stepperMoveCommentary) {
-        stepperMoveCommentary.textContent = `📜 ${currentNov.description || 'Pulsa «Avanzar ▶️» para iniciar esta partida jugada a jugada con su leyenda táctica.'}`;
-      }
-      if (btnDockYt) {
-        btnDockYt.href = getGuaranteedYouTubeUrl(currentNov);
-        btnDockYt.hidden = false;
-      }
-      updateSaveButtonState(btnDockSaveDb, currentNov, '💾 Guardar Novedad');
-    } else {
-      stepperGameLabel.textContent = `⚔️ Partida en Curso`;
-      stepperMoveBadge.textContent = `Mov. ${histLen} / ${totalLen}`;
-      if (stepperTournamentMeta) {
-        stepperTournamentMeta.textContent = `🏆 Campeonato: Duelo Cyber-Medieval · 📅 Año: ${new Date().getFullYear()}`;
-      }
-      const lastMv = histLen > 0 ? hist[histLen - 1] : null;
-      if (stepperMoveCommentary) {
-        stepperMoveCommentary.textContent = explainChessMove(lastMv, histLen, null);
-      }
-      if (btnDockYt) {
-        btnDockYt.href = getGuaranteedYouTubeUrl(currentNov);
-        btnDockYt.hidden = false;
-      }
-      const snap = histLen > 0 ? buildGameSnapshot() : null;
-      updateSaveButtonState(btnDockSaveDb, snap, '💾 Guardar Partida');
-    }
-    if (btnDockPractice) btnDockPractice.hidden = true;
-  }
+  updateStudyBarUI();
 }
 
 function getAllDatabaseFingerprints() {
@@ -1769,20 +1699,65 @@ function stopStudyAutoPlay() {
 }
 
 function updateStudyBarUI() {
-  updateBoardStepperDockUI();
   if (!studyBar) return;
-  if (!activeStudy) {
-    studyBar.hidden = true;
-    return;
-  }
   studyBar.hidden = false;
-  if (studyBarTitle) studyBarTitle.textContent = `🏆 ${activeStudy.title}`;
-  if (studyBarStep) studyBarStep.textContent = `${activeStudy.cursor} / ${activeStudy.moves.length}`;
-  if (studyYtLink) {
-    studyYtLink.href = getGuaranteedYouTubeUrl(activeStudy);
-    studyYtLink.hidden = false;
+
+  const btnPractice = document.getElementById('btn-study-practice');
+  if (activeStudy) {
+    if (studyBarTitle) studyBarTitle.textContent = `🏆 ${activeStudy.title}`;
+    if (studyBarStep) studyBarStep.textContent = `${activeStudy.cursor} / ${activeStudy.moves.length}`;
+    if (studyBarMeta) studyBarMeta.textContent = formatChampionshipYearText(activeStudy);
+    const currentMoveObj = activeStudy.cursor > 0 ? activeStudy.moves[activeStudy.cursor - 1] : null;
+    if (studyMoveCommentary) {
+      studyMoveCommentary.textContent = explainChessMove(currentMoveObj, activeStudy.cursor, activeStudy);
+    }
+    if (studyYtLink) {
+      studyYtLink.href = getGuaranteedYouTubeUrl(activeStudy);
+      studyYtLink.hidden = false;
+    }
+    if (btnPractice) btnPractice.hidden = false;
+    if (btnStudyAuto) btnStudyAuto.textContent = activeStudy.autoPlaying ? '⏸️ Pausa' : '⏯️ Auto';
+    updateSaveButtonState(btnStudySaveDb, activeStudy, '💾 Guardar en mi Base');
+  } else {
+    const hist = chess.history({ verbose: true });
+    const histLen = hist.length;
+    const totalLen = histLen + normalRedoStack.length;
+    const currentNov =
+      typeof autoLoadedNovelties !== 'undefined' && autoLoadedNovelties.length > 0
+        ? autoLoadedNovelties[currentNoveltyIndex]
+        : null;
+
+    if (totalLen === 0 && currentNov) {
+      if (studyBarTitle) studyBarTitle.textContent = `✨ ${currentNov.title}`;
+      if (studyBarStep) studyBarStep.textContent = `0 / Mov.`;
+      if (studyBarMeta) studyBarMeta.textContent = formatChampionshipYearText(currentNov);
+      if (studyMoveCommentary) {
+        studyMoveCommentary.textContent = `📜 ${currentNov.description || 'Pulsa «Avanzar ▶️» para reproducir esta novedad jugada a jugada.'}`;
+      }
+      if (studyYtLink) {
+        studyYtLink.href = getGuaranteedYouTubeUrl(currentNov);
+        studyYtLink.hidden = false;
+      }
+      updateSaveButtonState(btnStudySaveDb, currentNov, '💾 Guardar Novedad');
+    } else {
+      if (studyBarTitle) studyBarTitle.textContent = `⚔️ Partida en Curso`;
+      if (studyBarStep) studyBarStep.textContent = `${histLen} / ${totalLen}`;
+      if (studyBarMeta) {
+        studyBarMeta.textContent = `🏆 Campeonato: Duelo Cyber-Medieval · 📅 Año: ${new Date().getFullYear()}`;
+      }
+      const lastMv = histLen > 0 ? hist[histLen - 1] : null;
+      if (studyMoveCommentary) {
+        studyMoveCommentary.textContent = explainChessMove(lastMv, histLen, null);
+      }
+      if (studyYtLink) {
+        studyYtLink.href = getGuaranteedYouTubeUrl(currentNov);
+        studyYtLink.hidden = false;
+      }
+      const snap = histLen > 0 ? buildGameSnapshot() : null;
+      updateSaveButtonState(btnStudySaveDb, snap, '💾 Guardar Partida');
+    }
+    if (btnPractice) btnPractice.hidden = true;
   }
-  updateSaveButtonState(btnStudySaveDb, activeStudy);
 }
 
 function jumpToStudyStep(targetCursor) {

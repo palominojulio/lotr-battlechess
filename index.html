@@ -137,10 +137,10 @@
           </div>
         </div>
 
-        <!-- Study & Tournament Replay Bar (shown when studying a loaded tournament/master game) -->
-        <div class="study-bar" id="study-bar" hidden>
+        <!-- Study & Tournament Replay Bar (in the Left Sidebar so it never covers the 3D board) -->
+        <div class="study-bar" id="study-bar">
           <div class="study-bar-header">
-            <span class="study-bar-title" id="study-bar-title">🏆 Modo Estudio de Torneo</span>
+            <span class="study-bar-title" id="study-bar-title">🏆 Control de Jugadas & Estudio</span>
             <a id="study-yt-link" href="https://www.youtube.com/watch?v=Pclp2jUfNs0" target="_blank" rel="noopener noreferrer" class="btn-copy-pgn" style="background: rgba(225, 29, 72, 0.28); border-color: rgba(251, 113, 133, 0.65); color: #ffe4e6; text-decoration: none;" title="Abrir el vídeo en YouTube">📺 Ver en YouTube</a>
             <span class="study-bar-step" id="study-bar-step">0 / 0</span>
           </div>
@@ -194,33 +194,6 @@
         </button>
       </div>
     </aside>
-
-    <!-- On-Board Floating Move Stepper Dock (Always accessible at top-center of the 3D board!) -->
-    <div class="board-stepper-dock" id="board-stepper-dock" aria-label="Controles de avance, campeonato, año y leyenda táctica de la jugada">
-      <div class="stepper-top-row">
-        <span class="stepper-game-label" id="stepper-game-label">⚔️ Partida en Tablero</span>
-        <div style="display: flex; align-items: center; gap: 5px; flex-shrink: 0;">
-          <button type="button" class="btn-copy-pgn" id="btn-dock-load-yt" style="background: rgba(225, 29, 72, 0.22); border-color: rgba(251, 113, 133, 0.55); color: #ffe4e6;" title="Pegar y cargar una partida desde un link de YouTube">🔗 Cargar Link YouTube</button>
-          <a id="btn-dock-yt" href="https://www.youtube.com/watch?v=Pclp2jUfNs0" target="_blank" rel="noopener noreferrer" class="btn-copy-pgn" style="background: rgba(225, 29, 72, 0.28); border-color: rgba(251, 113, 133, 0.65); color: #ffe4e6; text-decoration: none;" title="Abrir vídeo oficial en YouTube">📺 Vídeo YouTube</a>
-          <span class="stepper-move-badge" id="stepper-move-badge">Jugada 0 / 0</span>
-        </div>
-      </div>
-      <div class="stepper-meta-row" id="stepper-tournament-meta">
-        🏆 Campeonato: Partida Libre · 📅 Año: 2026
-      </div>
-      <div class="stepper-commentary-box" id="stepper-move-commentary" aria-live="polite">
-        📜 <strong>Leyenda de la Jugada:</strong> Pulsa «Avanzar ▶️» (o mueve una pieza) para ver la explicación táctica y el comentario de cada jugada.
-      </div>
-      <div class="stepper-btn-row">
-        <button type="button" class="btn-stepper" id="btn-dock-first" title="Ir al inicio de la partida">⏮️</button>
-        <button type="button" class="btn-stepper btn-stepper-nav" id="btn-dock-prev" title="Retroceder una jugada (Flecha Izquierda)">◀️ Retroceder</button>
-        <button type="button" class="btn-stepper btn-stepper-nav btn-stepper-primary" id="btn-dock-next" title="Avanzar una jugada con combate 3D (Flecha Derecha)">Avanzar ▶️</button>
-        <button type="button" class="btn-stepper" id="btn-dock-last" title="Ir al final de la partida">⏭️</button>
-        <button type="button" class="btn-stepper" id="btn-dock-auto" title="Reproducir automáticamente jugada a jugada">⏯️ Auto</button>
-        <button type="button" class="btn-stepper btn-stepper-save" id="btn-dock-save-db" title="Guardar esta novedad o partida en tu base de datos">💾 Guardar en Base</button>
-        <button type="button" class="btn-stepper btn-stepper-play" id="btn-dock-practice" hidden title="Tomar el mando y jugar desde esta jugada">⚔️ Jugar Aquí</button>
-      </div>
-    </div>
 
     <!-- Right-of-Board Vertical Attack-Line Advance, Risk & Win-Probability Column -->
     <div class="attack-advance-column" id="attack-advance-column" aria-label="Columna de dominio, riesgo y probabilidad de victoria por jugador">
